@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>Extole_ConnectionStatus_Connected</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Connection status connected</shortDescription>
+        <value>Connected</value>
+    </labels>
+    <labels>
+        <fullName>Extole_ConnectionStatus_Failed</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Connection status failed</shortDescription>
+        <value>Not Connected</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Settings page title</shortDescription>
+        <value>Extole Settings</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_Connection_Section</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Settings connection section header</shortDescription>
+        <value>Connection</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_TestConnection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Test connection button label</shortDescription>
+        <value>Test Connection</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_SyncNow</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync now button label</shortDescription>
+        <value>Sync Now</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_SaveSettings</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Save settings button label</shortDescription>
+        <value>Save Settings</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_AddReport</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Add report button label</shortDescription>
+        <value>Add Report</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_ReportConfig_Section</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Report configuration section header</shortDescription>
+        <value>Report Configuration</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_LeadAttribution_Section</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead attribution section header</shortDescription>
+        <value>Lead Attribution</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_SyncManagement_Section</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync management section header</shortDescription>
+        <value>Sync Management</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_Debug_Section</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Debug section header</shortDescription>
+        <value>Debug / Orphan Management</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_ClearDebugLogs</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Clear debug logs button label</shortDescription>
+        <value>Clear Debug Logs</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_ClearOrphanedData</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Clear orphaned data button label</shortDescription>
+        <value>Clear Orphaned Data</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_ApiTokenNote</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>API token storage note</shortDescription>
+        <value>API token is stored securely in the Extole API Named Credential</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_GenerateToken</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generate token link text</shortDescription>
+        <value>Generate a token in My Extole →</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_LongLivedToken</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Long-lived token link text</shortDescription>
+        <value>How to generate a long-lived token →</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Program overview page title</shortDescription>
+        <value>Program Overview</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_NoPending</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No pending data message</shortDescription>
+        <value>All data is up to date</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_Stale</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Stale data indicator</shortDescription>
+        <value>Data may be stale</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_NoDataAdmin</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No data admin prompt</shortDescription>
+        <value>No reports configured yet. Add a report in Settings to get started.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_NoDataViewer</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No data viewer message</shortDescription>
+        <value>No program data available yet. Check back after the first sync.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_TokenInvalid</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Token invalid error banner</shortDescription>
+        <value>Unable to connect to Extole. Please check your API token in Settings.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tile_ViewInExtole</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>View in Extole link text</shortDescription>
+        <value>View in Extole →</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tile_Orphaned</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Orphaned tile footer text</shortDescription>
+        <value>No longer configured</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tile_SyncPending</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync pending tile message</shortDescription>
+        <value>Sync pending — data will appear after the first sync.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tile_StaleData</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Stale data tile message</shortDescription>
+        <value>Data may be stale</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tile_SyncFailed</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync failed tile message prefix</shortDescription>
+        <value>Failed</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_Step1</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Onboarding step 1 title</shortDescription>
+        <value>Connect to Extole</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_Step2</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Onboarding step 2 title</shortDescription>
+        <value>Configure Your First Report</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_Step3</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Onboarding step 3 title</shortDescription>
+        <value>Run First Sync</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_Step1_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Onboarding step 1 description</shortDescription>
+        <value>Add your Extole API token to the Named Credential in Salesforce Setup, then test your connection below.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_Step2_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Onboarding step 2 description</shortDescription>
+        <value>Choose a report type to track in your dashboard.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_Step3_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Onboarding step 3 description</shortDescription>
+        <value>Trigger your first sync to populate your dashboard with live data.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Onboarding_GoToSetup</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Go to setup link text</shortDescription>
+        <value>Go to Setup → Named Credentials</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead attribution page title</shortDescription>
+        <value>Lead Attribution</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_NoLeads</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No leads message</shortDescription>
+        <value>No RAF leads found for the selected tracking period.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_TrackingSince</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tracking since date label</shortDescription>
+        <value>Tracking since</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_RAFLeads</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>RAF leads created metric label</shortDescription>
+        <value>RAF Leads Created</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_ConversionRate</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>RAF lead conversion rate metric label</shortDescription>
+        <value>RAF Lead Conversion Rate</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_PipelineValue</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Pipeline value metric label</shortDescription>
+        <value>Pipeline Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LeadAttribution_Disabled</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead attribution disabled message</shortDescription>
+        <value>Lead Attribution is disabled. Enable it in Settings to track RAF leads.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_DisplayLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Display label field tooltip</shortDescription>
+        <value>The name shown on the dashboard tile for this report.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_Aggregation</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Aggregation field tooltip</shortDescription>
+        <value>How to compute the single metric value: use the first row, sum all rows, or count rows.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_ChartType</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Chart type field tooltip</shortDescription>
+        <value>The visualization shown beneath the metric value on the dashboard tile.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_DateRange</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Date range field tooltip</shortDescription>
+        <value>The rolling window or year-to-date period used when fetching this report.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_ValueColumn</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Value column field tooltip</shortDescription>
+        <value>The column from the report JSON that contains the primary metric value.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Modal_Step1_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config modal step 1 title</shortDescription>
+        <value>Select a Report Type</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Modal_Step2_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config modal step 2 title</shortDescription>
+        <value>Configure Report</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Modal_Next</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Modal next button</shortDescription>
+        <value>Next</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Modal_Back</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Modal back button</shortDescription>
+        <value>Back</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Modal_Save</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Modal save button</shortDescription>
+        <value>Save</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Modal_Cancel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Modal cancel button</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_ReportName</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log report name column</shortDescription>
+        <value>Report Name</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_DateRange</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log date range column</shortDescription>
+        <value>Date Range</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_Status</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log status column</shortDescription>
+        <value>Status</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_Timestamp</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log timestamp column</shortDescription>
+        <value>Timestamp</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_Value</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log value column</shortDescription>
+        <value>Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_HttpStatus</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log HTTP status column</shortDescription>
+        <value>HTTP Status</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_PollAttempts</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log poll attempts column</shortDescription>
+        <value>Poll Attempts</value>
+    </labels>
+    <labels>
+        <fullName>Extole_SyncLog_Error</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync log error column</shortDescription>
+        <value>Error</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Error_Generic</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic error message</shortDescription>
+        <value>An error occurred. Please try again.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Success_SettingsSaved</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Settings saved success message</shortDescription>
+        <value>Settings saved successfully.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Success_SyncTriggered</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync triggered success message</shortDescription>
+        <value>Sync triggered successfully.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Success_ConfigSaved</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config saved success message</shortDescription>
+        <value>Report configuration saved.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Success_ConfigDeleted</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config deleted success message</shortDescription>
+        <value>Report configuration deleted.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Connection_ReportCount</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Connection report count message</shortDescription>
+        <value>reports available</value>
+    </labels>
+    <labels>
+        <fullName>Extole_App_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>App title</shortDescription>
+        <value>Extole</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tab_Overview</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Overview tab label</shortDescription>
+        <value>Program Overview</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tab_Settings</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Settings tab label</shortDescription>
+        <value>Settings</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tab_LeadAttribution</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead attribution tab label</shortDescription>
+        <value>Lead Attribution</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_Rolling30</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Rolling 30 range button</shortDescription>
+        <value>Rolling 30</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_Rolling90</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Rolling 90 range button</shortDescription>
+        <value>Rolling 90</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Overview_YTD</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>YTD range button</shortDescription>
+        <value>YTD</value>
+    </labels>
+    <labels>
+        <fullName>Extole_AsOf</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>As of date prefix</shortDescription>
+        <value>As of</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_ShowLeadAttrib</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Show lead attribution checkbox label</shortDescription>
+        <value>Show Lead Attribution Tab</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_RAFLeadField</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>RAF Lead Field label</shortDescription>
+        <value>RAF Lead Field</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_RAFLeadValue</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>RAF Lead Value label</shortDescription>
+        <value>RAF Lead Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_RAFTrackingStart</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>RAF Tracking Start Date label</shortDescription>
+        <value>RAF Tracking Start Date</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_SyncCadence</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync cadence label</shortDescription>
+        <value>Sync Cadence</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_NotifyOnFailure</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Notify on sync failure label</shortDescription>
+        <value>Notify On Sync Failure</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_NotifyAfterN</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Notify after N failures label</shortDescription>
+        <value>Notify After N Failures</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_FailureEmail</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Failure notification email label</shortDescription>
+        <value>Failure Notification Email</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_DebugLogging</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Debug logging enabled label</shortDescription>
+        <value>Debug Logging Enabled</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Report_Fast</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Fast badge for SQL reports</shortDescription>
+        <value>Fast</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Report_DisplayName</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Report display name column header</shortDescription>
+        <value>Report Name</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Report_Description</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Report description column header</shortDescription>
+        <value>Description</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_DisplayLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config display label field</shortDescription>
+        <value>Display Label</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_ValueColumn</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config value column field</shortDescription>
+        <value>Value Column</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_Aggregation</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config aggregation field</shortDescription>
+        <value>Aggregation</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_ChartType</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config chart type field</shortDescription>
+        <value>Chart Type</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_DateRange</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config date range field</shortDescription>
+        <value>Date Range</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_DisplayOrder</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config display order field</shortDescription>
+        <value>Display Order</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_Active</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config active field</shortDescription>
+        <value>Active</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Filter_Category</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Filter by category label</shortDescription>
+        <value>Filter by Category</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Filter_PerformanceMetrics</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Performance and metrics category</shortDescription>
+        <value>Performance &amp; Metrics</value>
+    </labels>
+    <labels>
+        <fullName>Extole_LastSync</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Last sync label</shortDescription>
+        <value>Last Sync</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Never</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Never label for last sync</shortDescription>
+        <value>Never</value>
+    </labels>
+</CustomLabels>

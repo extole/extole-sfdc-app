@@ -1,0 +1,71 @@
+<template>
+    <div class={tileClass}>
+        <div class="tile-header">
+            <span class="tile-label" title={snapshot.Display_Label__c}>
+                {displayLabel}
+            </span>
+        </div>
+
+        <template lwc:if={isPending}>
+            <div class="tile-pending">
+                <lightning-icon icon-name="utility:clock" size="small" alternative-text="Pending"></lightning-icon>
+                <span class="pending-text">{labelSyncPending}</span>
+            </div>
+        </template>
+
+        <template lwc:else>
+            <div class="tile-value">{formattedValue}</div>
+
+            <template lwc:if={hasTrend}>
+                <div class={trendClass}>
+                    <span class="trend-arrow">{trendArrow}</span>
+                    <span class="trend-text">{trendText}</span>
+                </div>
+            </template>
+
+            <template lwc:if={hasChart}>
+                <div class="tile-chart" aria-hidden="true">
+                    <svg width="100%" height="48" viewBox={svgViewBox} preserveAspectRatio="none">
+                        <template lwc:if={isSparkline}>
+                            <defs>
+                                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.25"></stop>
+                                    <stop offset="100%" stop-color="#1D9E75" stop-opacity="0.02"></stop>
+                                </linearGradient>
+                            </defs>
+                            <path d={sparklineFillPath} fill={gradientFill} stroke="none"></path>
+                            <path d={sparklinePath} fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </template>
+                        <template lwc:if={isBar}>
+                            <template for:each={barRects} for:item="bar">
+                                <rect key={bar.key} x={bar.x} y={bar.y} width={bar.width} height={bar.height} fill={bar.fill} opacity={bar.opacity}></rect>
+                            </template>
+                        </template>
+                    </svg>
+                </div>
+            </template>
+        </template>
+
+        <div class="tile-footer">
+            <template lwc:if={isOrphaned}>
+                <span class="footer-orphaned">{labelOrphaned}</span>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasSyncFailed}>
+                    <lightning-icon icon-name="utility:error" size="x-small" variant="error" alternative-text="Error"></lightning-icon>
+                    <span class="footer-failed">{syncFailedText}</span>
+                </template>
+                <template lwc:else>
+                    <span class={asOfClass}>{asOfText}</span>
+                    <template lwc:if={isStale}>
+                        <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" alternative-text="Stale"></lightning-icon>
+                    </template>
+                </template>
+            </template>
+
+            <template lwc:if={hasViewUrl}>
+                <a href={snapshot.View_URL__c} target="_blank" rel="noopener noreferrer" class="footer-link">{labelViewInExtole}</a>
+            </template>
+        </div>
+    </div>
+</template>

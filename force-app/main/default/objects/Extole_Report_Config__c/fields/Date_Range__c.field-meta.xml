@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Date_Range__c</fullName>
+    <label>Date Range</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Rolling 30</fullName>
+                <default>false</default>
+                <label>Rolling 30</label>
+            </value>
+            <value>
+                <fullName>Rolling 90</fullName>
+                <default>true</default>
+                <label>Rolling 90</label>
+            </value>
+            <value>
+                <fullName>YTD</fullName>
+                <default>false</default>
+                <label>YTD</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

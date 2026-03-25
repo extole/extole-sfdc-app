@@ -1,0 +1,30 @@
+:host {
+    --extole-green: #1D9E75;
+    display: block;
+}
+
+.app-shell {
+    min-height: 100%;
+    background: #f3f3f3;
+}
+
+.app-header {
+    background: #ffffff;
+    border-bottom: 1px solid #dddbda;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+}
+
+.app-logo {
+    display: flex;
+    align-items: center;
+}
+
+.init-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    position: relative;
+}

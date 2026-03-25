@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Data_Mode__c</fullName>
+    <label>Data Mode</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Single Value</fullName>
+                <default>true</default>
+                <label>Single Value</label>
+            </value>
+            <value>
+                <fullName>Time Series</fullName>
+                <default>false</default>
+                <label>Time Series</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

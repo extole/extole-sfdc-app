@@ -1,0 +1,286 @@
+:host {
+    --extole-green: #1D9E75;
+    display: block;
+}
+
+.settings-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #080707;
+    margin: 0 0 8px 0;
+}
+
+.section-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-footer {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.section-action-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.section-header-row {
+    margin-top: 8px;
+    border-top: 1px solid #dddbda;
+    padding-top: 12px;
+}
+
+.subsection-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3e3e3c;
+    margin: 0;
+}
+
+/* Connection */
+.connection-status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.connection-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-connected {
+    background: #ecfdf5;
+    color: var(--extole-green);
+    border: 1px solid var(--extole-green);
+}
+
+.badge-failed {
+    background: #fde8e8;
+    color: #c23934;
+    border: 1px solid #c23934;
+}
+
+.connection-result {
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.result-success {
+    background: #ecfdf5;
+    color: #027a48;
+}
+
+.result-error {
+    background: #fde8e8;
+    color: #c23934;
+}
+
+.api-token-note {
+    font-size: 13px;
+    color: #706e6b;
+    margin: 0;
+}
+
+.token-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.extole-link {
+    color: var(--extole-green);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.extole-link:hover {
+    text-decoration: underline;
+}
+
+/* Sync action row */
+.sync-action-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.last-sync-text {
+    font-size: 12px;
+    color: #706e6b;
+}
+
+/* Sync log table */
+.sync-log-table {
+    overflow-x: auto;
+}
+
+.status-success {
+    color: var(--extole-green);
+    font-weight: 600;
+}
+
+.status-failed {
+    color: #c23934;
+    font-weight: 600;
+}
+
+.status-skipped {
+    color: #706e6b;
+}
+
+.error-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: #c23934;
+}
+
+/* Debug */
+.debug-action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.debug-result {
+    font-size: 13px;
+    color: #3e3e3c;
+    background: #f3f3f3;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin: 0;
+}
+
+/* Empty state */
+.empty-text {
+    font-size: 13px;
+    color: #706e6b;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Modal */
+.slds-modal__container {
+    max-width: 700px;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.step-indicator-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    background: #dddbda;
+    color: #706e6b;
+}
+
+.step-active {
+    background: var(--extole-green);
+    color: #ffffff;
+}
+
+.step-done {
+    background: #027a48;
+    color: #ffffff;
+}
+
+.step-separator {
+    color: #706e6b;
+    font-size: 16px;
+}
+
+.modal-loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    height: 100px;
+}
+
+.filter-row {
+    margin-bottom: 12px;
+}
+
+.report-type-table {
+    overflow-x: auto;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.report-row {
+    cursor: pointer;
+}
+
+.report-row:hover {
+    background: #f3f3f3;
+}
+
+.report-row-selected {
+    background: #ecfdf5 !important;
+    cursor: pointer;
+}
+
+.fast-badge {
+    display: inline-block;
+    background: #fff3e0;
+    color: #b54708;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.description-cell {
+    font-size: 12px;
+    color: #706e6b;
+    max-width: 300px;
+}
+
+.config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-error {
+    color: #c23934;
+    font-size: 13px;
+    background: #fde8e8;
+    padding: 8px 12px;
+    border-radius: 4px;
+}

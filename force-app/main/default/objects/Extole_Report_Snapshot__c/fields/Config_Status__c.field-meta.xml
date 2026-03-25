@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Config_Status__c</fullName>
+    <label>Config Status</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>ACTIVE</fullName>
+                <default>true</default>
+                <label>ACTIVE</label>
+            </value>
+            <value>
+                <fullName>ORPHANED</fullName>
+                <default>false</default>
+                <label>ORPHANED</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
