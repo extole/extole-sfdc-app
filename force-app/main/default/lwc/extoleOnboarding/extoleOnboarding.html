@@ -106,20 +106,13 @@
                                     <tr>
                                         <th scope="col"><div class="slds-truncate">Report Name</div></th>
                                         <th scope="col"><div class="slds-truncate">Description</div></th>
-                                        <th scope="col"><div class="slds-truncate">Type</div></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template for:each={filteredReportTypes} for:item="rt">
-                                        <tr key={rt.report_type_id} class={rt.rowClass} onclick={handleSelectReport} data-id={rt.report_type_id}>
-                                            <td>
-                                                {rt.display_name}
-                                                <template lwc:if={rt.isSql}>
-                                                    <span class="fast-badge">Fast</span>
-                                                </template>
-                                            </td>
+                                        <tr key={rt.runnerId} class={rt.rowClass} onclick={handleSelectReport} data-id={rt.runnerId}>
+                                            <td>{rt.displayName}</td>
                                             <td class="desc-cell">{rt.description}</td>
-                                            <td>{rt.type}</td>
                                         </tr>
                                     </template>
                                 </tbody>

@@ -1,12 +1,9 @@
 <template>
     <div class="app-shell">
-        <!-- App header with Extole logo -->
+        <!-- App header with Extole logo placeholder -->
         <div class="app-header">
-            <div class="app-logo" aria-label="Extole">
-                <svg width="100" height="28" viewBox="0 0 100 28" aria-hidden="true">
-                    <rect width="100" height="28" rx="4" fill="#1D9E75"/>
-                    <text x="10" y="20" font-family="sans-serif" font-size="14" font-weight="700" fill="#ffffff">extole</text>
-                </svg>
+            <div class="app-logo">
+                <img src={extoleLogoUrl} alt="Extole" height="28" />
             </div>
         </div>
 
@@ -24,24 +21,24 @@
 
         <!-- Main app with tabs -->
         <template lwc:else>
-            <lightning-tabset variant="standard" active-tab-value={activeTab} onactive={handleTabChange}>
-                <!-- Program Overview tab -->
-                <lightning-tab label={labelTabOverview} value="overview">
-                    <c-extole-program-overview onnavigatetosettings={handleNavigateToSettings}></c-extole-program-overview>
-                </lightning-tab>
-
-                <!-- Lead Attribution tab (conditional) -->
-                <template lwc:if={showLeadAttribution}>
-                    <lightning-tab label={labelTabLeadAttribution} value="leads">
-                        <c-extole-lead-attribution></c-extole-lead-attribution>
+            <template for:each={tabsetItems} for:item="tabsetItem">
+                <lightning-tabset key={tabsetItem.key} variant="standard" active-tab-value={activeTab} onactive={handleTabChange}>
+                    <!-- KPI Dashboard tab -->
+                    <lightning-tab lwc:if={showKPIDashboard} label={labelTabKpiDashboard} value="overview">
+                        <c-extole-kpi-dashboard onnavigatetosettings={handleNavigateToSettings}></c-extole-kpi-dashboard>
                     </lightning-tab>
-                </template>
 
-                <!-- Settings tab -->
-                <lightning-tab label={labelTabSettings} value="settings">
-                    <c-extole-settings></c-extole-settings>
-                </lightning-tab>
-            </lightning-tabset>
+                    <!-- List View tab -->
+                    <lightning-tab lwc:if={showListView} label={labelTabListView} value="leads">
+                        <c-extole-list-view settings-timestamp={settingsTimestamp}></c-extole-list-view>
+                    </lightning-tab>
+
+                    <!-- Settings tab -->
+                    <lightning-tab label={labelTabSettings} value="settings">
+                        <c-extole-settings onsettingssaved={handleSettingsSaved}></c-extole-settings>
+                    </lightning-tab>
+                </lightning-tabset>
+            </template>
         </template>
     </div>
 </template>

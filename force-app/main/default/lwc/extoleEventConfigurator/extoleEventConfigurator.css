@@ -1,0 +1,173 @@
+:host {
+    --extole-green: #1D9E75;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
+    padding: 16px;
+}
+
+/* Page header */
+.ec-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ec-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ec-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ec-title {
+    font-size: 16px !important;
+    font-weight: 700;
+    color: #080707;
+    margin: 0 !important;
+    line-height: 1.25;
+}
+
+.ec-subtitle {
+    font-size: 13px;
+    color: #706e6b;
+    margin: 0;
+}
+
+.ec-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Loading */
+.ec-loading {
+    display: flex;
+    justify-content: center;
+    padding: 60px;
+    position: relative;
+    min-height: 120px;
+}
+
+/* Table */
+.ec-table-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.ec-sortable-th {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.ec-sortable-th:hover {
+    background: #f3f3f3;
+}
+
+.ec-col-status { width: 120px; }
+.ec-col-date   { width: 165px; }
+.ec-col-actions { width: 50px; text-align: center; }
+
+
+/* Empty state */
+.ec-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+}
+
+.ec-empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #3e3e3c;
+    margin: 0;
+}
+
+.ec-empty-body {
+    font-size: 14px;
+    color: #706e6b;
+    margin: 0;
+    max-width: 480px;
+}
+
+/* Status badges */
+.ec-status-active,
+.ec-status-inactive,
+.ec-status-draft,
+.ec-status-failed {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.ec-status-active   { background: #ecfdf5; color: #027a48; border: 1px solid #a6f4c5; }
+.ec-status-inactive { background: #f3f3f3; color: #706e6b; border: 1px solid #dddbda; }
+.ec-status-draft    { background: #fff3e0; color: #b45309; border: 1px solid #f9c23c; }
+.ec-status-failed   { background: #fde8e8; color: #c23934; border: 1px solid #fca5a5; }
+
+/* Delete modal */
+.delete-modal-container {
+    max-width: 540px;
+}
+
+.delete-modal-container .slds-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.delete-checking-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    position: relative;
+    min-height: 40px;
+}
+
+.delete-checking-text {
+    font-size: 14px;
+    color: #706e6b;
+    font-style: italic;
+}
+
+.delete-body {
+    font-size: 14px;
+    color: #3e3e3c;
+    line-height: 1.5;
+    margin: 0 0 8px;
+}
+
+.delete-campaign-name {
+    font-size: 13px;
+    color: #3e3e3c;
+    background: #fff3e0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #b45309;
+    margin: 0;
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>List_View_Object__c</fullName>
+    <label>Lead Attribution Object</label>
+    <type>Text</type>
+    <length>50</length>
+    <defaultValue>'Contact'</defaultValue>
+</CustomField>

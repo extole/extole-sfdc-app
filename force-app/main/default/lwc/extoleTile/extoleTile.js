@@ -3,6 +3,7 @@ import LABEL_VIEW_IN_EXTOLE from '@salesforce/label/c.Extole_Tile_ViewInExtole';
 import LABEL_ORPHANED from '@salesforce/label/c.Extole_Tile_Orphaned';
 import LABEL_SYNC_PENDING from '@salesforce/label/c.Extole_Tile_SyncPending';
 import LABEL_SYNC_FAILED from '@salesforce/label/c.Extole_Tile_SyncFailed';
+import LABEL_SOURCE_UNAVAILABLE from '@salesforce/label/c.Extole_Tile_SourceUnavailable';
 import LABEL_AS_OF from '@salesforce/label/c.Extole_AsOf';
 
 const CHART_WIDTH = 200;
@@ -15,16 +16,22 @@ export default class ExtoleTile extends LightningElement {
     labelOrphaned = LABEL_ORPHANED;
     labelSyncPending = LABEL_SYNC_PENDING;
     labelSyncFailed = LABEL_SYNC_FAILED;
+    labelSourceUnavailable = LABEL_SOURCE_UNAVAILABLE;
     labelAsOf = LABEL_AS_OF;
 
     get tileClass() {
         const base = 'extole-tile';
         if (this.isOrphaned) return `${base} tile-orphaned`;
+        if (this.isSourceUnavailable) return `${base} tile-unavailable`;
         return base;
     }
 
     get isOrphaned() {
         return this.snapshot && this.snapshot.Config_Status__c === 'ORPHANED';
+    }
+
+    get isSourceUnavailable() {
+        return this.snapshot && this.snapshot.Config_Status__c === 'SOURCE_UNAVAILABLE';
     }
 
     get isPending() {
@@ -116,18 +123,23 @@ export default class ExtoleTile extends LightningElement {
     get sparklineFillPath() {
         const line = this.sparklinePath;
         if (!line) return '';
-        return `${line} L ${CHART_WIDTH},${CHART_HEIGHT} L 0,${CHART_HEIGHT} Z`;
+        const bottom = CHART_HEIGHT;
+        return `${line} L ${CHART_WIDTH},${bottom} L 0,${bottom} Z`;
     }
 
     get barRects() {
         const data = this.timeSeriesData;
         if (!data || data.length === 0) return [];
-        const vals = data.map(d => parseFloat(d.value) || 0);
-        const maxVal = Math.max(...vals) || 1;
+        const vals = data.map(d => parseFloat(d.value)).filter(v => !isNaN(v));
+        if (vals.length === 0) return [];
+        const maxVal = Math.max(...vals);
+        const minVal = Math.min(...vals);
+        const range = (maxVal - minVal) || 1;
+        const MIN_BAR = 3;
         const barWidth = Math.floor(CHART_WIDTH / vals.length) - 2;
         const lastIdx = vals.length - 1;
         return vals.map((v, i) => {
-            const barH = Math.round((v / maxVal) * CHART_HEIGHT);
+            const barH = MIN_BAR + Math.round(((v - minVal) / range) * (CHART_HEIGHT - MIN_BAR));
             return {
                 key: `bar-${i}`,
                 x: i * (barWidth + 2),
@@ -147,7 +159,12 @@ export default class ExtoleTile extends LightningElement {
 
     get asOfText() {
         if (!this.snapshot || !this.snapshot.As_Of_Date__c) return '';
-        return `${LABEL_AS_OF} ${this.snapshot.As_Of_Date__c}`;
+        const d = new Date(this.snapshot.As_Of_Date__c);
+        const formatted = d.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: 'numeric', minute: '2-digit'
+        });
+        return `${LABEL_AS_OF} ${formatted}`;
     }
 
     get asOfClass() {
@@ -168,16 +185,22 @@ export default class ExtoleTile extends LightningElement {
         return this.snapshot && !!this.snapshot.View_URL__c;
     }
 
+    get hasScheduleUrl() {
+        return this.snapshot && !!this.snapshot.Schedule_URL__c;
+    }
+
     computeSparklinePath(dataPoints, width, height) {
         if (!dataPoints || dataPoints.length < 2) return '';
         const vals = dataPoints.map(d => parseFloat(d.value) || 0);
         const min = Math.min(...vals);
         const max = Math.max(...vals);
         const range = max - min || 1;
+        const pad = height * 0.1; // 10% vertical padding keeps line away from SVG edges
+        const innerHeight = height - pad * 2;
         const pts = vals.map((v, i) => {
-            const x = Math.round((i / (vals.length - 1)) * width);
-            const y = Math.round(height - ((v - min) / range) * height);
-            return `${x},${y}`;
+            const x = (i / (vals.length - 1)) * width;
+            const y = pad + innerHeight - ((v - min) / range) * innerHeight;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
         });
         return 'M ' + pts.join(' L ');
     }

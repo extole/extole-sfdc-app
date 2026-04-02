@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status__c</fullName>
+    <label>Status</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>ACTIVE</fullName>
+                <default>false</default>
+                <label>ACTIVE</label>
+            </value>
+            <value>
+                <fullName>INACTIVE</fullName>
+                <default>false</default>
+                <label>INACTIVE</label>
+            </value>
+            <value>
+                <fullName>DRAFT</fullName>
+                <default>true</default>
+                <label>DRAFT</label>
+            </value>
+            <value>
+                <fullName>DEPLOY_FAILED</fullName>
+                <default>false</default>
+                <label>DEPLOY_FAILED</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,94 @@
+<template>
+    <div class="list-view-container">
+
+        <!-- Loading -->
+        <template lwc:if={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Field validation error -->
+        <template lwc:elseif={errorMessage}>
+            <div class="error-state">
+                <lightning-icon icon-name="utility:error" size="medium" variant="error" alternative-text="Error"></lightning-icon>
+                <p class="error-text">{errorMessage}</p>
+            </div>
+        </template>
+
+        <!-- Configured -->
+        <template lwc:elseif={configured}>
+
+            <!-- Header -->
+            <div class="list-view-header">
+                <div class="list-view-header-left">
+                    <h1 class="list-view-title">{labelTitle}</h1>
+                    <div class="list-view-meta">
+                        <template lwc:if={trackingSinceText}>
+                            <span class="tracking-since">{labelTrackingSince} {trackingSinceText}</span>
+                        </template>
+                        <template lwc:if={filterDescription}>
+                            <span class="filter-desc">{filterDescription}</span>
+                        </template>
+                    </div>
+                </div>
+                <lightning-button
+                    label={labelOpenInSf}
+                    icon-name="utility:new_window"
+                    icon-position="right"
+                    variant="neutral"
+                    onclick={handleOpenInSalesforce}>
+                </lightning-button>
+            </div>
+
+            <!-- Count tiles -->
+            <div class="count-tiles">
+                <div class="count-tile">
+                    <span class="count-tile-number">{totalCount}</span>
+                    <span class="count-tile-label">Total</span>
+                </div>
+                <div class="count-tile">
+                    <span class="count-tile-number">{thisMonthCount}</span>
+                    <span class="count-tile-label">This Month</span>
+                </div>
+                <div class="count-tile">
+                    <span class="count-tile-number">{thisQuarterCount}</span>
+                    <span class="count-tile-label">This Quarter</span>
+                </div>
+            </div>
+
+            <!-- Record datatable -->
+            <template lwc:if={hasRecords}>
+                <div class="table-container">
+                    <lightning-datatable
+                        key-field="Id"
+                        data={records}
+                        columns={columns}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </div>
+            </template>
+
+            <!-- Empty state -->
+            <template lwc:else>
+                <div class="empty-state">
+                    <lightning-icon icon-name="utility:people" size="large" alternative-text="No records"></lightning-icon>
+                    <p class="empty-text">{labelNoRecords}</p>
+                    <template lwc:if={filterDescription}>
+                        <p class="empty-subtext">Filter: {filterDescription}</p>
+                    </template>
+                </div>
+            </template>
+
+        </template>
+
+        <!-- Not configured -->
+        <template lwc:else>
+            <div class="not-configured-state">
+                <lightning-icon icon-name="utility:settings" size="large" alternative-text="Not configured"></lightning-icon>
+                <p class="empty-text">{labelNotConfigured}</p>
+            </div>
+        </template>
+
+    </div>
+</template>

@@ -1,0 +1,144 @@
+:host {
+    display: block;
+}
+
+.sc-label-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.sc-combobox-wrapper {
+    position: relative;
+}
+
+/* Dropdown: position:fixed (JS-computed via sentinel), escapes any overflow:hidden ancestor */
+.sc-dropdown {
+    position: fixed;
+    z-index: 9999;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    box-sizing: border-box;
+    font-size: 0.8125rem;   /* 13px base — cascades to all children */
+}
+
+/* Flipped variant: opens upward — shadow flips direction */
+.sc-dropdown-up {
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.18);
+}
+
+/* ── List reset — !important beats synthetic-shadow SLDS leakage ── */
+.slds-listbox_vertical {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.slds-listbox__item {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ── Option row — !important overrides any leaking global SLDS padding ── */
+.slds-listbox__option {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 2.25rem !important;   /* 36px — matches lightning-combobox row height */
+    max-height: 2.25rem !important;
+    padding: 0 1rem !important;       /* 16px horizontal — matches SLDS indent */
+    font-size: 0.8125rem !important;  /* 13px — matches lightning-combobox items */
+    cursor: pointer;
+    box-sizing: border-box !important;
+    width: 100%;
+}
+
+.slds-listbox__option:hover {
+    background: #f3f2f2;
+}
+
+/* Selected item: blue outline + light blue bg + checkmark prefix */
+.slds-is-selected {
+    outline: 1px solid #0176d3 !important;
+    background: #f0f7ff !important;
+}
+
+.slds-is-selected .slds-truncate::before {
+    content: '\2713\00a0';   /* ✓ + non-breaking space */
+    color: #0176d3;
+    font-weight: bold;
+}
+
+/* slds-media__body fills available width; min-width:0 allows text-overflow to work */
+.slds-media__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Keyboard-focused option: blue left border to match lightning-combobox */
+.sc-option-focused {
+    background: #f3f2f2;
+    border-left: 4px solid #0176d3;
+    padding-left: calc(1rem - 4px);
+}
+
+.slds-combobox__form-element {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.slds-combobox__input {
+    flex: 1;
+    min-width: 0;
+}
+
+.sc-chevron {
+    pointer-events: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Typography — match lightning-combobox exactly ── */
+.slds-form-element__label {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #3e3e3c;
+    margin-bottom: 0; /* sc-label-row margin-bottom controls the gap instead */
+}
+
+.slds-input {
+    font-size: 0.8125rem;      /* 13px — matches lightning-combobox input */
+    color: #080707;
+}
+
+.slds-truncate {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8125rem !important;   /* 13px — matches lightning-combobox items */
+    color: #080707;
+}
+
+.sc-loading-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    position: relative;
+}
+
+.sc-no-results {
+    color: #706e6b;
+    font-style: italic;
+    padding: 8px 12px;
+}

@@ -2,13 +2,11 @@
 <CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Extole referral program analytics and management</description>
     <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
-    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavPersonalizationDisabled>true</isNavPersonalizationDisabled>
     <isServiceCloudConsole>false</isServiceCloudConsole>
     <label>Extole</label>
     <navType>Standard</navType>
-    <tabs>Extole_Program_Overview</tabs>
-    <tabs>Extole_Lead_Attribution</tabs>
-    <tabs>Extole_Settings</tabs>
+    <tabs>Extole_App</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <formFactors>Small</formFactors>

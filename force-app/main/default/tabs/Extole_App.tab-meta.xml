@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Extole App</description>
+    <label>Home</label>
+    <lwcComponent>extoleApp</lwcComponent>
+    <motif>Custom73: Highway Sign</motif>
+</CustomTab>

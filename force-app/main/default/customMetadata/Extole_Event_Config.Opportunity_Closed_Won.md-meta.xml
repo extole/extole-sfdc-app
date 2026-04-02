@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Opportunity Closed Won</label>
+    <protected>false</protected>
+    <values>
+        <field>Config_Key__c</field>
+        <value xsi:type="xsd:string">Opportunity_Closed_Won</value>
+    </values>
+    <values>
+        <field>Config_Version__c</field>
+        <value xsi:type="xsd:double">1</value>
+    </values>
+    <values>
+        <field>Event_Name__c</field>
+        <value xsi:type="xsd:string">opportunity_closedwon</value>
+    </values>
+    <values>
+        <field>Trigger_Object__c</field>
+        <value xsi:type="xsd:string">Opportunity</value>
+    </values>
+    <values>
+        <field>Trigger_Type__c</field>
+        <value xsi:type="xsd:string">FIELD_EQUALS</value>
+    </values>
+    <values>
+        <field>Trigger_Field__c</field>
+        <value xsi:type="xsd:string">StageName</value>
+    </values>
+    <values>
+        <field>Trigger_Value__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Trigger_From_Value__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Trigger_To_Value__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Field_Mappings_JSON__c</field>
+        <value xsi:type="xsd:string">[{"extole_param":"email","sfdc_field":null,"static_value":null},{"extole_param":"partner_user_id","sfdc_field":"Id","static_value":null}]</value>
+    </values>
+    <values>
+        <field>Apex_Class_Name__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Flow_Name__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Status__c</field>
+        <value xsi:type="xsd:string">DRAFT</value>
+    </values>
+    <values>
+        <field>Active__c</field>
+        <value xsi:type="xsd:boolean">false</value>
+    </values>
+    <values>
+        <field>Deploy_Error__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Deploy_Error_Raw__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Deployed__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Deployed_By_User_Id__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Tested_Record_Id__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Attempted_At__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Succeeded_At__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Failed_At__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Record_Id__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_HTTP_Status__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Last_Response_Summary__c</field>
+        <value xsi:nil="true"/>
+    </values>
+</CustomMetadata>

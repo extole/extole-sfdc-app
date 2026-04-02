@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Comparison_Period__c</fullName>
+    <label>Comparison Period</label>
+    <description>How far back to look for the prior-period value that drives trend arrows on dashboard tiles.</description>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>7 days</fullName>
+                <default>false</default>
+                <label>7 days</label>
+            </value>
+            <value>
+                <fullName>14 days</fullName>
+                <default>false</default>
+                <label>14 days</label>
+            </value>
+            <value>
+                <fullName>30 days</fullName>
+                <default>true</default>
+                <label>30 days</label>
+            </value>
+            <value>
+                <fullName>90 days</fullName>
+                <default>false</default>
+                <label>90 days</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

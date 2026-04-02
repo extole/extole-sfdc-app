@@ -62,19 +62,36 @@ export default class ExtoleOnboarding extends LightningElement {
         return this.connectionResult.success ? 'connection-result result-success' : 'connection-result result-error';
     }
 
+    isUserGeneratedRunner(runner) {
+        // User-created scheduled runners have type=SCHEDULED.
+        // Platform/system runners have type=REFRESHING.
+        if (runner.type === 'SCHEDULED') return true;
+        if (runner.type === 'REFRESHING') return false;
+
+        // Fallback for runners with no type field: exclude if tags are all internal:
+        if (runner.tags && Array.isArray(runner.tags) && runner.tags.length > 0) {
+            const lowerTags = runner.tags.map(t => String(t).toLowerCase());
+            if (lowerTags.every(t => t.startsWith('internal:'))) return false;
+        }
+
+        // Last resort: non-empty created_by suggests user ownership
+        return !!runner.created_by;
+    }
+
     get filteredReportTypes() {
         return this.rawReportTypes
-            .filter(rt => {
-                const hasJson = rt.formats && rt.formats.includes('JSON');
-                return hasJson && ['CONFIGURED', 'SPARK', 'SQL'].includes(rt.type);
-            })
-            .map(rt => ({
-                ...rt,
-                isSql: rt.type === 'SQL',
-                rowClass: rt.report_type_id === this.selectedReportTypeId
-                    ? 'report-row report-row-selected'
-                    : 'report-row'
-            }));
+            .filter(rt => this.isUserGeneratedRunner(rt))
+            .map(rt => {
+                const runnerId = rt.report_runner_id || rt.id;
+                return {
+                    ...rt,
+                    runnerId,
+                    displayName: rt.name || rt.display_name || runnerId,
+                    rowClass: runnerId === this.selectedReportTypeId
+                        ? 'report-row report-row-selected'
+                        : 'report-row'
+                };
+            });
     }
 
     async handleTestConnection() {
@@ -116,26 +133,27 @@ export default class ExtoleOnboarding extends LightningElement {
     handleSelectReport(event) {
         const id = event.currentTarget.dataset.id;
         this.selectedReportTypeId = id;
-        this.selectedReportType = this.rawReportTypes.find(rt => rt.report_type_id === id);
+        this.selectedReportType = this.rawReportTypes.find(
+            rt => (rt.report_runner_id || rt.id) === id
+        );
     }
 
     async handleStep2Next() {
         if (!this.selectedReportType) return;
-        // Save a default config for the selected report type
+        const runner = this.selectedReportType;
+        const runnerName = runner.name || runner.display_name || this.selectedReportTypeId;
         try {
             const config = {
                 Report_Type__c: this.selectedReportTypeId,
-                Report_Name__c: this.selectedReportType.display_name || this.selectedReportType.name,
-                Display_Label__c: this.selectedReportType.display_name || '',
-                Executor_Type__c: this.selectedReportType.type || '',
+                Report_Name__c: runnerName,
+                Display_Label__c: runnerName,
+                Executor_Type__c: 'RUNNER',
                 Aggregation__c: 'FIRST_ROW',
                 Chart_Type__c: 'Sparkline',
-                Date_Range__c: 'Rolling 30',
+                Date_Range__c: 'Latest',
                 Active__c: true,
                 Display_Order__c: 1,
-                Value_Column__c: this.selectedReportType.preview_columns
-                    ? this.selectedReportType.preview_columns[0] || ''
-                    : ''
+                Value_Column__c: ''
             };
             await saveConfig({ config });
         } catch (error) {

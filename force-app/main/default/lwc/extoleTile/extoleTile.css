@@ -1,6 +1,8 @@
 :host {
     --extole-green: #1D9E75;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .extole-tile {
@@ -11,12 +13,16 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    height: 100%;
+    flex: 1;
     box-sizing: border-box;
 }
 
 .tile-orphaned {
     opacity: 0.5;
+}
+
+.tile-unavailable {
+    opacity: 0.7;
 }
 
 .tile-header {
@@ -113,6 +119,11 @@
 
 .footer-failed {
     color: #c23934;
+    font-size: 11px;
+}
+
+.footer-unavailable {
+    color: #b54708;
     font-size: 11px;
 }
 

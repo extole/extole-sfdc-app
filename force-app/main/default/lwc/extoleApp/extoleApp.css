@@ -28,3 +28,19 @@
     height: 300px;
     position: relative;
 }
+
+.feature-disabled {
+    padding: 24px;
+    color: #706e6b;
+    font-size: 14px;
+}
+
+.feature-disabled a {
+    color: var(--extole-green);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.feature-disabled a:hover {
+    text-decoration: underline;
+}

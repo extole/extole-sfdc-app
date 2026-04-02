@@ -50,6 +50,10 @@
             <template lwc:if={isOrphaned}>
                 <span class="footer-orphaned">{labelOrphaned}</span>
             </template>
+            <template lwc:elseif={isSourceUnavailable}>
+                <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" alternative-text="Unavailable"></lightning-icon>
+                <span class="footer-unavailable">{labelSourceUnavailable}</span>
+            </template>
             <template lwc:else>
                 <template lwc:if={hasSyncFailed}>
                     <lightning-icon icon-name="utility:error" size="x-small" variant="error" alternative-text="Error"></lightning-icon>
@@ -63,8 +67,8 @@
                 </template>
             </template>
 
-            <template lwc:if={hasViewUrl}>
-                <a href={snapshot.View_URL__c} target="_blank" rel="noopener noreferrer" class="footer-link">{labelViewInExtole}</a>
+            <template lwc:if={hasScheduleUrl}>
+                <a href={snapshot.Schedule_URL__c} target="_blank" rel="noopener noreferrer" class="footer-link">{labelViewInExtole}</a>
             </template>
         </div>
     </div>

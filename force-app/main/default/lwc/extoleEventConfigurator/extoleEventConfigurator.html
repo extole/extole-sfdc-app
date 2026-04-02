@@ -1,0 +1,169 @@
+<template>
+    <div class="ec-container">
+        <!-- Page header -->
+        <div class="ec-page-header">
+            <div class="ec-header-text">
+                <div class="ec-title" style="font-size:16px;font-weight:700;color:#080707;margin:0;line-height:1.25;display:flex;align-items:center;gap:6px">{labelTitle}<lightning-helptext content={tooltipSectionEventConfig}></lightning-helptext></div>
+                <p class="ec-subtitle">{labelSubtitle}</p>
+            </div>
+            <div class="ec-header-actions">
+                <lightning-button
+                    label={labelAddEvent}
+                    variant="brand"
+                    icon-name="utility:add"
+                    onclick={handleAddEvent}
+                ></lightning-button>
+            </div>
+        </div>
+
+        <!-- Loading state -->
+        <template lwc:if={isLoading}>
+            <div class="ec-loading">
+                <lightning-spinner size="medium" alternative-text="Loading event configurations..."></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Configs table -->
+        <template lwc:elseif={hasConfigs}>
+            <div class="ec-table-wrapper">
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th data-field="Event_Name__c" onclick={handleSortColumn} class="ec-sortable-th">Event Name{sortIconEventName}</th>
+                            <th data-field="triggerLabel" onclick={handleSortColumn} class="ec-sortable-th">Trigger{sortIconTrigger}</th>
+                            <th data-field="statusLabel" onclick={handleSortColumn} class="ec-sortable-th ec-col-status">Status{sortIconStatus}</th>
+                            <th data-field="CreatedDate" onclick={handleSortColumn} class="ec-sortable-th ec-col-date">Created{sortIconCreated}</th>
+                            <th data-field="Last_Deployed__c" onclick={handleSortColumn} class="ec-sortable-th ec-col-date">Last Modified{sortIconLastDeployed}</th>
+                            <th data-field="Last_Attempted_At__c" onclick={handleSortColumn} class="ec-sortable-th ec-col-date">Last Fire{sortIconLastFire}</th>
+                            <th class="ec-col-actions"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={configs} for:item="config">
+                            <tr key={config.Config_Key__c}>
+                                <td>{config.Event_Name__c}</td>
+                                <td>{config.triggerLabel}</td>
+                                <td><span class={config.statusCellClass}>{config.statusLabel}</span></td>
+                                <td>{config.formattedCreatedDate}</td>
+                                <td>{config.formattedLastDeployed}</td>
+                                <td>{config.formattedLastFire}</td>
+                                <td class="ec-col-actions">
+                                    <lightning-button-menu
+                                        icon-name="utility:down"
+                                        variant="bare"
+                                        menu-alignment="right"
+                                        data-key={config.Config_Key__c}
+                                        onselect={handleRowMenuSelect}
+                                    >
+                                        <lightning-menu-item value="edit" label="Edit"></lightning-menu-item>
+                                        <lightning-menu-item value="delete" label="Delete"></lightning-menu-item>
+                                    </lightning-button-menu>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+
+        <!-- Empty state -->
+        <template lwc:else>
+            <div class="ec-empty-state">
+                <lightning-illustration
+                    illustration-name="misc:no-events"
+                    size="small"
+                ></lightning-illustration>
+                <h2 class="ec-empty-title">{labelEmptyTitle}</h2>
+                <p class="ec-empty-body">{labelEmptyBody}</p>
+                <lightning-button
+                    label={labelEmptyAction}
+                    variant="brand"
+                    onclick={handleEmptyAction}
+                ></lightning-button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Add / Edit Modal -->
+    <template lwc:if={isModalOpen}>
+        <c-extole-event-modal
+            config={editingConfig}
+            onclose={handleModalClose}
+            ondeployed={handleDeployed}
+        ></c-extole-event-modal>
+    </template>
+
+    <!-- Delete Confirmation Modal -->
+    <template lwc:if={isDeleteModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true" aria-labelledby="delete-modal-heading">
+            <div class="slds-modal__container delete-modal-container">
+                <header class="slds-modal__header slds-theme_error">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={handleCloseDeleteModal}>
+                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                    </button>
+                    <h2 id="delete-modal-heading" class="slds-modal__title">
+                        <lightning-icon icon-name="utility:warning" size="small" alternative-text="Warning" class="slds-m-right_x-small"></lightning-icon>
+                        {labelDeleteTitle}
+                    </h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium">
+                    <!-- Checking state -->
+                    <template lwc:if={isDeleteChecking}>
+                        <div class="delete-checking-row">
+                            <lightning-spinner size="small" alternative-text="Checking..."></lightning-spinner>
+                            <span class="delete-checking-text">{labelDeleteChecking}</span>
+                        </div>
+                    </template>
+
+                    <!-- Result message -->
+                    <template lwc:else>
+                        <p class="delete-body">{deleteBodyMessage}</p>
+                        <template lwc:if={showCampaignName}>
+                            <p class="delete-campaign-name">
+                                <strong>{labelDeleteCampaign}:</strong> {deleteCheckCampaignName}
+                            </p>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label={labelDeleteCancel}
+                        variant="neutral"
+                        onclick={handleCloseDeleteModal}
+                    ></lightning-button>
+
+                    <!-- NOT_FOUND: Delete + Cancel -->
+                    <template lwc:if={showDeleteButton}>
+                        <lightning-button
+                            label={labelDeleteConfirm}
+                            variant="destructive"
+                            onclick={handleConfirmDelete}
+                            disabled={isDeleteButtonDisabled}
+                        ></lightning-button>
+                    </template>
+
+                    <!-- FOUND / UNKNOWN: Deactivate (primary) + Delete anyway (de-emphasized) -->
+                    <template lwc:if={showDeactivateButton}>
+                        <template lwc:if={showDeleteAnywayButton}>
+                            <lightning-button
+                                label={labelDeleteAnyway}
+                                variant="destructive-text"
+                                onclick={handleDeleteAnyway}
+                                disabled={isDeleteButtonDisabled}
+                            ></lightning-button>
+                        </template>
+                        <lightning-button
+                            label={labelDeactivate}
+                            variant="brand"
+                            onclick={handleDeactivate}
+                            disabled={isDeleteButtonDisabled}
+                        ></lightning-button>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

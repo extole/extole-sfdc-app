@@ -1,124 +1,120 @@
 <template>
     <div class="settings-container">
-        <h1 class="settings-title">{labelTitle}</h1>
-
-        <!-- SECTION 1: Connection -->
-        <lightning-card title={labelConnectionSection}>
-            <div class="section-body">
-                <div class="connection-status-row">
-                    <span class={connectionBadgeClass}>
-                        <lightning-icon icon-name={connectionIcon} size="x-small" alternative-text="Connection status"></lightning-icon>
-                        {connectionStatusLabel}
-                    </span>
-                    <lightning-button
-                        label={labelTestConnection}
-                        variant="neutral"
-                        onclick={handleTestConnection}
-                        disabled={isTesting}
-                    ></lightning-button>
-                    <template lwc:if={isTesting}>
-                        <lightning-spinner size="small" alternative-text="Testing..."></lightning-spinner>
-                    </template>
-                </div>
-
-                <template lwc:if={connectionResult}>
-                    <div class={connectionResultClass}>
-                        <template lwc:if={connectionResult.success}>
-                            {connectionResult.reportCount} {labelReportCount}
-                        </template>
-                        <template lwc:else>
-                            {connectionResult.errorMessage}
-                        </template>
-                    </div>
-                </template>
-
-                <p class="api-token-note">{labelApiTokenNote}</p>
-                <div class="token-links">
-                    <a href="https://my.extole.com/security-center" target="_blank" rel="noopener noreferrer" class="extole-link">{labelGenerateToken}</a>
-                    <a href="https://dev.extole.com/docs/generate-long-lived-access-tokens" target="_blank" rel="noopener noreferrer" class="extole-link">{labelLongLivedToken}</a>
-                </div>
-            </div>
-        </lightning-card>
+        <!-- SECTION 1: Referral Events -->
+        <c-extole-event-configurator></c-extole-event-configurator>
 
         <!-- SECTION 2: Report Configuration -->
-        <lightning-card title={labelReportConfigSection}>
-            <div class="section-body">
-                <div class="section-action-row">
-                    <lightning-button
-                        label={labelAddReport}
-                        variant="brand"
-                        icon-name="utility:add"
-                        onclick={handleAddReport}
-                    ></lightning-button>
-                </div>
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-title">{labelReportConfigSection}<lightning-helptext content={tooltipSectionReportConfig}></lightning-helptext></div>
+                <lightning-button
+                    label={labelAddReport}
+                    variant="brand"
+                    icon-name="utility:add"
+                    onclick={handleAddReport}
+                ></lightning-button>
+            </div>
+            <lightning-input
+                    type="checkbox"
+                    label={labelShowKPIDashboard}
+                    checked={settings.Show_KPI_Dashboard__c}
+                    data-field="Show_KPI_Dashboard__c"
+                    field-level-help="Show or hide the KPI Dashboard tab in the app navigation. When hidden, KPI tiles are still synced in the background — they'll appear immediately when re-enabled."
+                    onchange={handleSettingsChange}
+                ></lightning-input>
 
                 <template lwc:if={isLoadingConfigs}>
                     <lightning-spinner size="small" alternative-text="Loading configs..."></lightning-spinner>
                 </template>
                 <template lwc:else>
                     <template lwc:if={hasConfigs}>
-                        <lightning-datatable
-                            key-field="Id"
-                            data={configs}
-                            columns={configColumns}
-                            hide-checkbox-column
-                            onrowaction={handleConfigRowAction}
-                        ></lightning-datatable>
+                        <div class="kpi-table-wrapper">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th data-field="Display_Order__c" onclick={handleConfigSortColumn} class="kpi-sortable-th kpi-col-order">#{kpiSortIconOrder}</th>
+                                        <th data-field="Display_Label__c" onclick={handleConfigSortColumn} class="kpi-sortable-th">Display Label{kpiSortIconLabel}</th>
+                                        <th data-field="Report_Name__c" onclick={handleConfigSortColumn} class="kpi-sortable-th">Report{kpiSortIconReport}</th>
+                                        <th data-field="Aggregation__c" onclick={handleConfigSortColumn} class="kpi-sortable-th kpi-col-agg">Aggregation{kpiSortIconAgg}</th>
+                                        <th data-field="Chart_Type__c" onclick={handleConfigSortColumn} class="kpi-sortable-th kpi-col-agg">Chart Type{kpiSortIconChart}</th>
+                                        <th data-field="statusLabel" onclick={handleConfigSortColumn} class="kpi-sortable-th kpi-col-status">Status{kpiSortIconStatus}</th>
+                                        <th data-field="CreatedDate" onclick={handleConfigSortColumn} class="kpi-sortable-th kpi-col-date">Created{kpiSortIconCreated}</th>
+                                        <th data-field="LastModifiedDate" onclick={handleConfigSortColumn} class="kpi-sortable-th kpi-col-date">Last Modified{kpiSortIconModified}</th>
+                                        <th class="kpi-col-actions"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={configs} for:item="cfg">
+                                        <tr key={cfg.Id}>
+                                            <td>{cfg.Display_Order__c}</td>
+                                            <td>{cfg.Display_Label__c}</td>
+                                            <td>{cfg.Report_Name__c}</td>
+                                            <td>{cfg.Aggregation__c}</td>
+                                            <td>{cfg.Chart_Type__c}</td>
+                                            <td><span class={cfg.statusCellClass}>{cfg.statusLabel}</span></td>
+                                            <td>{cfg.formattedCreatedDate}</td>
+                                            <td>{cfg.formattedLastModifiedDate}</td>
+                                            <td class="kpi-col-actions">
+                                                <lightning-button-menu
+                                                    icon-name="utility:down"
+                                                    variant="bare"
+                                                    menu-alignment="right"
+                                                    data-id={cfg.Id}
+                                                    onselect={handleConfigRowMenuSelect}
+                                                >
+                                                    <lightning-menu-item value="edit" label="Edit"></lightning-menu-item>
+                                                    <lightning-menu-item value="delete" label="Delete"></lightning-menu-item>
+                                                </lightning-button-menu>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
                     </template>
                     <template lwc:else>
                         <p class="empty-text">No reports configured yet.</p>
                     </template>
                 </template>
-            </div>
-        </lightning-card>
-
-        <!-- SECTION 3: Lead Attribution -->
-        <lightning-card title={labelLeadAttributionSection}>
-            <div class="section-body">
-                <lightning-input
-                    type="checkbox"
-                    label={labelShowLeadAttrib}
-                    checked={settings.Show_Lead_Attribution__c}
-                    data-field="Show_Lead_Attribution__c"
-                    onchange={handleSettingsChange}
-                ></lightning-input>
-                <lightning-input
-                    type="text"
-                    label={labelRAFLeadField}
-                    value={settings.RAF_Lead_Field__c}
-                    data-field="RAF_Lead_Field__c"
-                    onchange={handleSettingsChange}
-                ></lightning-input>
-                <lightning-input
-                    type="text"
-                    label={labelRAFLeadValue}
-                    value={settings.RAF_Lead_Value__c}
-                    data-field="RAF_Lead_Value__c"
-                    onchange={handleSettingsChange}
-                ></lightning-input>
-                <lightning-input
-                    type="date"
-                    label={labelRAFTrackingStart}
-                    value={settings.RAF_Tracking_Start_Date__c}
-                    data-field="RAF_Tracking_Start_Date__c"
-                    onchange={handleSettingsChange}
-                ></lightning-input>
                 <div class="section-footer">
+                    <template lwc:if={hasDirtySettings}>
+                        <span class="unsaved-badge">
+                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                            Unsaved changes
+                        </span>
+                    </template>
                     <lightning-button label={labelSaveSettings} variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
                 </div>
-            </div>
-        </lightning-card>
+        </div>
 
-        <!-- SECTION 4: Sync Management -->
-        <lightning-card title={labelSyncManagementSection}>
-            <div class="section-body">
+        <!-- SECTION 3: Sync Management -->
+        <div class="settings-card">
+            <div class="settings-card-title">{labelSyncManagementSection}<lightning-helptext content={tooltipSectionSyncManagement}></lightning-helptext></div>
+            <template lwc:if={scheduleWarning}>
+                    <div class="schedule-warning-banner">
+                        <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" alternative-text="Warning"></lightning-icon>
+                        <span>Scheduled sync is not running. Re-save your settings to restore the schedule.</span>
+                    </div>
+                </template>
                 <lightning-combobox
                     label={labelSyncCadence}
                     value={settings.Sync_Cadence__c}
                     options={syncCadenceOptions}
                     data-field="Sync_Cadence__c"
+                    field-level-help={tooltipSyncCadence}
                     onchange={handleSettingsChange}
                 ></lightning-combobox>
+
+                <lightning-input
+                    type="number"
+                    label={labelSettingsHistoryDepth}
+                    value={settings.History_Depth__c}
+                    min="1"
+                    max="90"
+                    field-level-help="Number of past report runs to fetch per runner on first sync (and after adding a new report). Drives sparkline and bar chart history. Default: 30."
+                    data-field="History_Depth__c"
+                    onchange={handleSettingsChange}
+                ></lightning-input>
 
                 <div class="sync-action-row">
                     <lightning-button
@@ -131,6 +127,12 @@
                     <template lwc:if={isSyncing}>
                         <lightning-spinner size="small" alternative-text="Syncing..."></lightning-spinner>
                     </template>
+                    <template lwc:if={hasDirtySettings}>
+                        <span class="unsaved-badge">
+                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                            Unsaved changes
+                        </span>
+                    </template>
                     <span class="last-sync-text">{lastSyncText}</span>
                 </div>
 
@@ -139,6 +141,7 @@
                     label={labelNotifyOnFailure}
                     checked={settings.Notify_On_Sync_Failure__c}
                     data-field="Notify_On_Sync_Failure__c"
+                    field-level-help={tooltipNotifyOnFailure}
                     onchange={handleSettingsChange}
                 ></lightning-input>
                 <lightning-input
@@ -147,6 +150,7 @@
                     value={settings.Notify_After_N_Failures__c}
                     min="1"
                     data-field="Notify_After_N_Failures__c"
+                    field-level-help={tooltipNotifyAfterN}
                     onchange={handleSettingsChange}
                 ></lightning-input>
                 <lightning-input
@@ -154,95 +158,319 @@
                     label={labelFailureEmail}
                     value={settings.Failure_Notification_Email__c}
                     data-field="Failure_Notification_Email__c"
+                    field-level-help={tooltipFailureEmail}
                     onchange={handleSettingsChange}
                 ></lightning-input>
 
-                <div class="section-header-row">
-                    <h3 class="subsection-title">Sync Log</h3>
-                </div>
-
-                <template lwc:if={isLoadingLogs}>
-                    <lightning-spinner size="small" alternative-text="Loading logs..."></lightning-spinner>
-                </template>
-                <template lwc:else>
-                    <template lwc:if={hasSyncLogs}>
-                        <div class="sync-log-table">
-                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
-                                <thead>
-                                    <tr class="slds-line-height_reset">
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogReportName}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogDateRange}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogStatus}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogTimestamp}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogValue}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogHttpStatus}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogPollAttempts}</div></th>
-                                        <th scope="col"><div class="slds-truncate">{labelSyncLogError}</div></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template for:each={syncLogs} for:item="log">
-                                        <tr key={log.Id}>
-                                            <td>{log.Report_Name__c}</td>
-                                            <td>{log.Date_Range__c}</td>
-                                            <td><span class={log.statusClass}>{log.Status__c}</span></td>
-                                            <td>{log.Sync_Timestamp__c}</td>
-                                            <td>{log.Value_Extracted__c}</td>
-                                            <td>{log.HTTP_Status_Code__c}</td>
-                                            <td>{log.Poll_Attempts__c}</td>
-                                            <td class="error-cell">{log.Error_Message__c}</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </template>
-                    <template lwc:else>
-                        <p class="empty-text">No sync logs found.</p>
-                    </template>
-                </template>
-
                 <div class="section-footer">
+                    <template lwc:if={hasDirtySettings}>
+                        <span class="unsaved-badge">
+                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                            Unsaved changes
+                        </span>
+                    </template>
                     <lightning-button label={labelSaveSettings} variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
                 </div>
-            </div>
-        </lightning-card>
 
-        <!-- SECTION 5: Debug / Orphan Management -->
-        <lightning-card title={labelDebugSection}>
-            <div class="section-body">
+        </div>
+
+        <!-- SECTION 4: List View Configuration -->
+        <div class="settings-card">
+            <div class="settings-card-title">{labelListViewSection}<lightning-helptext content={tooltipSectionListView}></lightning-helptext></div>
+            <p class="section-description">Define which Salesforce people count as Extole-influenced. The List View tab uses these settings to show you the people your program has generated.</p>
                 <lightning-input
+                    type="checkbox"
+                    label={labelShowListView}
+                    checked={settings.Show_List_View__c}
+                    data-field="Show_List_View__c"
+                    field-level-help="Show or hide the List View tab in the app navigation. Configure the object, field, and value below to define which records appear in the list."
+                    onchange={handleSettingsChange}
+                ></lightning-input>
+                <lightning-combobox
+                    label="Salesforce Object"
+                    value={settings.List_View_Object__c}
+                    options={attributionObjectOptions}
+                    field-level-help="Choose whether your Extole-influenced people are tracked as Contacts or Leads."
+                    onchange={handleAttributionObjectChange}
+                ></lightning-combobox>
+                <lightning-combobox
+                    label={labelLeadField}
+                    value={settings.List_View_Field__c}
+                    options={attributionFieldOptions}
+                    disabled={isLoadingAttributionFields}
+                    placeholder="Select a field..."
+                    field-level-help="The field on the selected object that identifies Extole-influenced records."
+                    onchange={handleAttributionFieldChange}
+                ></lightning-combobox>
+                <lightning-combobox
+                    label={labelLeadValue}
+                    value={settings.List_View_Value__c}
+                    options={attributionValueOptions}
+                    disabled={isValueDisabled}
+                    placeholder="Select a field first"
+                    field-level-help="The value that marks a record as Extole-influenced."
+                    data-field="List_View_Value__c"
+                    onchange={handleSettingsChange}
+                ></lightning-combobox>
+                <lightning-dual-listbox
+                    label="Display Columns"
+                    source-label="Available"
+                    selected-label="Selected (up to 3)"
+                    field-level-help="Choose which additional fields appear as columns on the Lead Attribution tab. Defaults are pre-selected based on the object type."
+                    options={attributionFieldOptions}
+                    value={selectedAttributionColumns}
+                    max="3"
+                    disabled={isLoadingAttributionFields}
+                    onchange={handleAttributionColumnsChange}
+                ></lightning-dual-listbox>
+                <lightning-input
+                    type="date"
+                    label={labelTrackingStart}
+                    field-level-help="Only records created on or after this date will appear in the List View."
+                    value={settings.List_View_Start_Date__c}
+                    data-field="List_View_Start_Date__c"
+                    onchange={handleSettingsChange}
+                ></lightning-input>
+                <div class="section-footer">
+                    <template lwc:if={hasDirtySettings}>
+                        <span class="unsaved-badge">
+                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                            Unsaved changes
+                        </span>
+                    </template>
+                    <lightning-button label={labelSaveSettings} variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
+                </div>
+        </div>
+
+        <!-- SECTION 5: Connection -->
+        <div class="settings-card">
+            <div class="settings-card-title">{labelConnectionSection}<lightning-helptext content={tooltipSectionConnection}></lightning-helptext></div>
+            <div class="connection-action-row">
+                    <lightning-button
+                        label={labelTestConnection}
+                        variant="neutral"
+                        onclick={handleTestConnection}
+                        disabled={isTesting}
+                    ></lightning-button>
+                    <template lwc:if={isTesting}>
+                        <lightning-spinner size="small" alternative-text="Testing..."></lightning-spinner>
+                    </template>
+                </div>
+
+                <template lwc:if={connectionResult}>
+                    <div class="connection-result-row">
+                        <span class={connectionBadgeClass}>
+                            <lightning-icon icon-name={connectionIcon} size="x-small" alternative-text="Connection status"></lightning-icon>
+                            {connectionStatusLabel}
+                        </span>
+                        <template lwc:if={connectionResult.success}>
+                            <span class="connection-report-count">{connectionResult.reportCount} {labelReportCount}</span>
+                        </template>
+                        <template lwc:else>
+                            <span class="connection-error">{connectionResult.errorMessage}</span>
+                        </template>
+                    </div>
+                </template>
+
+                <p class="api-token-note">{labelApiTokenNote}</p>
+                <div class="token-links">
+                    <a href="https://my.extole.com/security-center" target="_blank" rel="noopener noreferrer" class="extole-link">{labelGenerateToken}</a>
+                    <a href="https://dev.extole.com/docs/generate-long-lived-access-tokens" target="_blank" rel="noopener noreferrer" class="extole-link">{labelLongLivedToken}</a>
+                </div>
+        </div>
+
+        <!-- SECTION 6: Diagnostics -->
+        <div class="settings-card">
+            <div class="settings-card-title">Diagnostics<lightning-helptext content="Recent sync and event activity logs. Use these to verify data is flowing correctly and diagnose failures. Both logs are retained for 30 days."></lightning-helptext></div>
+
+            <!-- Sync Log -->
+            <div class="section-header-row diag-header-row">
+                <div class="diag-subsection-label">
+                    <h3 class="subsection-title">Sync Log</h3>
+                    <lightning-helptext content="Records each report sync attempt — one row per report runner per run. Corresponds to the report configurations defined in the Report Configuration section above."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearSync}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearSync} disabled={isClearingSyncLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearSync}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshSyncLogs}></lightning-button>
+                        <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopySyncLogMd}></lightning-button>
+                        <lightning-button label="Clear Sync Logs" variant="destructive-text" onclick={handleClearSyncLogs} disabled={isClearingSyncLogs}></lightning-button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={isLoadingLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasSyncLogs}>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">{labelSyncLogReportName}</div></th>
+                                    <th scope="col"><div class="slds-truncate">{labelSyncLogDateRange}</div></th>
+                                    <th scope="col"><div class="slds-truncate">Result</div></th>
+                                    <th scope="col"><div class="slds-truncate">Trigger</div></th>
+                                    <th scope="col"><div class="slds-truncate">{labelSyncLogTimestamp}</div></th>
+                                    <th scope="col"><div class="slds-truncate">{labelSyncLogValue}</div></th>
+                                    <th scope="col"><div class="slds-truncate">{labelSyncLogHttpStatus}</div></th>
+                                    <th scope="col"><div class="slds-truncate">{labelSyncLogError}</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={syncLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.Report_Name__c}</td>
+                                        <td>{log.Date_Range__c}</td>
+                                        <td><span class={log.statusClass}>{log.Status__c}</span></td>
+                                        <td>{log.Trigger_Type__c}</td>
+                                        <td>{log.formattedTimestamp}</td>
+                                        <td>{log.Value_Extracted__c}</td>
+                                        <td>{log.HTTP_Status_Code__c}</td>
+                                        <td class="error-cell" title={log.Error_Message__c}>{log.Error_Message__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No sync logs found.</p>
+                </template>
+            </template>
+
+            <!-- Event Log -->
+            <div class="section-header-row diag-header-row">
+                <div class="diag-subsection-label">
+                    <h3 class="subsection-title">Event Log</h3>
+                    <lightning-helptext content="Records each Extole event fired from Salesforce — one row per trigger. Corresponds to the event configurations defined in the Referral Events section above."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearEventLog}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearEventLog} disabled={isClearingEventLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearEventLog}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshEventLogs}></lightning-button>
+                        <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopyEventLogMd}></lightning-button>
+                        <lightning-button label="Clear Event Logs" variant="destructive-text" onclick={handleClearEventLogs} disabled={isClearingEventLogs}></lightning-button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={isLoadingEventLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasEventLogs}>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Config Key</div></th>
+                                    <th scope="col"><div class="slds-truncate">Event Type</div></th>
+                                    <th scope="col"><div class="slds-truncate">Result</div></th>
+                                    <th scope="col"><div class="slds-truncate">Timestamp</div></th>
+                                    <th scope="col"><div class="slds-truncate">Detail</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={eventLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.Config_Key__c}</td>
+                                        <td>{log.Event_Type__c}</td>
+                                        <td><span class={log.resultClass}>{log.Result__c}</span></td>
+                                        <td>{log.formattedTimestamp}</td>
+                                        <td class={log.detailClass} title={log.Detail__c}>{log.Detail__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No event logs found.</p>
+                </template>
+            </template>
+        </div>
+
+        <!-- SECTION 7: Debug / Orphan Management -->
+        <div class="settings-card">
+            <div class="settings-card-title">{labelDebugSection}<lightning-helptext content={tooltipSectionDebug}></lightning-helptext></div>
+            <lightning-input
                     type="checkbox"
                     label={labelDebugLogging}
                     checked={settings.Debug_Logging_Enabled__c}
                     data-field="Debug_Logging_Enabled__c"
+                    field-level-help={tooltipDebugLogging}
                     onchange={handleSettingsChange}
                 ></lightning-input>
 
+                <p class="debug-actions-desc">{labelDebugClearActionsDesc}</p>
                 <div class="debug-action-row">
-                    <lightning-button
-                        label={labelClearDebugLogs}
-                        variant="destructive-text"
-                        onclick={handleClearDebugLogs}
-                        disabled={isClearingLogs}
-                    ></lightning-button>
-                    <lightning-button
-                        label={labelClearOrphanedData}
-                        variant="destructive-text"
-                        onclick={handleClearOrphanedData}
-                        disabled={isClearingOrphans}
-                    ></lightning-button>
+                    <template lwc:if={confirmClearDebug}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearDebugLogs} disabled={isClearingLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearDebugLogs}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button
+                            label={labelClearDebugLogs}
+                            variant="destructive-text"
+                            onclick={handleClearDebugLogs}
+                            disabled={isClearingLogs}
+                        ></lightning-button>
+                    </template>
                 </div>
 
                 <template lwc:if={debugClearResult}>
                     <p class="debug-result">{debugClearResult}</p>
                 </template>
 
+                <template lwc:if={hasDebugLogs}>
+                    <div class="section-header-row">
+                        <h3 class="subsection-title">Debug Log</h3>
+                    </div>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_fixed-layout">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th style="width:150px">Timestamp</th>
+                                    <th style="width:130px">Event Type</th>
+                                    <th style="width:220px">Report Name</th>
+                                    <th>Detail</th>
+                                    <th style="width:90px">Batch ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={debugLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.formattedTimestamp}</td>
+                                        <td>{log.Event_Type__c}</td>
+                                        <td>{log.Report_Name__c}</td>
+                                        <td class="truncated-cell" title={log.Detail__c}>{log.Detail__c}</td>
+                                        <td class="truncated-cell" title={log.Sync_Batch_Id__c}>{log.Sync_Batch_Id__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+
                 <div class="section-footer">
+                    <template lwc:if={hasDirtySettings}>
+                        <span class="unsaved-badge">
+                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                            Unsaved changes
+                        </span>
+                    </template>
                     <lightning-button label={labelSaveSettings} variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
                 </div>
-            </div>
-        </lightning-card>
+        </div>
     </div>
 
     <!-- Add/Edit Config Modal -->
@@ -255,9 +483,15 @@
                     </button>
                     <h2 id="modal-heading" class="slds-modal__title">{modalTitle}</h2>
                     <div class="step-indicator">
-                        <span class={step1IndicatorClass}>1</span>
-                        <span class="step-separator">›</span>
-                        <span class={step2IndicatorClass}>2</span>
+                        <div class="step-item">
+                            <span class={step1IndicatorClass}>1</span>
+                            <span class="step-label">Select Report</span>
+                        </div>
+                        <span class="step-separator"></span>
+                        <div class="step-item">
+                            <span class={step2IndicatorClass}>2</span>
+                            <span class="step-label">Configure</span>
+                        </div>
                     </div>
                 </header>
 
@@ -270,40 +504,24 @@
                             </div>
                         </template>
                         <template lwc:else>
-                            <div class="filter-row">
-                                <lightning-combobox
-                                    label={labelFilterCategory}
-                                    value={selectedCategory}
-                                    options={categoryOptions}
-                                    onchange={handleCategoryChange}
-                                ></lightning-combobox>
-                            </div>
                             <div class="report-type-table">
                                 <table class="slds-table slds-table_cell-buffer slds-table_bordered">
                                     <thead>
                                         <tr>
                                             <th scope="col"><div class="slds-truncate">{labelReportDisplayName}</div></th>
-                                            <th scope="col"><div class="slds-truncate">{labelReportDescription}</div></th>
-                                            <th scope="col"><div class="slds-truncate">Type</div></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <template for:each={filteredReportTypes} for:item="rt">
-                                            <tr key={rt.report_type_id} class={rt.rowClass} onclick={handleSelectReportType} data-id={rt.report_type_id}>
-                                                <td>
-                                                    {rt.display_name}
-                                                    <template lwc:if={rt.isSql}>
-                                                        <span class="fast-badge">{labelFast}</span>
-                                                    </template>
-                                                </td>
-                                                <td class="description-cell">{rt.description}</td>
-                                                <td>{rt.type}</td>
+                                            <tr key={rt.runnerId} class={rt.rowClass} onclick={handleSelectReportType} data-id={rt.runnerId}>
+                                                <td>{rt.displayName}</td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
                                 <template lwc:if={noFilteredReportTypes}>
-                                    <p class="empty-text">No reports found for selected category.</p>
+                                    <p class="empty-text">No Extole report runners found. Check your API connection in Settings and try again.</p>
+                                    <lightning-button label="Retry" variant="neutral" onclick={loadReportTypes}></lightning-button>
                                 </template>
                             </div>
                         </template>
@@ -323,15 +541,6 @@
                             ></lightning-input>
 
                             <lightning-combobox
-                                label={labelConfigValueColumn}
-                                value={editingConfig.Value_Column__c}
-                                options={valueColumnOptions}
-                                data-field="Value_Column__c"
-                                field-level-help={tooltipValueColumn}
-                                onchange={handleConfigFieldChange}
-                            ></lightning-combobox>
-
-                            <lightning-combobox
                                 label={labelConfigAggregation}
                                 value={editingConfig.Aggregation__c}
                                 options={aggregationOptions}
@@ -339,6 +548,34 @@
                                 field-level-help={tooltipAggregation}
                                 onchange={handleConfigFieldChange}
                             ></lightning-combobox>
+
+                            <template lwc:if={isAggregationCount}>
+                            </template>
+                            <template lwc:else>
+                                <template lwc:if={isLoadingColumns}>
+                                    <lightning-spinner size="small" alternative-text="Loading columns..."></lightning-spinner>
+                                </template>
+                                <template lwc:elseif={hasColumnOptions}>
+                                    <lightning-combobox
+                                        label={labelConfigValueColumn}
+                                        value={editingConfig.Value_Column__c}
+                                        options={valueColumnOptions}
+                                        data-field="Value_Column__c"
+                                        field-level-help={tooltipValueColumn}
+                                        onchange={handleConfigFieldChange}
+                                    ></lightning-combobox>
+                                </template>
+                                <template lwc:else>
+                                    <lightning-input
+                                        type="text"
+                                        label={labelConfigValueColumn}
+                                        value={editingConfig.Value_Column__c}
+                                        data-field="Value_Column__c"
+                                        field-level-help="No completed report found yet. Enter the column name manually, or save and update after the first scheduled run completes."
+                                        onchange={handleConfigFieldChange}
+                                    ></lightning-input>
+                                </template>
+                            </template>
 
                             <lightning-combobox
                                 label={labelConfigChartType}
@@ -350,11 +587,11 @@
                             ></lightning-combobox>
 
                             <lightning-combobox
-                                label={labelConfigDateRange}
-                                value={editingConfig.Date_Range__c}
-                                options={dateRangeOptions}
-                                data-field="Date_Range__c"
-                                field-level-help={tooltipDateRange}
+                                label={labelConfigComparisonPeriod}
+                                value={editingConfig.Comparison_Period__c}
+                                options={comparisonPeriodOptions}
+                                data-field="Comparison_Period__c"
+                                field-level-help={tooltipComparisonPeriod}
                                 onchange={handleConfigFieldChange}
                             ></lightning-combobox>
 
@@ -363,6 +600,7 @@
                                 label={labelConfigDisplayOrder}
                                 value={editingConfig.Display_Order__c}
                                 data-field="Display_Order__c"
+                                field-level-help={tooltipDisplayOrder}
                                 min="0"
                                 onchange={handleConfigFieldChange}
                             ></lightning-input>
@@ -372,6 +610,7 @@
                                 label={labelConfigActive}
                                 checked={editingConfig.Active__c}
                                 data-field="Active__c"
+                                field-level-help={tooltipActive}
                                 onchange={handleConfigFieldChange}
                             ></lightning-input>
 

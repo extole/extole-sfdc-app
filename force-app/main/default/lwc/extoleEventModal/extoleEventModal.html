@@ -1,0 +1,515 @@
+<template>
+    <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open modal-wide" aria-modal="true" aria-labelledby="event-modal-heading">
+        <div class="slds-modal__container">
+            <header class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={handleClose}>
+                    <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                </button>
+                <h2 id="event-modal-heading" class="slds-modal__title">{modalTitle}</h2>
+
+                <!-- Step indicator -->
+                <div class="step-indicator">
+                    <div class="step-item">
+                        <span class={step1Class}>1</span>
+                        <span class="step-label">Specify Trigger</span>
+                    </div>
+                    <span class="step-sep"></span>
+                    <div class="step-item">
+                        <span class={step2Class}>2</span>
+                        <span class="step-label">Map Fields</span>
+                    </div>
+                    <span class="step-sep"></span>
+                    <div class="step-item">
+                        <span class={step3Class}>3</span>
+                        <span class="step-label">Review</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="slds-modal__content slds-p-around_medium modal-body">
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- STEP 1: Choose Trigger                                 -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <template lwc:if={isStep1}>
+                    <template lwc:if={isEditLoading}>
+                        <div class="ec-loading">
+                            <lightning-spinner size="medium" alternative-text="Loading..."></lightning-spinner>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                    <!-- Preset cards -->
+                    <div class="section-block">
+                        <h3 class="section-header">{labelPresetSection}</h3>
+                        <div class="preset-grid">
+                            <template for:each={presets} for:item="preset">
+                                <div
+                                    key={preset.id}
+                                    class={preset.cardClass}
+                                    role="button"
+                                    tabindex="0"
+                                    data-preset-id={preset.id}
+                                    onclick={handlePresetSelect}
+                                >
+                                    <span class="preset-label">{preset.label}</span>
+                                    <span class="preset-desc">{preset.description}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Object picker -->
+                    <div class="section-block">
+                        <template lwc:if={isLoadingObjects}>
+                            <div class="inline-loading">
+                                <lightning-spinner size="small" alternative-text="Loading objects..."></lightning-spinner>
+                            </div>
+                        </template>
+                        <template lwc:elseif={isObjectLocked}>
+                            <lightning-input
+                                type="text"
+                                label={labelTriggerObject}
+                                value={lockedObjectLabel}
+                                disabled
+                                field-level-help={labelTooltipTriggerObject}
+                            ></lightning-input>
+                        </template>
+                        <template lwc:else>
+                            <c-searchable-combobox
+                                label={labelTriggerObject}
+                                value={selectedObject}
+                                options={filteredObjects}
+                                placeholder={labelTriggerObjectPh}
+                                field-level-help={labelTooltipTriggerObject}
+                                onchange={handleObjectSelect}
+                            ></c-searchable-combobox>
+                        </template>
+                    </div>
+
+                    <!-- Trigger condition (only shown once an object is selected) -->
+                    <template lwc:if={selectedObject}>
+                    <div class="section-block">
+                        <template lwc:if={isTriggerTypeLocked}>
+                            <lightning-input
+                                type="text"
+                                label={labelTriggerCondition}
+                                value={lockedTriggerTypeLabel}
+                                disabled
+                                field-level-help={labelTooltipTriggerCondition}
+                            ></lightning-input>
+                        </template>
+                        <template lwc:else>
+                            <lightning-combobox
+                                label={labelTriggerCondition}
+                                value={triggerType}
+                                options={triggerConditionOptions}
+                                placeholder="Select a condition..."
+                                field-level-help={labelTooltipTriggerCondition}
+                                onchange={handleTriggerTypeChange}
+                            ></lightning-combobox>
+                        </template>
+
+                        <!-- Field picker for FIELD_EQUALS / FIELD_CHANGES -->
+                        <template lwc:if={showFieldPicker}>
+                            <template lwc:if={isTriggerFieldLocked}>
+                                <lightning-input
+                                    type="text"
+                                    label={labelTriggerField}
+                                    value={lockedTriggerFieldLabel}
+                                    disabled
+                                ></lightning-input>
+                            </template>
+                            <template lwc:else>
+                                <c-searchable-combobox
+                                    label={labelTriggerField}
+                                    value={triggerField}
+                                    options={triggerFieldOptions}
+                                    placeholder="Search fields..."
+                                    loading={isLoadingFields}
+                                    onchange={handleTriggerFieldChange}
+                                ></c-searchable-combobox>
+                            </template>
+                        </template>
+
+                        <!-- Value for FIELD_EQUALS -->
+                        <template lwc:if={showValueInput}>
+                            <template lwc:if={isTriggerValueLocked}>
+                                <lightning-input
+                                    type="text"
+                                    label={labelTriggerValue}
+                                    value={triggerValue}
+                                    disabled
+                                ></lightning-input>
+                            </template>
+                            <template lwc:elseif={isPicklistField}>
+                                <c-searchable-combobox
+                                    label={labelTriggerValue}
+                                    value={triggerValue}
+                                    options={triggerFieldPicklistOptions}
+                                    placeholder="Select a value..."
+                                    onchange={handleTriggerValueChange}
+                                ></c-searchable-combobox>
+                            </template>
+                            <template lwc:else>
+                                <lightning-input
+                                    type="text"
+                                    label={labelTriggerValue}
+                                    value={triggerValue}
+                                    onchange={handleTriggerValueChange}
+                                ></lightning-input>
+                            </template>
+                        </template>
+
+                        <!-- From / To for FIELD_CHANGES -->
+                        <template lwc:if={showFromToInputs}>
+                            <div class="from-to-row">
+                                <template lwc:if={isPicklistField}>
+                                    <c-searchable-combobox
+                                        label={labelTriggerFrom}
+                                        value={triggerFromValue}
+                                        options={triggerFieldPicklistOptions}
+                                        placeholder="Select a value..."
+                                        onchange={handleTriggerFromChange}
+                                    ></c-searchable-combobox>
+                                    <c-searchable-combobox
+                                        label={labelTriggerTo}
+                                        value={triggerToValue}
+                                        options={triggerFieldPicklistOptions}
+                                        placeholder="Select a value..."
+                                        onchange={handleTriggerToChange}
+                                    ></c-searchable-combobox>
+                                </template>
+                                <template lwc:else>
+                                    <lightning-input
+                                        type="text"
+                                        label={labelTriggerFrom}
+                                        value={triggerFromValue}
+                                        onchange={handleTriggerFromChange}
+                                    ></lightning-input>
+                                    <lightning-input
+                                        type="text"
+                                        label={labelTriggerTo}
+                                        value={triggerToValue}
+                                        onchange={handleTriggerToChange}
+                                    ></lightning-input>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    </template>
+
+                    <!-- Step 1 error -->
+                    <template lwc:if={step1Error}>
+                        <div class="form-error">{step1Error}</div>
+                    </template>
+                    </template>
+                </template>
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- STEP 2: Map Fields                                     -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <template lwc:if={isStep2}>
+                    <template lwc:if={isLoadingFields}>
+                        <div class="inline-loading">
+                            <lightning-spinner size="medium" alternative-text="Loading fields..."></lightning-spinner>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <!-- Event name -->
+                        <div class="section-block">
+                            <lightning-input
+                                type="text"
+                                label={labelEventName}
+                                value={eventName}
+                                field-level-help={labelTooltipEventName}
+                                onblur={handleEventNameChange}
+                                required
+                            ></lightning-input>
+                            <template lwc:if={eventNameError}>
+                                <p class="field-error slds-text-color_error slds-m-top_xx-small">{eventNameError}</p>
+                            </template>
+                            <template lwc:if={eventNameAdjusted}>
+                                <p class="slds-text-color_weak slds-m-top_xx-small" style="font-size:0.75rem">Name adjusted — a config with the default name already exists.</p>
+                            </template>
+                        </div>
+
+                        <!-- Parameters -->
+                        <div class="section-block">
+                            <div class="section-header-row">
+                                <h3 class="section-header">Parameters</h3>
+                                <lightning-button
+                                    label={labelAddParam}
+                                    variant="neutral"
+                                    icon-name="utility:add"
+                                    onclick={handleAddParam}
+                                ></lightning-button>
+                            </div>
+
+                            <template for:each={params} for:item="param">
+                                <div key={param.id} class="mapping-row optional-row">
+                                    <!-- Col 1: param name input -->
+                                    <lightning-input
+                                        type="text"
+                                        label={labelParamName}
+                                        value={param.paramName}
+                                        data-param-id={param.id}
+                                        onblur={handleParamNameBlur}
+                                    ></lightning-input>
+                                    <!-- Col 2: field combobox or static input -->
+                                    <div class="mapping-field-side">
+                                        <template lwc:if={param.useStatic}>
+                                            <lightning-input
+                                                type="text"
+                                                label={labelStaticValueInput}
+                                                value={param.staticVal}
+                                                data-param-id={param.id}
+                                                onchange={handleParamStaticValueChange}
+                                            ></lightning-input>
+                                        </template>
+                                        <template lwc:else>
+                                            <c-searchable-combobox
+                                                label={labelFieldPicker}
+                                                value={param.field}
+                                                options={fieldOptions}
+                                                placeholder="Search fields..."
+                                                data-param-id={param.id}
+                                                onchange={handleParamFieldChange}
+                                            ></c-searchable-combobox>
+                                        </template>
+                                    </div>
+                                    <!-- Col 3: remove button -->
+                                    <div class="remove-btn-col">
+                                        <lightning-button
+                                            label={labelRemoveParam}
+                                            variant="destructive-text"
+                                            data-param-id={param.id}
+                                            onclick={handleRemoveParam}
+                                        ></lightning-button>
+                                    </div>
+                                    <!-- Static value toggle -->
+                                    <div class="opt-static-toggle">
+                                        <lightning-input
+                                            type="checkbox"
+                                            label={labelStaticValue}
+                                            checked={param.useStatic}
+                                            data-param-id={param.id}
+                                            onchange={handleParamStaticToggle}
+                                        ></lightning-input>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="section-block notes-block">
+                            <p class="note-text app-type-note">
+                                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                {labelAppTypeNote}
+                            </p>
+                            <p class="note-text">{labelNullNote}</p>
+                        </div>
+
+                        <!-- Step 2 error -->
+                        <template lwc:if={step2Error}>
+                            <div class="form-error">{step2Error}</div>
+                        </template>
+                    </template>
+                </template>
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- STEP 3: Review & Deploy                                -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <template lwc:if={isStep3}>
+                    <!-- Summary card -->
+                    <div class="section-block review-card">
+                        <h3 class="section-header">{labelReviewSummary}</h3>
+                        <dl class="summary-dl">
+                            <dt>{labelReviewObject}</dt>
+                            <dd>{selectedObject}</dd>
+                            <dt>{labelReviewTrigger}</dt>
+                            <dd>{reviewTriggerLabel}</dd>
+                            <dt>{labelReviewEventName}</dt>
+                            <dd>{eventName}</dd>
+                        </dl>
+                    </div>
+
+                    <!-- Mappings table -->
+                    <div class="section-block">
+                        <h3 class="section-header">{labelReviewMappings}</h3>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col"><div class="slds-truncate">{labelParamName}</div></th>
+                                    <th scope="col"><div class="slds-truncate">{labelParamValue}</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={reviewMappingsTable} for:item="row">
+                                    <tr key={row.param}>
+                                        <td><span class="mapping-param">{row.param}</span></td>
+                                        <td class="mapping-value">{row.value}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Payload diff (edit mode only) -->
+                    <template lwc:if={isEditMode}>
+                        <div class="section-block diff-block">
+                            <h3 class="section-header">{labelReviewDiffSection}</h3>
+                            <p class="note-text">{labelReviewDiffNote}</p>
+
+                            <template lwc:if={showTriggerChangedNote}>
+                                <div class="diff-trigger-note">
+                                    <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    {labelReviewTriggerChanged}
+                                </div>
+                            </template>
+
+                            <template lwc:if={hasDiffRows}>
+                                <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col"><div class="slds-truncate">Parameter</div></th>
+                                            <th scope="col"><div class="slds-truncate">Before</div></th>
+                                            <th scope="col"><div class="slds-truncate">After</div></th>
+                                            <th scope="col"><div class="slds-truncate">Change</div></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={diffRows} for:item="row">
+                                            <tr key={row.key} class="diff-row">
+                                                <td>{row.key}</td>
+                                                <td class="diff-old">{row.oldVal}</td>
+                                                <td class="diff-new">{row.newVal}</td>
+                                                <td>
+                                                    <template lwc:if={row.isAdded}>
+                                                        <span class="diff-badge diff-added">{labelReviewDiffAdded}</span>
+                                                    </template>
+                                                    <template lwc:elseif={row.isRemoved}>
+                                                        <span class="diff-badge diff-removed">{labelReviewDiffRemoved}</span>
+                                                    </template>
+                                                    <template lwc:else>
+                                                        <span class="diff-badge diff-changed">{labelReviewDiffChanged}</span>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </template>
+                            <template lwc:else>
+                                <p class="note-text slds-m-top_small">No payload changes detected.</p>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Generated artifacts -->
+                    <div class="section-block">
+                        <h3 class="section-header">{labelReviewArtifacts}</h3>
+                        <dl class="summary-dl">
+                            <dt>{labelReviewApex}</dt>
+                            <dd class="artifact-name">{generatedApexName}</dd>
+                            <dt>{labelReviewFlow}</dt>
+                            <dd class="artifact-name">{generatedFlowName}</dd>
+                        </dl>
+                        <p class="note-text slds-m-top_small">{labelReviewArtifactsNote}</p>
+                    </div>
+
+                    <!-- Test with sample record -->
+                    <div class="section-block">
+                        <h3 class="section-header">{labelReviewTestRecord}</h3>
+                        <p class="note-text">{labelReviewTestDesc}</p>
+                        <div class="test-row">
+                            <lightning-input
+                                type="text"
+                                label={labelReviewRecordId}
+                                value={testRecordId}
+                                placeholder="e.g. 00Q000000001XYZ"
+                                onchange={handleTestRecordIdChange}
+                            ></lightning-input>
+                            <lightning-button
+                                label={labelReviewTestButton}
+                                variant="neutral"
+                                onclick={handlePreviewPayload}
+                                disabled={isPreviewDisabled}
+                            ></lightning-button>
+                        </div>
+
+                        <template lwc:if={isPreviewLoading}>
+                            <div class="inline-loading">
+                                <lightning-spinner size="small" alternative-text="Loading preview..."></lightning-spinner>
+                            </div>
+                        </template>
+
+                        <template lwc:if={hasPreviewPayload}>
+                            <div class="section-block">
+                                <h4 class="subsection-header">{labelReviewPayloadPreview}</h4>
+                                <pre class="payload-preview">{previewPayloadJson}</pre>
+                            </div>
+                        </template>
+
+                        <template lwc:if={previewError}>
+                            <div class="form-error">{previewError}</div>
+                        </template>
+                    </div>
+
+                    <!-- Deploy status -->
+                    <template lwc:if={isDeploying}>
+                        <div class="deploy-status-row">
+                            <lightning-spinner size="small" alternative-text="Deploying..."></lightning-spinner>
+                            <span class="deploy-status-text">{labelReviewDeploying}</span>
+                        </div>
+                    </template>
+
+                    <template lwc:if={deployError}>
+                        <div class="form-error deploy-error">{deployError}</div>
+                    </template>
+
+                    <template lwc:if={deploySuccess}>
+                        <div class="deploy-success">
+                            <lightning-icon icon-name="utility:success" size="small" variant="success" class="slds-m-right_x-small"></lightning-icon>
+                            {labelReviewDeploySuccess}
+                        </div>
+                    </template>
+                </template>
+
+            </div><!-- /modal body -->
+
+            <footer class="slds-modal__footer">
+                <lightning-button label={labelCancel} variant="neutral" onclick={handleClose}></lightning-button>
+
+                <template lwc:if={isStep1}>
+                    <lightning-button
+                        label={labelNext}
+                        variant="brand"
+                        onclick={handleNext}
+                        disabled={isNextStep1Disabled}
+                    ></lightning-button>
+                </template>
+
+                <template lwc:if={isStep2}>
+                    <lightning-button label={labelBack} variant="neutral" onclick={handleBack}></lightning-button>
+                    <lightning-button
+                        label={labelNext}
+                        variant="brand"
+                        onclick={handleNext}
+                        disabled={isNextStep2Disabled}
+                    ></lightning-button>
+                </template>
+
+                <template lwc:if={isStep3}>
+                    <lightning-button label={labelBack} variant="neutral" onclick={handleBack} disabled={isDeploying}></lightning-button>
+                    <lightning-button
+                        label={labelReviewDeploy}
+                        variant="brand"
+                        onclick={handleDeploy}
+                        disabled={isDeployDisabled}
+                    ></lightning-button>
+                </template>
+            </footer>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+</template>

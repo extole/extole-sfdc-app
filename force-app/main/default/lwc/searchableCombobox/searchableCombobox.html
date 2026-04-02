@@ -1,0 +1,79 @@
+<template>
+    <div class="slds-form-element">
+
+        <!-- Label row -->
+        <div class="sc-label-row">
+            <label class="slds-form-element__label">
+                <template lwc:if={required}>
+                    <abbr class="slds-required" title="required">*</abbr>
+                </template>
+                {label}
+            </label>
+            <template lwc:if={fieldLevelHelp}>
+                <lightning-helptext content={fieldLevelHelp}></lightning-helptext>
+            </template>
+        </div>
+
+        <!-- Input + Dropdown: sc-combobox-wrapper is position:relative so dropdown can be position:absolute -->
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container sc-combobox-wrapper">
+                <div class={comboboxClass} role="combobox" aria-expanded={isOpenStr} aria-haspopup="listbox">
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                        <input
+                            type="text"
+                            class="slds-input slds-combobox__input"
+                            placeholder={placeholder}
+                            autocomplete="off"
+                            oninput={handleInput}
+                            onfocus={handleFocus}
+                            onclick={handleInputClick}
+                            onkeydown={handleKeyDown}
+                        />
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_right sc-chevron">
+                            <lightning-icon icon-name="utility:down" size="x-small"></lightning-icon>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Dropdown: position:absolute inside sc-combobox-wrapper -->
+                <template lwc:if={isOpen}>
+                    <div class={dropdownClass} style={_dropdownStyle} role="listbox" onwheel={handleDropdownWheel}>
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <template lwc:if={loading}>
+                                <li role="presentation" class="slds-listbox__item sc-loading-row">
+                                    <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+                                </li>
+                            </template>
+                            <template lwc:elseif={hasFilteredOptions}>
+                                <template for:each={filteredOptions} for:item="opt">
+                                    <li key={opt.value} role="presentation" class="slds-listbox__item">
+                                        <span
+                                            class={opt.itemClass}
+                                            role="option"
+                                            data-value={opt.value}
+                                            onmousedown={handleOptionMouseDown}
+                                        >
+                                            <span class="slds-media__body">
+                                                <span class="slds-truncate">{opt.label}</span>
+                                            </span>
+                                        </span>
+                                    </li>
+                                </template>
+                            </template>
+                            <template lwc:else>
+                                <li role="presentation" class="slds-listbox__item">
+                                    <span class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small sc-no-results">
+                                        <span class="slds-media__body">
+                                            <span class="slds-truncate">No matches found</span>
+                                        </span>
+                                    </span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+    </div>
+</template>

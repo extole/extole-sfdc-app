@@ -26,7 +26,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Settings connection section header</shortDescription>
-        <value>Connection</value>
+        <value>Extole API Connection</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_TestConnection</fullName>
@@ -54,35 +54,35 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Add report button label</shortDescription>
-        <value>Add Report</value>
+        <value>Add KPI</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_ReportConfig_Section</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Report configuration section header</shortDescription>
-        <value>Report Configuration</value>
+        <value>KPI Dashboard Configuration</value>
     </labels>
     <labels>
-        <fullName>Extole_Settings_LeadAttribution_Section</fullName>
+        <fullName>Extole_Settings_ListView_Section</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Lead attribution section header</shortDescription>
-        <value>Lead Attribution</value>
+        <value>List View Configuration</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_SyncManagement_Section</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync management section header</shortDescription>
-        <value>Sync Management</value>
+        <value>Data Import Management</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_Debug_Section</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Debug section header</shortDescription>
-        <value>Debug / Orphan Management</value>
+        <value>Debug Log Management</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_ClearDebugLogs</fullName>
@@ -91,13 +91,7 @@
         <shortDescription>Clear debug logs button label</shortDescription>
         <value>Clear Debug Logs</value>
     </labels>
-    <labels>
-        <fullName>Extole_Settings_ClearOrphanedData</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Clear orphaned data button label</shortDescription>
-        <value>Clear Orphaned Data</value>
-    </labels>
+
     <labels>
         <fullName>Extole_Settings_ApiTokenNote</fullName>
         <language>en_US</language>
@@ -123,8 +117,8 @@
         <fullName>Extole_Overview_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Program overview page title</shortDescription>
-        <value>Program Overview</value>
+        <shortDescription>KPI dashboard page title</shortDescription>
+        <value>KPI Dashboard</value>
     </labels>
     <labels>
         <fullName>Extole_Overview_NoPending</fullName>
@@ -197,6 +191,13 @@
         <value>Failed</value>
     </labels>
     <labels>
+        <fullName>Extole_Tile_SourceUnavailable</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tile footer when Extole source runner is not found (404)</shortDescription>
+        <value>Source Unavailable</value>
+    </labels>
+    <labels>
         <fullName>Extole_Onboarding_Step1</fullName>
         <language>en_US</language>
         <protected>false</protected>
@@ -246,53 +247,39 @@
         <value>Go to Setup → Named Credentials</value>
     </labels>
     <labels>
-        <fullName>Extole_LeadAttribution_Title</fullName>
+        <fullName>Extole_ListView_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Lead attribution page title</shortDescription>
-        <value>Lead Attribution</value>
+        <value>List View</value>
     </labels>
     <labels>
-        <fullName>Extole_LeadAttribution_NoLeads</fullName>
+        <fullName>Extole_ListView_NoRecords</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>No leads message</shortDescription>
-        <value>No RAF leads found for the selected tracking period.</value>
+        <value>No records found for the current filter.</value>
     </labels>
     <labels>
-        <fullName>Extole_LeadAttribution_TrackingSince</fullName>
+        <fullName>Extole_ListView_TrackingSince</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Tracking since date label</shortDescription>
-        <value>Tracking since</value>
+        <shortDescription>Showing records from date label</shortDescription>
+        <value>Showing records from</value>
     </labels>
     <labels>
-        <fullName>Extole_LeadAttribution_RAFLeads</fullName>
+        <fullName>Extole_ListView_NotConfigured</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>RAF leads created metric label</shortDescription>
-        <value>RAF Leads Created</value>
+        <shortDescription>Lead attribution not configured message</shortDescription>
+        <value>List View is not fully configured. Set the Field, Value, and Start Date in Settings.</value>
     </labels>
     <labels>
-        <fullName>Extole_LeadAttribution_ConversionRate</fullName>
+        <fullName>Extole_ListView_OpenInSalesforce</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>RAF lead conversion rate metric label</shortDescription>
-        <value>RAF Lead Conversion Rate</value>
-    </labels>
-    <labels>
-        <fullName>Extole_LeadAttribution_PipelineValue</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Pipeline value metric label</shortDescription>
-        <value>Pipeline Value</value>
-    </labels>
-    <labels>
-        <fullName>Extole_LeadAttribution_Disabled</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Lead attribution disabled message</shortDescription>
-        <value>Lead Attribution is disabled. Enable it in Settings to track RAF leads.</value>
+        <shortDescription>Open in Salesforce button label</shortDescription>
+        <value>Open in Salesforce</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_DisplayLabel</fullName>
@@ -306,7 +293,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Aggregation field tooltip</shortDescription>
-        <value>How to compute the single metric value: use the first row, sum all rows, or count rows.</value>
+        <value>How to extract a single number from your report. Use First Row when your report returns a single summary row. Use Sum when your report returns one row per event or person and you want a total. Use Count when the number of rows is the metric.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_ChartType</fullName>
@@ -390,7 +377,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync log status column</shortDescription>
-        <value>Status</value>
+        <value>Result</value>
     </labels>
     <labels>
         <fullName>Extole_SyncLog_Timestamp</fullName>
@@ -446,7 +433,14 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync triggered success message</shortDescription>
-        <value>Sync triggered successfully.</value>
+        <value>Sync completed successfully.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Warning_SyncPartialFailure</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync completed with some failures</shortDescription>
+        <value>Sync completed with errors. Check the Sync Log for details.</value>
     </labels>
     <labels>
         <fullName>Extole_Success_ConfigSaved</fullName>
@@ -467,7 +461,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Connection report count message</shortDescription>
-        <value>reports available</value>
+        <value>scheduled reports found in your Extole account</value>
     </labels>
     <labels>
         <fullName>Extole_App_Title</fullName>
@@ -480,8 +474,8 @@
         <fullName>Extole_Tab_Overview</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Overview tab label</shortDescription>
-        <value>Program Overview</value>
+        <shortDescription>KPI Dashboard tab label</shortDescription>
+        <value>KPI Dashboard</value>
     </labels>
     <labels>
         <fullName>Extole_Tab_Settings</fullName>
@@ -491,11 +485,11 @@
         <value>Settings</value>
     </labels>
     <labels>
-        <fullName>Extole_Tab_LeadAttribution</fullName>
+        <fullName>Extole_Tab_ListView</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Lead attribution tab label</shortDescription>
-        <value>Lead Attribution</value>
+        <value>List View</value>
     </labels>
     <labels>
         <fullName>Extole_Overview_Rolling30</fullName>
@@ -526,32 +520,39 @@
         <value>As of</value>
     </labels>
     <labels>
-        <fullName>Extole_Settings_ShowLeadAttrib</fullName>
+        <fullName>Extole_Settings_ShowKPIDashboard</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Show KPI Dashboard tab checkbox label</shortDescription>
+        <value>Show KPI Dashboard Tab</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_ShowListView</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Show lead attribution checkbox label</shortDescription>
-        <value>Show Lead Attribution Tab</value>
+        <value>Show List View Tab</value>
     </labels>
     <labels>
-        <fullName>Extole_Settings_RAFLeadField</fullName>
+        <fullName>Extole_Settings_ListView_Field</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>RAF Lead Field label</shortDescription>
-        <value>RAF Lead Field</value>
+        <shortDescription>Extole attribution field label</shortDescription>
+        <value>Extole Field</value>
     </labels>
     <labels>
-        <fullName>Extole_Settings_RAFLeadValue</fullName>
+        <fullName>Extole_Settings_ListView_Value</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>RAF Lead Value label</shortDescription>
-        <value>RAF Lead Value</value>
+        <shortDescription>Extole attribution value label</shortDescription>
+        <value>Extole Value</value>
     </labels>
     <labels>
-        <fullName>Extole_Settings_RAFTrackingStart</fullName>
+        <fullName>Extole_Settings_ListView_StartDate</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>RAF Tracking Start Date label</shortDescription>
-        <value>RAF Tracking Start Date</value>
+        <shortDescription>List View start date label</shortDescription>
+        <value>Show records created after</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_SyncCadence</fullName>
@@ -685,5 +686,859 @@
         <protected>false</protected>
         <shortDescription>Never label for last sync</shortDescription>
         <value>Never</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Config_ComparisonPeriod</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Config comparison period field</shortDescription>
+        <value>Comparison Period</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_ComparisonPeriod</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Comparison period field tooltip</shortDescription>
+        <value>Compare the current value to the value from this many days ago. The trend arrow and percentage on the dashboard tile are driven by this setting. If there is not enough history yet, no trend arrow will appear.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Settings_HistoryDepth</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>History depth setting label</shortDescription>
+        <value>History Depth (reports per runner)</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_DebugLogging</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Debug logging enabled field tooltip</shortDescription>
+        <value>Logs detailed HTTP request and response data for each sync. Useful for diagnosing sync failures or unexpected values. Disable in production to avoid accumulating large amounts of log data.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Debug_ClearActionsDesc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Description of the clear debug logs action</shortDescription>
+        <value>Clear Debug Logs removes all debug log records from this org.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_SyncCadence</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync cadence field tooltip</shortDescription>
+        <value>How often Extole data is automatically pulled into Salesforce. Hourly keeps tiles fresh throughout the day; Nightly is suitable for most daily-summary reports.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_NotifyOnFailure</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Notify on sync failure field tooltip</shortDescription>
+        <value>When enabled, an email alert is sent if consecutive sync attempts fail. Use this to catch API token expiry or connectivity issues early.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_NotifyAfterN</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Notify after N failures field tooltip</shortDescription>
+        <value>Number of consecutive failures before the alert email is sent. Set to 1 to be notified on the first failure; set higher to tolerate occasional transient errors.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_FailureEmail</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Failure notification email field tooltip</shortDescription>
+        <value>Email address that receives sync failure alerts. Defaults to the org admin address if left blank.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tab_EventConfigurator</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event Configurator tab label</shortDescription>
+        <value>Event Configurator</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event Configurator page title</shortDescription>
+        <value>Event Configuration</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Subtitle</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event Configurator subtitle</shortDescription>
+        <value>Configure SFDC → Extole event flows. No code required.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_AddEvent</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Add event button label</shortDescription>
+        <value>Add Event</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_ClearEventLog</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Clear event log button label</shortDescription>
+        <value>Clear Event Log</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_EmptyState_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator empty state title</shortDescription>
+        <value>No event flows configured yet</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_EmptyState_Body</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator empty state body</shortDescription>
+        <value>Connect a Salesforce trigger to an Extole event in minutes — no Apex, no Zapier, no developer required.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_EmptyState_Action</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator empty state action button</shortDescription>
+        <value>Configure Your First Event</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Col_EventName</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event name column header</shortDescription>
+        <value>Event Name</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Col_Trigger</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger column header</shortDescription>
+        <value>Trigger</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Col_Status</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Status column header</shortDescription>
+        <value>Status</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Col_LastDeployed</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Last deployed column header</shortDescription>
+        <value>Last Deployed</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Col_LastFire</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Last fire column header</shortDescription>
+        <value>Last Fire</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Status_Active</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Active status value</shortDescription>
+        <value>Active</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Status_Inactive</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inactive status value</shortDescription>
+        <value>Inactive</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Status_Draft</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Draft status value</shortDescription>
+        <value>Draft</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Status_DeployFailed</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deploy Failed status value</shortDescription>
+        <value>Deploy Failed</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Action_Edit</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Edit row action label</shortDescription>
+        <value>Edit</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Action_Delete</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete row action label</shortDescription>
+        <value>Delete</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Modal_Step1_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator modal step 1 title</shortDescription>
+        <value>Choose Trigger</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Modal_Step2_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator modal step 2 title</shortDescription>
+        <value>Map Fields</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Modal_Step3_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator modal step 3 title</shortDescription>
+        <value>Review &amp; Deploy</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Modal_EditTitle</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event configurator modal edit title prefix</shortDescription>
+        <value>Edit Event Flow</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_ObjectLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger object picker label</shortDescription>
+        <value>Triggering Object</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_ObjectPlaceholder</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger object picker placeholder</shortDescription>
+        <value>Search for an object…</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_ConditionLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger condition label</shortDescription>
+        <value>Trigger Condition</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_Created</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Record created trigger option</shortDescription>
+        <value>Record Created</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_Updated</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Record updated trigger option</shortDescription>
+        <value>Record Updated</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_FieldEquals</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Field set to value trigger option</shortDescription>
+        <value>Field Set To Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_FieldChanges</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Field changes trigger option</shortDescription>
+        <value>Field Changes From → To</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_FieldLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger field picker label</shortDescription>
+        <value>Field</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_ValueLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger value input label</shortDescription>
+        <value>Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_FromValueLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger from-value input label</shortDescription>
+        <value>From Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Trigger_ToValueLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger to-value input label</shortDescription>
+        <value>To Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_SectionTitle</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Preset templates section title</shortDescription>
+        <value>Start from a preset</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_LeadCreated</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead created preset label</shortDescription>
+        <value>Lead Created</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_LeadConverted</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead converted preset label</shortDescription>
+        <value>Lead Converted</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_OpportunityWon</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Opportunity closed won preset label</shortDescription>
+        <value>Opportunity Closed/Won</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_Custom</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Custom preset label</shortDescription>
+        <value>Custom</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_LeadCreated_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead created preset description</shortDescription>
+        <value>Lead — Record Created → lead_created</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_LeadConverted_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead converted preset description</shortDescription>
+        <value>Lead — IsConverted equals True → lead_converted</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_OpportunityWon_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Opportunity closed won preset description</shortDescription>
+        <value>Opportunity — StageName equals Closed Won → opportunity_closedwon</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Preset_Custom_Desc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Custom preset description</shortDescription>
+        <value>Build from scratch — any object, any condition</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_EventNameLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Extole event name field label</shortDescription>
+        <value>Extole Event Name</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_EventNameTooltip</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Extole event name field tooltip</shortDescription>
+        <value>The event_name value sent to Extole. Must match the event name configured in your Extole program (e.g. lead_created, opportunity_closedwon).</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_RequiredSection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Required parameters section header</shortDescription>
+        <value>Required Parameters</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_OptionalSection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Optional parameters section header</shortDescription>
+        <value>Optional Parameters</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_EmailLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Email parameter field label</shortDescription>
+        <value>email</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_EmailTooltip</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Email parameter tooltip</shortDescription>
+        <value>Required. Maps to the contact email for the Extole event. Save is blocked if unmapped.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_PartnerUserIdLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Partner user ID parameter field label</shortDescription>
+        <value>partner_user_id</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_PartnerUserIdTooltip</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Partner user ID parameter tooltip</shortDescription>
+        <value>Required. A stable unique identifier for the person associated with this event. Defaults to the record Id.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_AppTypeNote</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>app_type auto-injection note</shortDescription>
+        <value>app_type: salesforce_crm is automatically injected into every event payload.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_NullNote</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Null field exclusion note</shortDescription>
+        <value>If a mapped field has no value on a record, that parameter will be excluded from the event payload.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_ParamNameLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Optional parameter name column label</shortDescription>
+        <value>Extole Parameter</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_ParamValueLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Optional parameter value column label</shortDescription>
+        <value>SFDC Field / Static Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_AddParam</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Add optional parameter button label</shortDescription>
+        <value>Add Parameter</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_RemoveParam</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Remove parameter button label</shortDescription>
+        <value>Remove</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_StaticValue</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Static value toggle label</shortDescription>
+        <value>Static Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_SFDCField</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SFDC field toggle label</shortDescription>
+        <value>SFDC Field</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_NoEmailWarning</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Warning when no email-like field detected</shortDescription>
+        <value>No standard email field detected on this object. Map a related field containing an email address or enter a static value.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_FieldPickerLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Field picker combobox label</shortDescription>
+        <value>Select Field</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Fields_StaticValueLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Static value input label</shortDescription>
+        <value>Static Value</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_SummarySection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Review step summary section header</shortDescription>
+        <value>Configuration Summary</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_ObjectLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Object row label in review summary</shortDescription>
+        <value>Object</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_TriggerLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger row label in review summary</shortDescription>
+        <value>Trigger</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_EventNameLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event name row label in review summary</shortDescription>
+        <value>Extole Event Name</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_MappingsSection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Field mappings section header in review</shortDescription>
+        <value>Field Mappings</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_ArtifactsSection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generated artifacts section header in review</shortDescription>
+        <value>Generated Artifacts</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_ApexClassLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Apex class name label in review</shortDescription>
+        <value>Apex Class</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_FlowNameLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Flow name label in review</shortDescription>
+        <value>Flow</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_ArtifactsNote</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Artifacts note in review</shortDescription>
+        <value>These names are shown for reference. The Apex class and Flow are generated and deployed automatically.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_TestRecord</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Test with sample record section header</shortDescription>
+        <value>Test with Sample Record</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_TestRecordDesc</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Test with sample record description</shortDescription>
+        <value>Preview the exact JSON payload that would be sent to Extole for a specific record — without actually sending it.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_TestButton</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Preview payload button label</shortDescription>
+        <value>Preview Payload</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DeployButton</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deploy button label</shortDescription>
+        <value>Deploy</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_Deploying</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deploying spinner message</shortDescription>
+        <value>Deploying… This may take up to 30 seconds.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DeploySuccess</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deploy success message</shortDescription>
+        <value>Event flow deployed and activated successfully.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DeployFailed</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deploy failed message prefix</shortDescription>
+        <value>Deployment failed.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DiffSection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Payload diff section header (edit mode)</shortDescription>
+        <value>Payload Changes</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DiffNote</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Payload diff note (edit mode)</shortDescription>
+        <value>Changes compared to the currently deployed configuration.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DiffAdded</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Diff added row label</shortDescription>
+        <value>Added</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DiffRemoved</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Diff removed row label</shortDescription>
+        <value>Removed</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_DiffChanged</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Diff changed row label</shortDescription>
+        <value>Changed</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_RecordIdLabel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Record ID input label in test section</shortDescription>
+        <value>Record ID</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_PayloadPreview</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Payload preview section header</shortDescription>
+        <value>Payload Preview</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Review_TriggerChanged</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Trigger condition changed note in diff</shortDescription>
+        <value>Trigger condition changed</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Title</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete confirmation modal title</shortDescription>
+        <value>Delete Event Flow</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Checking</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Checking Extole campaign usage message</shortDescription>
+        <value>Checking Extole campaign usage…</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_NotFound</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete confirmation message when event not in use</shortDescription>
+        <value>This event is not referenced by any active Extole campaigns. Are you sure you want to delete this event flow? This will deactivate the associated Flow and cannot be undone.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Found</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete warning message when event is in active use</shortDescription>
+        <value>This event is used by an active Extole campaign. Deleting it may break campaign behavior. Deactivation is recommended.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Unknown</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete warning message when usage check failed</shortDescription>
+        <value>We couldn&apos;t verify whether this event is in use by Extole campaigns. Deactivation is the safer option.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Campaign</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Campaign label in delete found message</shortDescription>
+        <value>Campaign</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Confirm</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete confirmation button label</shortDescription>
+        <value>Delete</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_DeleteAnyway</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete anyway secondary button label</shortDescription>
+        <value>Delete anyway</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Deactivate</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deactivate primary button label in delete modal</shortDescription>
+        <value>Deactivate</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Cancel</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Cancel button in delete modal</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Delete_Success</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Delete success toast message</shortDescription>
+        <value>Event flow deleted.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Deactivate_Success</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deactivate success toast message</shortDescription>
+        <value>Event flow deactivated.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_EventLog_Cleared</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Event log cleared success toast message</shortDescription>
+        <value>Event log cleared.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_LoadConfigs</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error loading event configs</shortDescription>
+        <value>Failed to load event configurations.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_LoadObjects</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error loading available objects</shortDescription>
+        <value>Failed to load available objects.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_LoadFields</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error loading fields for object</shortDescription>
+        <value>Failed to load fields for the selected object.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_Preview</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error generating payload preview</shortDescription>
+        <value>Failed to generate payload preview.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_Deploy</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deploy error message prefix</shortDescription>
+        <value>Deployment error</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_Delete</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error deleting event config</shortDescription>
+        <value>Failed to delete the event flow.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_SaveRequired</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validation error for required field unmapped</shortDescription>
+        <value>Both email and partner_user_id must be mapped before saving.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_EventNameRequired</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validation error for missing event name</shortDescription>
+        <value>Extole Event Name is required.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_EventNameDuplicate</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validation error when event name is already in use</shortDescription>
+        <value>This event name is already in use.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_ObjectRequired</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validation error for missing object</shortDescription>
+        <value>Please select a triggering object.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_ClearLog</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error clearing event log</shortDescription>
+        <value>Failed to clear event log.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Tooltip_TriggerObject</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for trigger object picker</shortDescription>
+        <value>The Salesforce object that will trigger the Extole event when records are created or updated.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Tooltip_TriggerCondition</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for trigger condition</shortDescription>
+        <value>The condition that must be true for the event to fire. Field Set To and Field Changes let you target specific field values.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Tooltip_EventName</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for Extole event name</shortDescription>
+        <value>The event_name value sent to Extole. This must match the event name in your Extole program configuration.</value>
     </labels>
 </CustomLabels>

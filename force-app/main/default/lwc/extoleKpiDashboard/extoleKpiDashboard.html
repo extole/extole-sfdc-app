@@ -1,0 +1,46 @@
+<template>
+    <div class="kpi-dashboard-container">
+        <!-- Error banner for invalid token -->
+        <template lwc:if={hasTokenError}>
+            <div class="error-banner" role="alert">
+                <lightning-icon icon-name="utility:error" size="small" variant="error" alternative-text="Error"></lightning-icon>
+                <span>{labelTokenInvalid}</span>
+            </div>
+        </template>
+
+        <!-- Loading spinner -->
+        <template lwc:if={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- No snapshots + no configs: admin guided setup -->
+        <template lwc:elseif={showAdminSetup}>
+            <div class="empty-state">
+                <lightning-icon icon-name="utility:settings" size="large" alternative-text="No reports configured"></lightning-icon>
+                <p class="empty-state-text">{labelNoDataAdmin}</p>
+                <lightning-button label="Go to Settings" variant="brand" onclick={handleGoToSettings}></lightning-button>
+            </div>
+        </template>
+
+        <!-- No snapshots + configs exist: viewer ghost grid -->
+        <template lwc:elseif={showViewerEmpty}>
+            <div class="empty-state">
+                <lightning-icon icon-name="utility:database" size="large" alternative-text="No data"></lightning-icon>
+                <p class="empty-state-text">{labelNoDataViewer}</p>
+            </div>
+        </template>
+
+        <!-- Tile grid -->
+        <template lwc:else>
+            <div class="tile-grid">
+                <template for:each={filteredSnapshots} for:item="snapshot">
+                    <div key={snapshot.Id} class="tile-item">
+                        <c-extole-tile snapshot={snapshot}></c-extole-tile>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

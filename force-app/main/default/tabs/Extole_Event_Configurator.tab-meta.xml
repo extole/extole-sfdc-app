@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <lwcComponent>extoleEventConfigurator</lwcComponent>
+    <description>Configure Salesforce to Extole event flows — no code required</description>
+    <label>Event Configurator</label>
+    <motif>Custom73: Lightning Bolt</motif>
+</CustomTab>
