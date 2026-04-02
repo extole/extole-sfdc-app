@@ -255,20 +255,32 @@ public with sharing class ExtoleEventController {
             throw new AuraHandledException('configJson must include triggerObject and fieldMappingsJson');
         }
 
+        // Validate objectApiName against Schema before interpolating into SOQL
+        Schema.SObjectType sot = Schema.getGlobalDescribe().get(objectApiName);
+        if (sot == null) {
+            throw new AuraHandledException('Unknown object: ' + objectApiName);
+        }
+        String safeObjectName = sot.getDescribe().getName();
+        Map<String, Schema.SObjectField> fieldMap = sot.getDescribe().fields.getMap();
+
         List<Object> mappings = (List<Object>) JSON.deserializeUntyped(fieldMappingsJSON);
 
-        // Build the field set to SOQL-query
+        // Build the field set to SOQL-query — validate each field against Schema
         Set<String> fieldsToQuery = new Set<String>{ 'Id' };
         for (Object rawM : mappings) {
             Map<String, Object> m = (Map<String, Object>) rawM;
             String sfdcField = (String) m.get('sfdc_field');
-            if (!String.isBlank(sfdcField)) {
-                fieldsToQuery.add(sfdcField); // SOQL supports dot-notation natively
-            }
+            if (String.isBlank(sfdcField)) continue;
+            // For dot-notation (e.g. Account.Name), validate the base relationship field
+            String baseField = sfdcField.contains('.')
+                ? sfdcField.split('\\.', 2)[0].toLowerCase()
+                : sfdcField.toLowerCase();
+            if (!fieldMap.containsKey(baseField)) continue;
+            fieldsToQuery.add(sfdcField);
         }
 
         String soql = 'SELECT ' + String.join(new List<String>(fieldsToQuery), ', ')
-            + ' FROM ' + objectApiName + ' WHERE Id = :recordId LIMIT 1';
+            + ' FROM ' + safeObjectName + ' WHERE Id = :recordId LIMIT 1';
 
         List<SObject> records;
         try {
@@ -293,7 +305,8 @@ public with sharing class ExtoleEventController {
 
             if (!String.isBlank(staticValue)) {
                 dataMap.put(extoleParam, staticValue);
-            } else if (!String.isBlank(sfdcField)) {
+            } else if (!String.isBlank(sfdcField) && fieldsToQuery.contains(sfdcField)) {
+                // Only access fields that passed Schema validation (were added to fieldsToQuery)
                 if (sfdcField.contains('.')) {
                     String[] parts = sfdcField.split('\\.', 2);
                     SObject rel = r.getSObject(parts[0]);
@@ -383,6 +396,7 @@ public with sharing class ExtoleEventController {
         for (Extole_Event_Cfg__c c : [
             SELECT Event_Name__c FROM Extole_Event_Cfg__c
             WHERE Event_Name__c != null AND Config_Key__c != :excluded
+            LIMIT 500
         ]) {
             existing.add(c.Event_Name__c.toLowerCase());
         }
@@ -634,12 +648,11 @@ public with sharing class ExtoleEventController {
     }
 
     /**
-     * Poll the status of an async deploy job.
-     * Because deployEventConfig is synchronous, this stub always returns SUCCEEDED
-     * or FAILED based on a cached result. If the configKey is provided, looks up
-     * the current CMDT status as a proxy for deploy outcome.
+     * Returns the current deploy status for a config.
+     * deployEventConfig is synchronous, so by the time the LWC calls this,
+     * the deploy is already complete. Looks up the config record status as the source of truth.
      *
-     * @param jobId  The configKey (DeveloperName) returned by deployEventConfig
+     * @param jobId  The configKey returned by deployEventConfig
      * @return Map with status (PENDING | SUCCEEDED | FAILED) and errorMessage
      */
     @AuraEnabled
@@ -684,17 +697,8 @@ public with sharing class ExtoleEventController {
         return result;
     }
 
-    /**
-     * No-op: per-config handler classes no longer exist.
-     * The universal handler (ExtoleUniversalHandler) is a static class.
-     * Retained for API compatibility with any callers.
-     *
-     * @return 0
-     */
-    @AuraEnabled
-    public static Integer clearOrphanedHandlers() {
-        return 0;
-    }
+    // clearOrphanedHandlers() was removed — per-config handler classes no longer exist.
+    // The universal handler (ExtoleUniversalHandler) is a static class; there is nothing to clean up.
 
     // ─────────────────────────────────────────────────────────────────────────
     // Private helpers

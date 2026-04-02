@@ -158,7 +158,7 @@ public with sharing class ExtoleMetadataService {
             'triggerType'       => 'RecordAfterSave'
         };
 
-        // Add entry condition filter for FIELD_EQUALS
+        // Add entry condition filter for FIELD_EQUALS and FIELD_CHANGES
         if (triggerType == 'FIELD_EQUALS'
             && !String.isBlank(triggerField)
             && !String.isBlank(triggerValue))
@@ -182,6 +182,18 @@ public with sharing class ExtoleMetadataService {
             // Only fire when the record transitions INTO meeting the condition,
             // not on every update where the field already equals the value.
             startNode.put('doesRequireRecordChangedToMeetCriteria', true);
+        } else if (triggerType == 'FIELD_CHANGES' && !String.isBlank(triggerField)) {
+            // Fire only when the specified field's value actually changes.
+            // IsChanged and doesRequireRecordChangedToMeetCriteria are mutually exclusive —
+            // IsChanged is used standalone here without the doesRequire flag.
+            startNode.put('filterLogic', 'and');
+            startNode.put('filters', new List<Object>{
+                new Map<String, Object>{
+                    'field'    => triggerField,
+                    'operator' => 'IsChanged',
+                    'value'    => new Map<String, Object>{ 'booleanValue' => true }
+                }
+            });
         }
 
         // Input parameters passed to ExtoleUniversalHandler.invoke():

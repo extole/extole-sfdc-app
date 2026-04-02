@@ -96,17 +96,17 @@ public with sharing class ExtoleController {
     @AuraEnabled
     public static void saveSettings(Extole_App_Settings__c settings) {
         System.debug('ExtoleController.saveSettings called');
-        upsert settings;
 
-        // Wire up the scheduled job for the saved cadence and persist the job ID.
+        // Wire up the scheduled job before saving so the job ID lands in the same upsert.
         // Wrapped in try-catch so a scheduling failure never prevents settings from saving.
         try {
             String jobId = ExtoleSyncJob.scheduleJob(settings.Sync_Cadence__c);
             settings.Scheduled_Job_Id__c = jobId;
-            upsert settings;
         } catch (Exception e) {
             System.debug('ExtoleController.saveSettings: scheduleJob failed (non-fatal): ' + e.getMessage());
         }
+
+        upsert settings;
     }
 
     @AuraEnabled

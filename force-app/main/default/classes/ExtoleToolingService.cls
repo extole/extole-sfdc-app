@@ -19,9 +19,9 @@ public with sharing class ExtoleToolingService {
         return URL.getOrgDomainUrl().toExternalForm() + '/services/data/v59.0/tooling';
     }
 
-    // Set by ExtoleEventController before making callouts — provides the full
-    // API-capable session obtained via the VF page postMessage trick.
-    public static String sessionOverride = null;
+    // Set in tests to bypass session auth. Private in production; @TestVisible for test access.
+    @TestVisible
+    private static String sessionOverride = null;
 
     private static String getSessionId() {
         if (!String.isBlank(sessionOverride)) return sessionOverride;

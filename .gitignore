@@ -42,6 +42,11 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# Screenshots and local exploration artifacts
+Screenshot*.png
+summary.json
+set_screenshot_dir.sh
+
 # Python Salesforce Functions
 **/__pycache__/
 **/.venv/

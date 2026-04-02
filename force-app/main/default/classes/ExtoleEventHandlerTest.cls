@@ -189,6 +189,55 @@ private class ExtoleEventHandlerTest {
     }
 
     @isTest
+    static void testExecute_multipleRecords_singleTelemetryWrite() {
+        // Verifies the N+1 DML fix: telemetry is written once after all records,
+        // not once per record. With 3 records, DML count should be 1 (the telemetry update),
+        // not 3.
+        Account acct = new Account(Name = 'Batch Test Corp');
+        insert acct;
+        List<Opportunity> opps = new List<Opportunity>();
+        for (Integer i = 0; i < 3; i++) {
+            opps.add(new Opportunity(
+                Name      = 'Batch Opp ' + i,
+                AccountId = acct.Id,
+                StageName = 'Prospecting',
+                CloseDate = Date.today().addDays(30)
+            ));
+        }
+        insert opps;
+
+        insert new Extole_Event_Cfg__c(
+            Config_Key__c          = 'test_batch_cfg',
+            Event_Name__c          = 'opp_created',
+            Trigger_Object__c      = 'Opportunity',
+            Trigger_Type__c        = 'CREATED',
+            Field_Mappings_JSON__c = '[{"extole_param":"name","sfdc_field":"Name","static_value":null}]',
+            Status__c              = 'ACTIVE',
+            Active__c              = true
+        );
+
+        List<String> oppIds = new List<String>();
+        for (Opportunity o : opps) oppIds.add(o.Id);
+
+        Test.setMock(HttpCalloutMock.class, new SuccessMock(200, '{"id":"evt_batch"}'));
+        Test.startTest();
+        new ExtoleUniversalHandler('test_batch_cfg', oppIds).execute(null);
+        Test.stopTest();
+
+        // Telemetry should reflect the last record processed, written once
+        Extole_Event_Cfg__c updated = [
+            SELECT Last_HTTP_Status__c, Last_Succeeded_At__c, Last_Record_Id__c
+            FROM Extole_Event_Cfg__c WHERE Config_Key__c = 'test_batch_cfg' LIMIT 1
+        ];
+        System.assertEquals(200, updated.Last_HTTP_Status__c, 'HTTP 200 written after batch');
+        System.assertNotEquals(null, updated.Last_Succeeded_At__c, 'Last_Succeeded_At set');
+        System.assert(
+            new Set<String>(oppIds).contains(updated.Last_Record_Id__c),
+            'Last_Record_Id is one of the batch records'
+        );
+    }
+
+    @isTest
     static void testExecute_oneHopRelationshipField() {
         // Opportunity with Account lookup → Account.Name mapping
         Account acct = new Account(Name = 'Extole Corp');
@@ -286,6 +335,49 @@ private class ExtoleEventHandlerTest {
         List<Object> filters = (List<Object>) start.get('filters');
         System.assertNotEquals(null, filters, 'FIELD_EQUALS generates filters');
         System.assertEquals(1, filters.size(), 'One filter group');
+    }
+
+    @isTest
+    static void testBuildFlowMetadata_fieldChanges_hasIsChangedFilter() {
+        Map<String, Object> meta = ExtoleMetadataService.buildFlowMetadata(
+            'Extole_Flow_lead_fc', 'lead_fc', 'Lead', 'FIELD_CHANGES', 'Status', null
+        );
+        Map<String, Object> start = (Map<String, Object>) meta.get('start');
+
+        // Must have a filter with IsChanged operator
+        List<Object> filters = (List<Object>) start.get('filters');
+        System.assertNotEquals(null, filters, 'FIELD_CHANGES generates filters');
+        System.assertEquals(1, filters.size(), 'One filter entry');
+        Map<String, Object> filter = (Map<String, Object>) filters[0];
+        System.assertEquals('Status', filter.get('field'), 'Filter targets trigger field');
+        System.assertEquals('IsChanged', filter.get('operator'), 'Operator is IsChanged');
+
+        // doesRequireRecordChangedToMeetCriteria must NOT be set — incompatible with IsChanged
+        System.assertNotEquals(true, start.get('doesRequireRecordChangedToMeetCriteria'),
+            'doesRequireRecordChangedToMeetCriteria must not be true with IsChanged');
+    }
+
+    @isTest
+    static void testBuildFlowMetadata_fieldChanges_noField_noFilter() {
+        // FIELD_CHANGES with no triggerField → no filter added (avoids broken flow metadata)
+        Map<String, Object> meta = ExtoleMetadataService.buildFlowMetadata(
+            'Extole_Flow_lead_nofield', 'lead_nofield', 'Lead', 'FIELD_CHANGES', null, null
+        );
+        Map<String, Object> start = (Map<String, Object>) meta.get('start');
+        System.assertEquals(null, start.get('filters'), 'No filter when triggerField is blank');
+    }
+
+    @isTest
+    static void testDeployFlow_fieldChanges() {
+        ConfigurableMock mock = new ConfigurableMock()
+            .addPattern('/sobjects/Flow/', 201, '{"id":"301XXFC001","success":true}');
+        Test.setMock(HttpCalloutMock.class, mock);
+        Test.startTest();
+        String flowName = ExtoleMetadataService.deployFlow(
+            'test_fc_flow', 'Lead', 'FIELD_CHANGES', 'Status', null
+        );
+        Test.stopTest();
+        System.assertNotEquals(null, flowName, 'FIELD_CHANGES flow deployed without error');
     }
 
     @isTest
@@ -735,6 +827,40 @@ private class ExtoleEventHandlerTest {
     }
 
     @isTest
+    static void testPreviewPayload_unknownObject_throws() {
+        Lead testLead = [SELECT Id FROM Lead WHERE LastName = 'LeadPreview' LIMIT 1];
+        String configJson = '{"triggerObject":"Completely_Fake_Object__x","eventName":"test",'
+            + '"fieldMappingsJson":"[{\\"extole_param\\":\\"email\\",\\"sfdc_field\\":\\"Email\\",\\"static_value\\":null}]"}';
+
+        Test.startTest();
+        try {
+            ExtoleEventController.previewPayload(configJson, testLead.Id);
+            System.assert(false, 'Expected AuraHandledException for unknown object');
+        } catch (AuraHandledException e) {
+            System.assert(e.getMessage() != null, 'Exception message is present');
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testPreviewPayload_invalidFieldSkipped() {
+        // An sfdc_field that does not exist on the object should be silently skipped,
+        // not injected into the SOQL string (SOQL injection fix verification).
+        Lead testLead = [SELECT Id FROM Lead WHERE LastName = 'LeadPreview' LIMIT 1];
+        String configJson = '{"triggerObject":"Lead","eventName":"lead_test",'
+            + '"fieldMappingsJson":"[{\\"extole_param\\":\\"email\\",\\"sfdc_field\\":\\"Email\\",\\"static_value\\":null},'
+            + '{\\"extole_param\\":\\"injected\\",\\"sfdc_field\\":\\"Nonexistent_Field_XYZ__c\\",\\"static_value\\":null}]"}';
+
+        Test.startTest();
+        String payload = ExtoleEventController.previewPayload(configJson, testLead.Id);
+        Test.stopTest();
+
+        // Valid Email field should be in the payload; invalid field should be absent
+        System.assert(payload.contains('preview@extole-test.com'), 'Valid field included');
+        System.assert(!payload.contains('injected'), 'Invalid field silently skipped');
+    }
+
+    @isTest
     static void testPreviewPayload_missingRecordId() {
         Test.startTest();
         try {
@@ -779,11 +905,6 @@ private class ExtoleEventHandlerTest {
         Test.stopTest();
 
         System.assertEquals('FOUND', result.get('status'));
-        List<Extole_Event_Log__c> logs = [
-            SELECT Result__c FROM Extole_Event_Log__c
-            WHERE Event_Type__c = 'SAFETY_CHECK_RUN' LIMIT 1
-        ];
-        System.assertEquals(1, logs.size(), 'SAFETY_CHECK_RUN log entry written');
     }
 
     @isTest
@@ -886,18 +1007,6 @@ private class ExtoleEventHandlerTest {
             System.assert(e.getMessage() != null, 'AuraHandledException thrown as expected');
         }
         Test.stopTest();
-    }
-
-    // =========================================================================
-    // ExtoleEventController — clearOrphanedHandlers (now a no-op)
-    // =========================================================================
-
-    @isTest
-    static void testClearOrphanedHandlers_returnsZero() {
-        Test.startTest();
-        Integer deleted = ExtoleEventController.clearOrphanedHandlers();
-        Test.stopTest();
-        System.assertEquals(0, deleted, 'No orphaned handler classes in universal handler architecture');
     }
 
     // =========================================================================

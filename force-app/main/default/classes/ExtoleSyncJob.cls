@@ -1,10 +1,10 @@
-global class ExtoleSyncJob implements Schedulable {
+public class ExtoleSyncJob implements Schedulable {
 
     // ─────────────────────────────────────────────────────────────────────────
     // Schedulable entry point
     // ─────────────────────────────────────────────────────────────────────────
 
-    global void execute(SchedulableContext ctx) {
+    public void execute(SchedulableContext ctx) {
         System.debug('ExtoleSyncJob.execute: scheduled run triggered');
         System.enqueueJob(new SyncQueueable());
     }

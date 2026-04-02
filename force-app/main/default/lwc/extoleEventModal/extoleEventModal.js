@@ -838,8 +838,9 @@ export default class ExtoleEventModal extends LightningElement {
                 this.isDeploying = false;
             }
         };
-        // eslint-disable-next-line @lwc/lwc/no-async-operation
-        setTimeout(poll, POLL_INTERVAL_MS);
+        // Deploy is synchronous — call immediately rather than waiting POLL_INTERVAL_MS.
+        // The retry loop inside poll() is a safety net in case status is ever PENDING.
+        poll();
     }
 
     // ── Navigation ─────────────────────────────────────────────────────────

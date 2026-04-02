@@ -106,6 +106,13 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
         }
 
         // 5. Send one Extole event per record
+        // Telemetry is accumulated and written once after the loop to avoid N+1 DML.
+        DateTime lastAttemptedAt = null;
+        String   lastRecordId    = null;
+        Boolean  lastSuccess     = null;
+        Integer  lastHttpStatus  = null;
+        String   lastSummary     = null;
+
         for (SObject r : records) {
             Map<String, Object> dataMap = buildDataMap(r, mappings);
             dataMap.put('app_type', 'salesforce_crm');
@@ -127,8 +134,11 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
             try {
                 res = new Http().send(req);
             } catch (Exception e) {
-                updateTelemetry(cfg, (String) r.get('Id'), attemptedAt,
-                    false, null, 'Callout exception: ' + e.getMessage());
+                lastAttemptedAt = attemptedAt;
+                lastRecordId    = (String) r.get('Id');
+                lastSuccess     = false;
+                lastHttpStatus  = null;
+                lastSummary     = 'Callout exception: ' + e.getMessage();
                 continue;
             }
 
@@ -139,8 +149,18 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
                 summary += ': ' + (respBody != null && respBody.length() > 200
                     ? respBody.substring(0, 200) : respBody);
             }
-            updateTelemetry(cfg, (String) r.get('Id'), attemptedAt,
-                success, res.getStatusCode(), summary);
+
+            lastAttemptedAt = attemptedAt;
+            lastRecordId    = (String) r.get('Id');
+            lastSuccess     = success;
+            lastHttpStatus  = res.getStatusCode();
+            lastSummary     = summary;
+        }
+
+        // Single DML write after all callouts complete
+        if (lastAttemptedAt != null) {
+            updateTelemetry(cfg, lastRecordId, lastAttemptedAt,
+                lastSuccess, lastHttpStatus, lastSummary);
         }
     }
 
