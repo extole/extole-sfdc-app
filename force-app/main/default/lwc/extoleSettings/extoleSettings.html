@@ -20,7 +20,7 @@
                     checked={settings.Show_KPI_Dashboard__c}
                     data-field="Show_KPI_Dashboard__c"
                     field-level-help="Show or hide the KPI Dashboard tab in the app navigation. When hidden, KPI tiles are still synced in the background — they'll appear immediately when re-enabled."
-                    onchange={handleSettingsChange}
+                    onchange={handleKpiDashboardToggle}
                 ></lightning-input>
 
                 <template lwc:if={isLoadingConfigs}>
@@ -76,15 +76,6 @@
                         <p class="empty-text">No reports configured yet.</p>
                     </template>
                 </template>
-                <div class="section-footer">
-                    <template lwc:if={hasDirtySettings}>
-                        <span class="unsaved-badge">
-                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
-                            Unsaved changes
-                        </span>
-                    </template>
-                    <lightning-button label={labelSaveSettings} variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
-                </div>
         </div>
 
         <!-- SECTION 3: Sync Management -->

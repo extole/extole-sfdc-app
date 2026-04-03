@@ -739,6 +739,11 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     // Event handlers
+    async handleKpiDashboardToggle(event) {
+        this.settings = { ...this.settings, Show_KPI_Dashboard__c: event.detail.checked };
+        await this.handleSaveSettings();
+    }
+
     handleSettingsChange(event) {
         const field = event.currentTarget.dataset.field;
         let value;
