@@ -107,6 +107,19 @@ public with sharing class ExtoleController {
         }
 
         upsert settings;
+
+        // Refresh Next_Expected_Sync__c on all active snapshots immediately so the
+        // tile stale indicator reflects the new cadence without waiting for next sync.
+        if (settings.Sync_Cadence__c != null) {
+            DateTime nextExpected = ExtoleSyncJob.calcNextExpectedSync(settings.Sync_Cadence__c);
+            List<Extole_Report_Snapshot__c> snaps = [
+                SELECT Id FROM Extole_Report_Snapshot__c WHERE Config_Status__c = 'ACTIVE'
+            ];
+            for (Extole_Report_Snapshot__c snap : snaps) {
+                snap.Next_Expected_Sync__c = nextExpected;
+            }
+            if (!snaps.isEmpty()) update snaps;
+        }
     }
 
     @AuraEnabled

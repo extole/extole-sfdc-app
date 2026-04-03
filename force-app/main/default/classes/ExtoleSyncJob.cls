@@ -374,14 +374,9 @@ public class ExtoleSyncJob implements Schedulable {
                 snap.Time_Series_JSON__c   = series.isEmpty() ? null : JSON.serialize(series);
                 snap.Report_Name__c   = cfg.Report_Name__c;
                 snap.Executor_Type__c = cfg.Executor_Type__c;
-                // As_Of_Date reflects the actual report date; fall back to existing if no new data
-                if (latestReportDateMs > 0) {
-                    snap.As_Of_Date__c = DateTime.newInstance(latestReportDateMs);
-                } else if (existing != null && existing.As_Of_Date__c != null) {
-                    snap.As_Of_Date__c = existing.As_Of_Date__c;
-                } else {
-                    snap.As_Of_Date__c = System.now();
-                }
+                // As_Of_Date reflects when SFDC last successfully synced, not when
+                // Extole generated the report — keeps the tile footer date current.
+                snap.As_Of_Date__c = System.now();
                 // Date_Range__c stores the comparison period label for the tile trendText
                 snap.Date_Range__c    = cfg.Comparison_Period__c != null
                                             ? cfg.Comparison_Period__c : cfg.Date_Range__c;
@@ -629,7 +624,7 @@ public class ExtoleSyncJob implements Schedulable {
     // Utility: next expected sync calculation
     // ─────────────────────────────────────────────────────────────────────────
 
-    private static DateTime calcNextExpectedSync(String cadence) {
+    public static DateTime calcNextExpectedSync(String cadence) {
         DateTime now = System.now();
         if (cadence == 'Every 30min') return now.addMinutes(30);
         if (cadence == 'Every 6hrs')  return now.addHours(6);

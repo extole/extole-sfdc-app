@@ -154,7 +154,8 @@ export default class ExtoleTile extends LightningElement {
 
     get isStale() {
         if (!this.snapshot || !this.snapshot.Next_Expected_Sync__c) return false;
-        return new Date(this.snapshot.Next_Expected_Sync__c) < new Date();
+        const GRACE_MS = 10 * 60 * 1000; // 10-min grace absorbs normal sync processing time
+        return new Date(this.snapshot.Next_Expected_Sync__c).getTime() + GRACE_MS < Date.now();
     }
 
     get asOfText() {
