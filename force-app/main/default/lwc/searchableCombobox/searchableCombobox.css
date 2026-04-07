@@ -142,3 +142,16 @@
     font-style: italic;
     padding: 8px 12px;
 }
+
+/* Disabled state */
+.slds-is-disabled {
+    pointer-events: none;
+}
+.slds-is-disabled .slds-input {
+    background-color: #e0e5ee;
+    color: #706e6b;
+    border-color: #c9c7c5;
+}
+.slds-is-disabled .sc-chevron {
+    opacity: 0.5;
+}

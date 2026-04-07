@@ -6,6 +6,7 @@ export default class SearchableCombobox extends LightningElement {
     @api fieldLevelHelp;
     @api required = false;
     @api loading = false;
+    @api disabled = false;
 
     @api
     get value() { return this._value; }
@@ -67,7 +68,7 @@ export default class SearchableCombobox extends LightningElement {
     }
 
     get comboboxClass() {
-        return `slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click${this.isOpen ? ' slds-is-open' : ''}`;
+        return `slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click${this.isOpen ? ' slds-is-open' : ''}${this.disabled ? ' slds-is-disabled' : ''}`;
     }
 
     get filteredOptions() {

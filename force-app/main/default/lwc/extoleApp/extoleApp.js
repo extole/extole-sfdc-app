@@ -84,10 +84,11 @@ export default class ExtoleApp extends LightningElement {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+
     async handleOnboardingComplete() {
         // Reload app state after onboarding
         await this.initApp();
         this.showOnboarding = false;
-        this.activeTab = 'overview';
+        this.activeTab = 'settings';
     }
 }

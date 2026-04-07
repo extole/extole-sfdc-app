@@ -1,6 +1,5 @@
 <template>
     <div class="onboarding-container">
-        <!-- Logo / Branding -->
         <div class="onboarding-logo">
             <svg width="120" height="32" viewBox="0 0 120 32" aria-label="Extole">
                 <rect width="120" height="32" rx="4" fill="#1D9E75"/>
@@ -8,168 +7,79 @@
             </svg>
         </div>
 
-        <!-- Progress stepper -->
-        <div class="stepper" role="list">
-            <div class={step1Class} role="listitem">
-                <div class="step-circle">
-                    <template lwc:if={isStep1Done}>
-                        <lightning-icon icon-name="utility:check" size="x-small" alternative-text="Done"></lightning-icon>
-                    </template>
-                    <template lwc:else>
-                        <span>1</span>
-                    </template>
+        <lightning-card title="Getting Started">
+            <div class="setup-body">
+                <p class="setup-intro">Complete these four steps to connect Salesforce to your Extole program.</p>
+
+                <ol class="setup-steps">
+                    <li class="setup-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-heading">Get your Extole API token</div>
+                            <p class="step-desc">Generate a long-lived access token from the Extole Security Center.</p>
+                            <div class="step-links">
+                                <a href="https://my.extole.com/security-center" target="_blank" rel="noopener noreferrer" class="setup-link">
+                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
+                                    Extole Security Center
+                                </a>
+                                <a href="https://dev.extole.com/docs/generate-long-lived-access-tokens" target="_blank" rel="noopener noreferrer" class="setup-link">
+                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
+                                    Long-lived token docs
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="setup-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-heading">Create Named Credential: <code>Extole_API</code></div>
+                            <p class="step-desc">In Salesforce Setup, create a Named Credential using your Extole API token as the bearer token. Use <strong>Extole_API</strong> as the name.</p>
+                            <div class="step-links">
+                                <a href="/lightning/setup/NamedCredential/home" target="_blank" rel="noopener noreferrer" class="setup-link">
+                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
+                                    Named Credentials Setup
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="setup-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-heading">Create Connected App + Named Credential: <code>Extole_Tooling</code></div>
+                            <p class="step-desc">Create a Connected App with OAuth enabled, then create a Named Credential using the consumer key and secret. Use <strong>Extole_Tooling</strong> as the name. This enables the Referral Events configurator.</p>
+                            <div class="step-links">
+                                <a href="/lightning/setup/ConnectedApplication/home" target="_blank" rel="noopener noreferrer" class="setup-link">
+                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
+                                    Connected Apps Setup
+                                </a>
+                                <a href="/lightning/setup/NamedCredential/home" target="_blank" rel="noopener noreferrer" class="setup-link">
+                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
+                                    Named Credentials Setup
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="setup-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-heading">Test connection and add your first KPI</div>
+                            <p class="step-desc">Go to Settings, test your connection, then add a report configuration. Your KPI dashboard will appear once the first sync completes.</p>
+                        </div>
+                    </li>
+                </ol>
+
+                <div class="setup-footer">
+                    <lightning-button
+                        label="Go to Settings"
+                        variant="brand"
+                        icon-name="utility:settings"
+                        onclick={handleGoToSettings}
+                    ></lightning-button>
                 </div>
-                <span class="step-label">{labelStep1}</span>
             </div>
-            <div class="step-connector"></div>
-            <div class={step2Class} role="listitem">
-                <div class="step-circle">
-                    <template lwc:if={isStep2Done}>
-                        <lightning-icon icon-name="utility:check" size="x-small" alternative-text="Done"></lightning-icon>
-                    </template>
-                    <template lwc:else>
-                        <span>2</span>
-                    </template>
-                </div>
-                <span class="step-label">{labelStep2}</span>
-            </div>
-            <div class="step-connector"></div>
-            <div class={step3Class} role="listitem">
-                <div class="step-circle"><span>3</span></div>
-                <span class="step-label">{labelStep3}</span>
-            </div>
-        </div>
-
-        <!-- Step content card -->
-        <lightning-card>
-            <!-- Step 1: Connect -->
-            <template lwc:if={isCurrentStep1}>
-                <div class="step-body">
-                    <h2 class="step-title">{labelStep1}</h2>
-                    <p class="step-desc">{labelStep1Desc}</p>
-
-                    <a href="/lightning/setup/NamedCredential/home" target="_blank" rel="noopener noreferrer" class="setup-link">
-                        <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
-                        {labelGoToSetup}
-                    </a>
-
-                    <div class="connect-action-row">
-                        <lightning-button
-                            label={labelTestConnection}
-                            variant="brand"
-                            onclick={handleTestConnection}
-                            disabled={isTesting}
-                        ></lightning-button>
-                        <template lwc:if={isTesting}>
-                            <lightning-spinner size="small" alternative-text="Testing..."></lightning-spinner>
-                        </template>
-                    </div>
-
-                    <template lwc:if={connectionResult}>
-                        <div class={connectionResultClass}>
-                            <template lwc:if={connectionResult.success}>
-                                Connected! {connectionResult.reportCount} {labelReportCount}
-                            </template>
-                            <template lwc:else>
-                                {connectionResult.errorMessage}
-                            </template>
-                        </div>
-                    </template>
-
-                    <div class="step-footer">
-                        <lightning-button
-                            label="Next"
-                            variant="brand"
-                            onclick={handleStep1Next}
-                            disabled={isNotConnected}
-                        ></lightning-button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Step 2: Configure first report -->
-            <template lwc:if={isCurrentStep2}>
-                <div class="step-body">
-                    <h2 class="step-title">{labelStep2}</h2>
-                    <p class="step-desc">{labelStep2Desc}</p>
-
-                    <template lwc:if={isLoadingReportTypes}>
-                        <div class="spinner-container">
-                            <lightning-spinner size="medium" alternative-text="Loading report types..."></lightning-spinner>
-                        </div>
-                    </template>
-
-                    <template lwc:else>
-                        <div class="report-picker-table">
-                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
-                                <thead>
-                                    <tr>
-                                        <th scope="col"><div class="slds-truncate">Report Name</div></th>
-                                        <th scope="col"><div class="slds-truncate">Description</div></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template for:each={filteredReportTypes} for:item="rt">
-                                        <tr key={rt.runnerId} class={rt.rowClass} onclick={handleSelectReport} data-id={rt.runnerId}>
-                                            <td>{rt.displayName}</td>
-                                            <td class="desc-cell">{rt.description}</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </template>
-
-                    <div class="step-footer">
-                        <lightning-button label="Back" variant="neutral" onclick={handleStep2Back}></lightning-button>
-                        <lightning-button
-                            label="Next"
-                            variant="brand"
-                            onclick={handleStep2Next}
-                            disabled={noReportTypeSelected}
-                        ></lightning-button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Step 3: Run first sync -->
-            <template lwc:if={isCurrentStep3}>
-                <div class="step-body">
-                    <h2 class="step-title">{labelStep3}</h2>
-                    <p class="step-desc">{labelStep3Desc}</p>
-
-                    <div class="sync-action-row">
-                        <lightning-button
-                            label={labelSyncNow}
-                            variant="brand"
-                            icon-name="utility:refresh"
-                            onclick={handleRunSync}
-                            disabled={isSyncing}
-                        ></lightning-button>
-                        <template lwc:if={isSyncing}>
-                            <lightning-spinner size="small" alternative-text="Syncing..."></lightning-spinner>
-                        </template>
-                    </div>
-
-                    <template lwc:if={syncComplete}>
-                        <div class="sync-success">
-                            <lightning-icon icon-name="utility:success" size="small" alternative-text="Success" variant="success"></lightning-icon>
-                            Sync complete! Your dashboard is ready.
-                        </div>
-                        <div class="step-footer">
-                            <lightning-button
-                                label="Go to Dashboard"
-                                variant="brand"
-                                onclick={handleFinish}
-                            ></lightning-button>
-                        </div>
-                    </template>
-
-                    <div class="step-footer-back">
-                        <lightning-button label="Back" variant="neutral" onclick={handleStep3Back}></lightning-button>
-                    </div>
-                </div>
-            </template>
         </lightning-card>
     </div>
 </template>

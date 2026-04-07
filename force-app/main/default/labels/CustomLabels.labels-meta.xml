@@ -198,55 +198,6 @@
         <value>Source Unavailable</value>
     </labels>
     <labels>
-        <fullName>Extole_Onboarding_Step1</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Onboarding step 1 title</shortDescription>
-        <value>Connect to Extole</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Onboarding_Step2</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Onboarding step 2 title</shortDescription>
-        <value>Configure Your First Report</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Onboarding_Step3</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Onboarding step 3 title</shortDescription>
-        <value>Run First Sync</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Onboarding_Step1_Desc</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Onboarding step 1 description</shortDescription>
-        <value>Add your Extole API token to the Named Credential in Salesforce Setup, then test your connection below.</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Onboarding_Step2_Desc</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Onboarding step 2 description</shortDescription>
-        <value>Choose a report type to track in your dashboard.</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Onboarding_Step3_Desc</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Onboarding step 3 description</shortDescription>
-        <value>Trigger your first sync to populate your dashboard with live data.</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Onboarding_GoToSetup</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Go to setup link text</shortDescription>
-        <value>Go to Setup → Named Credentials</value>
-    </labels>
-    <labels>
         <fullName>Extole_ListView_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>

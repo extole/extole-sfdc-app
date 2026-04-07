@@ -184,7 +184,7 @@
                     field-level-help="Choose whether your Extole-influenced people are tracked as Contacts or Leads."
                     onchange={handleAttributionObjectChange}
                 ></lightning-combobox>
-                <lightning-combobox
+                <c-searchable-combobox
                     label={labelLeadField}
                     value={settings.List_View_Field__c}
                     options={attributionFieldOptions}
@@ -192,8 +192,8 @@
                     placeholder="Select a field..."
                     field-level-help="The field on the selected object that identifies Extole-influenced records."
                     onchange={handleAttributionFieldChange}
-                ></lightning-combobox>
-                <lightning-combobox
+                ></c-searchable-combobox>
+                <c-searchable-combobox
                     label={labelLeadValue}
                     value={settings.List_View_Value__c}
                     options={attributionValueOptions}
@@ -202,7 +202,7 @@
                     field-level-help="The value that marks a record as Extole-influenced."
                     data-field="List_View_Value__c"
                     onchange={handleSettingsChange}
-                ></lightning-combobox>
+                ></c-searchable-combobox>
                 <lightning-dual-listbox
                     label="Display Columns"
                     source-label="Available"
@@ -547,14 +547,14 @@
                                     <lightning-spinner size="small" alternative-text="Loading columns..."></lightning-spinner>
                                 </template>
                                 <template lwc:elseif={hasColumnOptions}>
-                                    <lightning-combobox
+                                    <c-searchable-combobox
                                         label={labelConfigValueColumn}
                                         value={editingConfig.Value_Column__c}
                                         options={valueColumnOptions}
                                         data-field="Value_Column__c"
                                         field-level-help={tooltipValueColumn}
                                         onchange={handleConfigFieldChange}
-                                    ></lightning-combobox>
+                                    ></c-searchable-combobox>
                                 </template>
                                 <template lwc:else>
                                     <lightning-input
