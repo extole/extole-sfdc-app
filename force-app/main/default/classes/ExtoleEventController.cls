@@ -563,14 +563,15 @@ public with sharing class ExtoleEventController {
 
         Extole_Event_Cfg__c cfg = configs[0];
 
-        // Deactivate the Flow (retain as orphan per spec)
+        // Deactivate and delete the Flow
         if (!String.isBlank(cfg.Flow_Name__c)) {
             try {
                 ExtoleMetadataService.deactivateFlow(cfg.Flow_Name__c);
+                ExtoleMetadataService.deleteFlow(cfg.Flow_Name__c);
                 writeEventLog(configKey, 'FLOW_DEACTIVATED', 'SUCCESS',
-                    'Deactivated on config delete: ' + cfg.Flow_Name__c);
+                    'Deactivated and deleted on config delete: ' + cfg.Flow_Name__c);
             } catch (Exception e) {
-                System.debug('deleteEventConfig: flow deactivation failed (non-fatal): ' + e.getMessage());
+                System.debug('deleteEventConfig: flow deactivation/deletion failed (non-fatal): ' + e.getMessage());
             }
         }
 

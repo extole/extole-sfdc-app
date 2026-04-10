@@ -1,18 +1,67 @@
-# Salesforce DX Project: Next Steps
+# Extole SFDC App
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+Connects Salesforce to your Extole referral program. Syncs program KPIs into Salesforce and sends Salesforce record events to Extole to trigger referral actions.
 
-## How Do You Plan to Deploy Your Changes?
+---
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+## What it does
 
-## Configure Your Salesforce DX Project
+**KPI Dashboard** — Pulls report data from the Extole API on a configurable schedule (hourly, daily, or weekly) and displays it as metric tiles inside Salesforce. Admins choose which Extole reports to surface and how frequently to sync.
 
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
+**Event Configurator** — Lets admins define record-triggered events that fire to Extole when Salesforce records change. For example: send an event to Extole when a Lead is created, or when an Opportunity moves to Closed Won. No code required — the app generates and deploys the necessary Salesforce Flow automatically.
 
-## Read All About It
+---
 
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
+## What gets installed
+
+**Custom Objects**
+
+| Object | Purpose |
+|---|---|
+| `Extole_App_Settings__c` | Org-wide configuration (sync cadence, notifications, feature toggles) |
+| `Extole_Report_Config__c` | Admin-defined list of Extole reports to sync |
+| `Extole_Report_Snapshot__c` | Latest synced values from each report |
+| `Extole_Sync_Log__c` | Audit log of every sync attempt |
+| `Extole_Event_Cfg__c` | Event trigger configurations created in the Event Configurator |
+| `Extole_Event_Log__c` | Audit log of every event fired to Extole |
+| `Extole_Debug_Log__c` | Optional detailed debug logs for troubleshooting |
+
+**Permission Sets**
+
+| Permission Set | Assign to |
+|---|---|
+| `Extole_App_Admin` | Admins who configure the integration |
+| `Extole_App_Viewer` | Users who need read access to the KPI Dashboard |
+| `Extole_API_Access` | System — grants access to the Extole API credential |
+
+**App and Tabs** — A Lightning app with five tabs: Home, Settings, Event Configurator, KPI Dashboard, and List View.
+
+**Apex Classes** — Backend logic for syncing, event handling, and Tooling API integration. All classes use `with sharing`.
+
+**Custom Metadata** — Three built-in event templates: Lead Created, Lead Converted, Opportunity Closed Won.
+
+---
+
+## Auth model
+
+The app uses two Named Credentials for all external callouts — no tokens are stored in Apex code or custom fields.
+
+**Extole API** (`Extole_API`) — Custom External Credential using a long-lived bearer token generated from the Extole Security Center. Used by the sync job and event handlers to call `https://my.extole.com`.
+
+**Salesforce Tooling API** (`Extole_Tooling`) — OAuth External Credential backed by a Connected App. Used by the Event Configurator to deploy generated Flows into the org. Requires a one-time admin OAuth authorization after setup.
+
+---
+
+## Ongoing maintenance
+
+- **Sync cadence** — Change in Settings → Sync Management. The scheduled job is automatically re-registered on save.
+- **Adding KPIs** — Settings → Report Configuration → Add Report. New tiles appear on the KPI Dashboard after the next sync.
+- **Event configs** — Event Configurator tab. Create, edit, deactivate, or delete event triggers. Deleting a config deactivates and removes the associated Flow automatically.
+- **Failure notifications** — Settings → Notifications. Enable email alerts after N consecutive sync failures.
+- **Debug logging** — Settings → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
+
+---
+
+## Installation
+
+See [INSTALL.md](INSTALL.md) for step-by-step setup instructions.
