@@ -57,8 +57,8 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
 3. Under **App Settings**:
    - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
    - **OAuth Scopes** — add:
-     - `api` (Access and manage your data)
-     - `refresh_token, offline_access` (Perform requests on your behalf at any time)
+     - **Manage user data via APIs (api)**
+     - **Perform requests at any time (refresh_token, offline_access)**
 4. Under **OAuth Settings → Flow Enablement**, check:
    - **Enable Authorization Code and Credentials Flow**
 5. Save — the app is enabled immediately
