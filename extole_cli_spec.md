@@ -17,12 +17,14 @@ Built in Node.js. Distributed via `npm install -g @extole/cli` or `npx @extole/c
 extole auth login --token <bearer-token>
 extole auth logout
 extole auth status
+extole auth token
 ```
 
 - Token stored in `~/.extole/config` (JSON)
 - Supports multiple named profiles: `--profile staging`
 - Default profile used if `--profile` omitted
-- `auth status` prints token, client ID resolved from token, and a live ping result
+- `auth status` prints token (masked), client ID resolved from token, and a live ping result
+- `auth token` prints the raw token to stdout for piping into other tools (e.g. `extole auth token | pbcopy` or `some-tool --token $(extole auth token)`). Prints a credential warning to stderr so it doesn't pollute stdout.
 
 All commands accept `--token <token>` as an override for one-off use (useful for Claude Code / CI).
 
