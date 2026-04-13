@@ -54,13 +54,14 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
    - **Distribution:** Local
-3. Under **OAuth Settings**, add the following **Selected OAuth Scopes**:
-   - `api` (Access and manage your data)
-   - `refresh_token, offline_access` (Perform requests on your behalf at any time)
+3. Under **App Settings**:
+   - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
+   - **OAuth Scopes** — add:
+     - `api` (Access and manage your data)
+     - `refresh_token, offline_access` (Perform requests on your behalf at any time)
 4. Under **OAuth Settings → Flow Enablement**, check:
    - **Enable Authorization Code and Credentials Flow**
-5. **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
-6. Save — the app is enabled immediately
+5. Save — the app is enabled immediately
 
 ---
 
