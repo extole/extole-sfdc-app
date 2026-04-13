@@ -144,6 +144,36 @@ sf project deploy start \
     $ORG_FLAG
 
 echo ""
+echo "=== Step 6: Granting Extole_Tooling_Cred access to Extole_App_Admin permission set ==="
+
+PERM_SET_FILE="$METADATA_DIR/permissionsets/Extole_App_Admin.permissionset-meta.xml"
+cp "$PERM_SET_FILE" "${PERM_SET_FILE}.bak"
+
+python3 - "$PERM_SET_FILE" <<'PYEOF'
+import sys
+with open(sys.argv[1], 'r') as f:
+    content = f.read()
+
+new_block = (
+    '\n    <externalCredentialPrincipalAccesses>'
+    '\n        <enabled>true</enabled>'
+    '\n        <externalCredentialPrincipal>Extole_Tooling_Cred-Admin</externalCredentialPrincipal>'
+    '\n    </externalCredentialPrincipalAccesses>'
+)
+# Insert after the first closing tag (the Extole_API entry)
+content = content.replace('</externalCredentialPrincipalAccesses>', '</externalCredentialPrincipalAccesses>' + new_block, 1)
+
+with open(sys.argv[1], 'w') as f:
+    f.write(content)
+PYEOF
+
+sf project deploy start \
+    --source-dir "$METADATA_DIR/permissionsets" \
+    $ORG_FLAG
+
+mv "${PERM_SET_FILE}.bak" "$PERM_SET_FILE"
+
+echo ""
 echo "================================================================"
 echo "SETUP COMPLETE — One-time authorization required:"
 echo ""

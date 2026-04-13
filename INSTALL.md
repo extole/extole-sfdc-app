@@ -89,6 +89,8 @@ After the script completes, an admin must authorize the credential:
 
 This is a one-time step. After authorization, the Event Configurator can deploy Flows without requiring a browser session.
 
+> The setup script automatically grants the `Extole_App_Admin` permission set access to the Tooling credential as part of Step 6.
+
 ---
 
 ## Step 6 — Assign permission sets

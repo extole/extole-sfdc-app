@@ -5,10 +5,6 @@
         <enabled>true</enabled>
         <externalCredentialPrincipal>Extole_API-ExtoleAPIUser</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
-    <externalCredentialPrincipalAccesses>
-        <enabled>true</enabled>
-        <externalCredentialPrincipal>Extole_Tooling_Auth2-Admin</externalCredentialPrincipal>
-    </externalCredentialPrincipalAccesses>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Extole App Admin</label>
     <license>Salesforce</license>
