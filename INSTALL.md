@@ -77,10 +77,22 @@ bash scripts/setup_named_credential.sh --target-org <org_alias>
 1. Retrieves your org domain URL
 2. Prompts for the Consumer Key and Secret from the app you created in Step 3
    - Find them: Setup → App Manager → Extole Deployer → View
-3. Writes and deploys the `Extole_Tooling_Auth` Auth Provider and `Extole_Tooling` Named Credential
+3. Deploys the `Extole_Tooling_Auth` Auth Provider
+4. Pauses and prompts you to manually create the External Credential in Setup (Salesforce blocks this via the API)
+5. Deploys the `Extole_Tooling` Named Credential
 
-> **Note:** Salesforce does not allow setting the Consumer Secret via metadata deploy. After the script completes, it will print your secret — add it manually:
-> Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the Consumer Secret → Save
+**Manual steps the script will prompt you through:**
+
+After the Auth Provider deploys, the script will pause and ask you to:
+
+1. Add the Consumer Secret manually — Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the secret → Save
+2. Create the External Credential — Setup → **Named Credentials** → **External Credentials** tab → New:
+   - **Label:** `Extole Tooling Cred`
+   - **API Name:** `Extole_Tooling_Cred`
+   - **Authentication Protocol:** OAuth 2.0
+   - **Identity Provider:** Extole Tooling Auth
+   - **Principal Type:** Named Principal
+   - Save
 
 ---
 

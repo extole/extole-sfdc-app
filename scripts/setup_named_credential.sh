@@ -107,30 +107,7 @@ echo "  Value: (the Consumer Secret you entered above)"
 echo "  Your secret: ${CONSUMER_SECRET}"
 
 echo ""
-echo "=== Step 4: Writing External Credential + Named Credential metadata ==="
-
-mkdir -p "$METADATA_DIR/externalCredentials"
-
-EC_FILE="$METADATA_DIR/externalCredentials/Extole_Tooling_Cred.externalCredential-meta.xml"
-cat > "$EC_FILE" <<ECXML
-<?xml version="1.0" encoding="UTF-8"?>
-<ExternalCredential xmlns="http://soap.sforce.com/2006/04/metadata">
-    <authenticationProtocol>Oauth</authenticationProtocol>
-    <label>Extole Tooling Cred</label>
-    <parameters>
-        <authProvider>Extole_Tooling_Auth</authProvider>
-        <parameterName>AuthProvider</parameterName>
-        <parameterType>AuthProvider</parameterType>
-        <sequenceNumber>1</sequenceNumber>
-    </parameters>
-    <principals>
-        <principalName>Admin</principalName>
-        <principalType>NamedPrincipal</principalType>
-        <sequenceNumber>1</sequenceNumber>
-    </principals>
-</ExternalCredential>
-ECXML
-echo "Written: $EC_FILE"
+echo "=== Step 4: Writing Named Credential metadata ==="
 
 NC_FILE="$METADATA_DIR/namedCredentials/Extole_Tooling.namedCredential-meta.xml"
 cat > "$NC_FILE" <<NCXML
@@ -146,10 +123,25 @@ NCXML
 echo "Written: $NC_FILE"
 
 echo ""
-echo "=== Step 5: Deploying AuthProvider + External Credential + Named Credential ==="
+echo "=== Step 5: Deploying AuthProvider + Named Credential ==="
+echo ""
+echo "NOTE: The External Credential (Extole_Tooling_Cred) cannot be created via"
+echo "metadata deploy — Salesforce blocks OAuth credential configuration through"
+echo "the API. You must create it manually in Setup BEFORE pressing ENTER:"
+echo ""
+echo "  1. Setup → Named Credentials → External Credentials tab → New"
+echo "  2. Label: Extole Tooling Cred"
+echo "  3. API Name: Extole_Tooling_Cred"
+echo "  4. Authentication Protocol: OAuth 2.0"
+echo "  5. Identity Provider: Extole Tooling Auth  (the Auth Provider just deployed)"
+echo "  6. Principal Type: Named Principal"
+echo "  7. Save"
+echo ""
+echo "Press ENTER once you have created the External Credential in Setup..."
+read -r
+
 sf project deploy start \
     --source-dir "$METADATA_DIR/authproviders" \
-    --source-dir "$METADATA_DIR/externalCredentials" \
     --source-dir "$METADATA_DIR/namedCredentials" \
     $ORG_FLAG
 
