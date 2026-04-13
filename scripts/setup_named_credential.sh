@@ -117,11 +117,6 @@ cat > "$EC_FILE" <<ECXML
 <ExternalCredential xmlns="http://soap.sforce.com/2006/04/metadata">
     <authenticationProtocol>Oauth</authenticationProtocol>
     <label>Extole Tooling Cred</label>
-    <principals>
-        <principalName>Admin</principalName>
-        <principalType>NamedPrincipal</principalType>
-        <sequenceNumber>1</sequenceNumber>
-    </principals>
 </ExternalCredential>
 ECXML
 echo "Written: $EC_FILE"
