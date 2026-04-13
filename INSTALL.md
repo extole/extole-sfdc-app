@@ -79,6 +79,9 @@ bash scripts/setup_named_credential.sh --target-org <org_alias>
    - Find them: Setup → App Manager → Extole Deployer → View
 3. Writes and deploys the `Extole_Tooling_Auth` Auth Provider and `Extole_Tooling` Named Credential
 
+> **Note:** Salesforce does not allow setting the Consumer Secret via metadata deploy. After the script completes, it will print your secret — add it manually:
+> Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the Consumer Secret → Save
+
 ---
 
 ## Step 5 — Authorize the Tooling credential (one-time OAuth)

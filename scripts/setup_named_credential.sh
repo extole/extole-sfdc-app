@@ -95,11 +95,16 @@ cat > "$AUTH_PROVIDER_FILE" <<AUTHXML
     <friendlyName>Extole Tooling Auth</friendlyName>
     <providerType>Salesforce</providerType>
     <consumerKey>${CONSUMER_KEY}</consumerKey>
-    <consumerSecret>${CONSUMER_SECRET}</consumerSecret>
     <defaultScopes>full refresh_token</defaultScopes>
 </AuthProvider>
 AUTHXML
 echo "Written: $AUTH_PROVIDER_FILE"
+echo ""
+echo "NOTE: Salesforce does not allow setting the Consumer Secret via metadata deploy."
+echo "After this script completes, you must add it manually:"
+echo "  Setup → Auth Providers → Extole Tooling Auth → Edit → Consumer Secret"
+echo "  Value: (the Consumer Secret you entered above)"
+echo "  Your secret: ${CONSUMER_SECRET}"
 
 echo ""
 echo "=== Step 4: Writing External Credential + Named Credential metadata ==="
@@ -111,7 +116,6 @@ cat > "$EC_FILE" <<ECXML
 <?xml version="1.0" encoding="UTF-8"?>
 <ExternalCredential xmlns="http://soap.sforce.com/2006/04/metadata">
     <authenticationProtocol>Oauth</authenticationProtocol>
-    <authProvider>Extole_Tooling_Auth</authProvider>
     <label>Extole Tooling Cred</label>
     <principalType>NamedPrincipal</principalType>
     <principals>
