@@ -124,8 +124,8 @@ If you have access to the Extole CLI (via npm or the private repo), install it a
 
 ```bash
 # Install (method depends on your access — npm or private GitHub repo)
-npm install -g @extole/cli          # if published to npm
-npm install -g github:extole/<repo> # if installing from the private repo
+npm install -g @extole/cli                    # if published to npm
+npm install -g github:cduskin-cpu/extole-cli  # if installing from the private repo
 
 # Authenticate with your Extole API token
 extole auth login --token <your_token>
