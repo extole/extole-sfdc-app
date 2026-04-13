@@ -95,7 +95,7 @@ cat > "$AUTH_PROVIDER_FILE" <<AUTHXML
     <friendlyName>Extole Tooling Auth</friendlyName>
     <providerType>Salesforce</providerType>
     <consumerKey>${CONSUMER_KEY}</consumerKey>
-    <defaultScopes>full refresh_token</defaultScopes>
+    <defaultScopes>api refresh_token</defaultScopes>
 </AuthProvider>
 AUTHXML
 echo "Written: $AUTH_PROVIDER_FILE"
