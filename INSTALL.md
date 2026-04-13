@@ -3,12 +3,9 @@
 ## Prerequisites
 
 - **Git** with GitHub SSH access configured — [GitHub SSH setup docs](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
-- **Salesforce CLI** (`sf`) installed and authenticated to the target org:
-  ```bash
-  sf org login web        # opens browser to authenticate
-  sf org list             # shows your orgs and their aliases
-  ```
+- **Salesforce CLI** (`sf`) installed — [Install guide](https://developer.salesforce.com/tools/salesforcecli)
 - **jq** installed (`brew install jq` on macOS)
+- **python3** installed (standard on macOS)
 - **Extole API token** — generate a long-lived token from the [Extole Security Center](https://my.extole.com/security-center) ([docs](https://dev.extole.com/docs/generate-long-lived-access-tokens))
 - Installing user must be a Salesforce admin with:
   - Author Apex permission
@@ -16,97 +13,140 @@
 
 ---
 
-## Step 1 — Deploy the package
+## Step 1 — Clone the repository and authenticate
+
+**In your terminal:**
 
 ```bash
-sf project deploy start --target-org <org_alias>
+git clone git@github.com:cduskin-cpu/extole-sfdc-app.git
+cd extole-sfdc-app
 ```
 
-Replace `<org_alias>` with the alias shown in `sf org list`. Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole app.
+Authenticate the Salesforce CLI to your org:
+
+```bash
+sf org login web --instance-url https://<your-org-domain>.my.salesforce.com --alias <alias>
+```
+
+Verify it worked:
+
+```bash
+sf org list
+```
 
 ---
 
-## Step 2 — Configure the Extole API credential
+## Step 2 — Deploy the package
 
-The app calls the Extole API using a Named Credential. This requires a long-lived Extole access token.
+**In your terminal:**
 
-**Set the bearer token on the External Credential**
+```bash
+sf project deploy start --target-org <alias>
+```
 
-The `Extole_API` External Credential ships with a placeholder value. Replace it:
+Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole app.
+
+---
+
+## Step 3 — Configure the Extole API credential
+
+**In Salesforce Setup UI:**
+
+The `Extole_API` External Credential ships with a placeholder bearer token. Replace it:
 
 1. Setup → Named Credentials → **External Credentials** tab
-2. Click **Extole API** → Edit
-3. Under **Authentication Parameters**, find the `Authorization` parameter
+2. Click the **Extole API** name to open the full detail page (do not click Edit — that opens a modal)
+3. Under **Authentication Parameters**, find the `Authorization` row → click **Edit**
 4. Replace `REPLACE_WITH_BEARER_TOKEN` with: `Bearer <your_token>`
+   _(include the word `Bearer` followed by a space)_
 5. Save
 
 > **If you have the Extole CLI:** run `extole ping` to verify the token is valid before continuing.
 
 ---
 
-## Step 3 — Create the External Client App (Connected App)
+## Step 4 — Create the External Client App
 
-The Event Configurator deploys Salesforce Flows via the Tooling API. This requires an OAuth-connected app.
+**In Salesforce Setup UI:**
+
+The Event Configurator deploys Salesforce Flows via the Tooling API. This requires an OAuth app.
 
 1. Setup → **External Client App Manager** → **New External Client App**
-2. Fill in:
+2. Under **Basic Information**, fill in:
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
+   - **Contact Email:** your admin email address
    - **Distribution:** Local
-3. Under **App Settings**:
-   - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback` _(placeholder — you will replace this in Step 4 below)_
-   - **OAuth Scopes** — add:
+3. Check **Enable OAuth Settings**
+4. Under **OAuth Settings**, configure:
+   - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
+     _(placeholder — you will replace this after the Auth Provider deploys in Step 5)_
+   - **OAuth Scopes** — add both:
      - **Manage user data via APIs (api)**
      - **Perform requests at any time (refresh_token, offline_access)**
-4. Under **OAuth Settings → Flow Enablement**, check:
+5. Under **Flow Enablement**, check:
    - **Enable Authorization Code and Credentials Flow**
-5. Save — the app is enabled immediately
+6. Save — the app is enabled immediately
 
 ---
 
-## Step 4 — Run the Tooling credential setup script
+## Step 5 — Run the Tooling credential setup script
 
-After creating the Connected App, run the setup script. It will prompt you for the Consumer Key and Secret, then deploy the Auth Provider and Named Credential.
+**In your terminal:**
 
 ```bash
-bash scripts/setup_named_credential.sh --target-org <org_alias>
+bash scripts/setup_named_credential.sh --target-org <alias>
 ```
 
-**What the script does:**
-1. Retrieves your org domain URL
-2. Prompts for the Consumer Key and Secret from the app you created in Step 3
-   - Find them: Setup → App Manager → Extole Deployer → View
-3. Deploys the `Extole_Tooling_Auth` Auth Provider
-4. Pauses and prompts you to manually create the External Credential in Setup (Salesforce blocks this via the API)
-5. Deploys the `Extole_Tooling` Named Credential
+The script deploys the Auth Provider and Named Credential, and pauses at points where Salesforce requires manual UI steps. Follow the prompts exactly.
 
-**Manual steps the script will prompt you through (after the Auth Provider deploys):**
+**The script will walk you through:**
 
-1. Update the Connected App callback URL — the Auth Provider generates a specific callback URL that must be registered:
-   - Setup → **Auth Providers** → **Extole Tooling Auth** → copy the **Callback URL** shown on the detail page
-     _(looks like `https://<your-org>.my.salesforce.com/services/authcallback/Extole_Tooling_Auth`)_
-   - Setup → **App Manager** → **Extole Deployer** → Edit → replace the placeholder Callback URL with this value → Save
+**a. Find the Consumer Key and Secret**
 
-2. Create the External Credential — Setup → **Named Credentials** → **External Credentials** tab → New:
-   - **Label:** `Extole Tooling Cred`
-   - **API Name:** `Extole_Tooling_Cred`
-   - **Authentication Protocol:** OAuth 2.0
-   - **Authentication Flow Type:** Browser Flow
-   - **Identity Provider:** `Extole Tooling Auth` ← select the Auth Provider just deployed
-   - Leave **Scope** blank — the Auth Provider's default scopes (`full refresh_token`) are used
-   - Save
-3. On the credential detail page, find the **Principals** section and click **New**:
-   - **Parameter Name:** `Admin`
-   - Leave **Scope** blank
-   - Save
-4. Return to the terminal and press ENTER to continue
-5. After the script finishes, add the Consumer Secret manually — Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the secret → Save
+> In Salesforce Setup UI:
+> Setup → **External Client App Manager** → click **Extole Deployer** → **Settings** tab → **OAuth Settings** → **Consumer Key and Secret**
+
+**b. Update the callback URL** _(after the Auth Provider deploys)_
+
+> In Salesforce Setup UI:
+>
+> 1. Setup → **Auth Providers** → **Extole Tooling Auth** → copy the **Callback URL** shown on the detail page
+>    _(looks like `https://<your-org>.my.salesforce.com/services/authcallback/Extole_Tooling_Auth`)_
+> 2. Setup → **External Client App Manager** → **Extole Deployer** → **Edit** → replace the Callback URL with the value you just copied → Save
+
+**c. Create the External Credential** _(after updating the callback URL)_
+
+> In Salesforce Setup UI:
+>
+> Setup → **Named Credentials** → **External Credentials** tab → **New**:
+> - **Label:** `Extole Tooling Cred`
+> - **API Name:** `Extole_Tooling_Cred`
+> - **Authentication Protocol:** OAuth 2.0
+> - **Authentication Flow Type:** Browser Flow
+> - **Identity Provider:** change the dropdown from _External Auth Identity Provider_ to **Auth Provider**, then select `Extole Tooling Auth`
+> - **Scope:** leave blank
+>
+> Save.
+>
+> Then on the credential detail page, under **Principals** → **New**:
+> - **Parameter Name:** `Admin`
+> - **Identity Type:** Named Principal
+> - **Scope:** leave blank
+>
+> Save, then return to the terminal and press ENTER.
+
+**d. Add the Consumer Secret** _(after the script finishes)_
+
+> In Salesforce Setup UI:
+>
+> Setup → **Auth Providers** → **Extole Tooling Auth** → **Edit** → paste the Consumer Secret into the **Consumer Secret** field → Save
 
 ---
 
-## Step 5 — Authorize the Tooling credential (one-time OAuth)
+## Step 6 — Authorize the Tooling credential (one-time OAuth)
 
-After the script completes, an admin must authorize the credential:
+**In Salesforce Setup UI:**
 
 1. Setup → **Named Credentials** → **External Credentials** tab
 2. Click **Extole Tooling Cred**
@@ -116,62 +156,60 @@ After the script completes, an admin must authorize the credential:
 
 This is a one-time step. After authorization, the Event Configurator can deploy Flows without requiring a browser session.
 
-> The setup script automatically grants the `Extole_App_Admin` permission set access to the Tooling credential as part of Step 6.
+> The setup script automatically grants the `Extole_App_Admin` permission set access to the Tooling credential.
 
 ---
 
-## Step 6 — Assign permission sets
+## Step 7 — Assign permission sets
+
+**In your terminal:**
 
 | Permission Set | Assign to |
 |---|---|
 | `Extole_App_Admin` | Admins who will configure the integration |
 | `Extole_App_Viewer` | Any user who needs read access to the KPI Dashboard |
 
-**Assign to yourself first** so you can access the app, then assign to any other users as needed.
+Assign to yourself first, then to other users as needed:
 
 ```bash
-# Assign to yourself
-sf org assign permset --name Extole_App_Admin --target-org <org_alias>
+sf org assign permset --name Extole_App_Admin --target-org <alias>
+```
 
-# Assign to another user
-sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target-org <org_alias>
+To assign to another user:
+
+```bash
+sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target-org <alias>
 ```
 
 ---
 
-## Step 7 — Launch and complete onboarding
+## Step 8 — Launch and complete onboarding
+
+**In the Salesforce app:**
 
 1. Open the **Extole** app from the App Launcher
-2. The Getting Started screen will appear on first launch — it summarizes the setup steps
+2. The Getting Started screen will appear on first launch
 3. Click **Go to Settings**
 4. In **Settings → API Connection**, click **Test Connection** — verify it shows "Connected"
 5. In **Settings → Report Configuration**, click **Add Report** and configure your first KPI
-   - The reports you add here must already exist and be scheduled in the Extole platform — if a report hasn't run yet in Extole, the sync will return no data
+   - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
 6. Trigger a manual sync — your KPI Dashboard will populate once the first sync completes
 
-> **If you have the Extole CLI:** run `extole events stream` and then trigger a Salesforce record change (e.g. create a Lead). You should see the event arrive in Extole in real time, confirming the full end-to-end flow.
+> **If you have the Extole CLI:** run `extole events stream` and then trigger a Salesforce record change (e.g. create a Lead). You should see the event arrive in Extole in real time.
 
 ---
 
 ## Optional — Extole CLI
 
-If you have access to the Extole CLI (via npm or the private repo), install it and authenticate with your Extole API token. It's useful for verifying connectivity and watching events arrive in real time during testing.
+If you have access to the Extole CLI, install it and authenticate with your Extole API token.
 
 ```bash
-# Install (method depends on your access — npm or private GitHub repo)
-npm install -g @extole/cli                    # if published to npm
-npm install -g github:cduskin-cpu/extole-cli  # if installing from the private repo
+npm install -g github:cduskin-cpu/extole-cli
 
-# Authenticate with your Extole API token
 extole auth login --token <your_token>
 
-# Verify connectivity
 extole ping
 
-# List available reports (confirms the token has the right scopes)
-extole reports list
-
-# Watch events arrive in real time after triggering a Salesforce record change
 extole events stream
 ```
 
@@ -181,9 +219,10 @@ extole events stream
 
 | Symptom | Likely cause |
 |---|---|
-| "Test Connection" fails | Bearer token is wrong, missing, or expired. Re-check Step 2b. |
-| Event Configurator deploy fails | Tooling OAuth not completed. Re-check Step 5. |
-| Scheduled sync not running | Go to Settings, change the Sync Cadence and save to re-register the job. |
-| Permission errors on objects | User missing the `Extole_App_Admin` or `Extole_App_Viewer` permission set. |
+| `InvalidProjectWorkspaceError` on deploy | You are not inside the cloned repo directory. Run `cd extole-sfdc-app` first. |
+| "Test Connection" fails | Bearer token wrong, missing, or expired. Re-check Step 3. |
+| Event Configurator deploy fails | Tooling OAuth not completed. Re-check Step 6. |
+| Scheduled sync not running | Go to Settings, change Sync Cadence and save to re-register the job. |
+| Permission errors on objects | User missing `Extole_App_Admin` or `Extole_App_Viewer` permission set. |
 
 For detailed diagnostics, enable **Debug Logging** in Settings and check the Sync Log entries.

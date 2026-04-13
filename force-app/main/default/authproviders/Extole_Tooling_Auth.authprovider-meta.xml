@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<AuthProvider xmlns="http://soap.sforce.com/2006/04/metadata">
-    <friendlyName>Extole Tooling Auth</friendlyName>
-    <providerType>Salesforce</providerType>
-    <consumerKey>3MVG9fIN0XOBSvWV_LCfB78uIpelL8rD57QqDNK_PZyV1TfNP2DpHy7q3Lcn5AnXXIqkl7H.6EmdLZCA_4M6A</consumerKey>
-    <consumerSecret>6933B23C30F81218198DB2626CCE845E9D7370547EF9EB20DA1D95466DCE451A</consumerSecret>
-    <defaultScopes>full refresh_token</defaultScopes>
-</AuthProvider>

@@ -54,3 +54,8 @@ set_screenshot_dir.sh
 
 # HubSpot config file
 hubspot.config.yml
+
+# Generated per-org metadata — written by setup_named_credential.sh, never committed
+force-app/main/default/authproviders/Extole_Tooling_Auth.authprovider-meta.xml
+force-app/main/default/namedCredentials/Extole_Tooling.namedCredential-meta.xml
+force-app/main/default/externalCredentials/Extole_Tooling_Cred.externalCredential-meta.xml

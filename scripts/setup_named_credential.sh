@@ -5,23 +5,14 @@
 # Sets up the Extole_Tooling Named Credential for Salesforce-to-Salesforce
 # callouts (Tooling API / Metadata API).
 #
-# Run this ONCE after the initial org deploy. Requires:
-#   - sf CLI (Salesforce CLI) authenticated to the target org
-#   - jq installed (brew install jq)
+# Run this ONCE after the initial org deploy (Step 5 in INSTALL.md).
+# Requires: sf CLI authenticated to the target org, jq, python3.
 #
 # Usage:
-#   ./scripts/setup_named_credential.sh [--target-org <alias>]
-#
-# What it does:
-#   1. Deploys the Extole_Deployer Connected App (if not already deployed)
-#   2. Queries the auto-generated Consumer Key for that Connected App
-#   3. Writes Extole_Tooling_Auth.authProvider-meta.xml with the real key
-#   4. Writes Extole_Tooling.namedCredential-meta.xml with the org domain endpoint
-#   5. Deploys the AuthProvider and NamedCredential
-#   6. Prints instructions for the one-time admin OAuth authorization step
+#   bash scripts/setup_named_credential.sh --target-org <alias>
 # =============================================================================
 
-set -u
+set -euo pipefail
 
 TARGET_ORG=""
 while [[ $# -gt 0 ]]; do
@@ -40,23 +31,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 METADATA_DIR="$PROJECT_DIR/force-app/main/default"
 
-echo "=== Step 1: External Client App check ==="
-echo "The External Client App must be created manually in Setup before running this script."
-echo "If you haven't done this yet:"
-echo "  1. Go to Setup → App Manager → New External Client App"
-echo "  2. Name: 'Extole Deployer'  API Name: 'Extole_Deployer'  Distribution: Local"
-echo "  3. Under OAuth Settings → Flow Enablement:"
-echo "     check 'Enable Authorization Code and Credentials Flow'"
-echo "  4. Callback URL: https://login.salesforce.com/services/oauth2/callback"
-echo "  5. Save — the app will be enabled immediately (no wait needed)"
+# All metadata writes go to a temp directory — force-app/ is never modified
+WORK_DIR=$(mktemp -d)
+trap 'rm -rf "$WORK_DIR"' EXIT
+mkdir -p "$WORK_DIR/authproviders" "$WORK_DIR/namedCredentials" "$WORK_DIR/permissionsets"
+
+echo "=== Step 1: Confirm External Client App exists ==="
 echo ""
-echo "Press ENTER to continue (assuming Connected App already exists)..."
+echo "Before continuing, confirm you have completed Step 4 in INSTALL.md:"
+echo "the Extole Deployer External Client App must exist in Salesforce Setup."
+echo ""
+echo "Press ENTER to continue..."
 read -r
 
 echo ""
-echo "=== Step 2: Retrieving Consumer Key and Org Domain ==="
+echo "=== Step 2: Retrieving org domain ==="
 
-# Query the org domain URL
 ORG_DOMAIN=$(sf org display $ORG_FLAG --json 2>/dev/null | jq -r '.result.instanceUrl' 2>/dev/null)
 if [[ -z "$ORG_DOMAIN" || "$ORG_DOMAIN" == "null" ]]; then
     echo "Could not retrieve org domain automatically."
@@ -68,28 +58,30 @@ if [[ -z "$ORG_DOMAIN" || "$ORG_DOMAIN" == "null" ]]; then
 fi
 echo "Org domain: $ORG_DOMAIN"
 
-# External Client Apps don't expose credentials via SOQL — prompt directly.
-echo "Find both values: Setup → App Manager → Extole Deployer → View → Consumer Key and Secret"
 echo ""
-read -rp "Paste the Consumer Key here: " CONSUMER_KEY
+echo "=== Step 3: Consumer Key and Secret ==="
+echo ""
+echo "Find these values in Salesforce Setup:"
+echo "  External Client App Manager → Extole Deployer → Settings tab → OAuth Settings → Consumer Key and Secret"
+echo ""
+read -rp "Paste the Consumer Key: " CONSUMER_KEY
 if [[ -z "$CONSUMER_KEY" ]]; then
     echo "ERROR: Consumer Key is required." >&2
     exit 1
 fi
 echo "Consumer Key: ${CONSUMER_KEY:0:8}... (truncated)"
-read -rsp "Paste the Consumer Secret here (hidden): " CONSUMER_SECRET
+read -rsp "Paste the Consumer Secret (input hidden): " CONSUMER_SECRET
 echo ""
 if [[ -z "$CONSUMER_SECRET" ]]; then
     echo "ERROR: Consumer Secret is required." >&2
     exit 1
 fi
-echo "Consumer Secret: (captured, hidden)"
+echo "Consumer Secret: (captured)"
 
 echo ""
-echo "=== Step 3: Writing AuthProvider metadata ==="
+echo "=== Step 4: Deploying Auth Provider ==="
 
-AUTH_PROVIDER_FILE="$METADATA_DIR/authproviders/Extole_Tooling_Auth.authprovider-meta.xml"
-cat > "$AUTH_PROVIDER_FILE" <<AUTHXML
+cat > "$WORK_DIR/authproviders/Extole_Tooling_Auth.authprovider-meta.xml" <<AUTHXML
 <?xml version="1.0" encoding="UTF-8"?>
 <AuthProvider xmlns="http://soap.sforce.com/2006/04/metadata">
     <friendlyName>Extole Tooling Auth</friendlyName>
@@ -98,19 +90,57 @@ cat > "$AUTH_PROVIDER_FILE" <<AUTHXML
     <defaultScopes>api refresh_token</defaultScopes>
 </AuthProvider>
 AUTHXML
-echo "Written: $AUTH_PROVIDER_FILE"
-echo ""
-echo "NOTE: Salesforce does not allow setting the Consumer Secret via metadata deploy."
-echo "After this script completes, you must add it manually:"
-echo "  Setup → Auth Providers → Extole Tooling Auth → Edit → Consumer Secret"
-echo "  Value: (the Consumer Secret you entered above)"
-echo "  Your secret: ${CONSUMER_SECRET}"
+
+sf project deploy start \
+    --source-dir "$WORK_DIR/authproviders" \
+    $ORG_FLAG
 
 echo ""
-echo "=== Step 4: Writing Named Credential metadata ==="
+echo "=== Step 5: Update callback URL in the External Client App ==="
+echo ""
+echo "In Salesforce Setup UI:"
+echo ""
+echo "  1. Setup → Auth Providers → Extole Tooling Auth"
+echo "     Copy the Callback URL shown on the detail page."
+echo "     It will look like:"
+echo "     ${ORG_DOMAIN}/services/authcallback/Extole_Tooling_Auth"
+echo ""
+echo "  2. Setup → External Client App Manager → Extole Deployer → Edit"
+echo "     Replace the Callback URL with the value you just copied → Save"
+echo ""
+echo "Press ENTER once you have updated the Callback URL..."
+read -r
 
-NC_FILE="$METADATA_DIR/namedCredentials/Extole_Tooling.namedCredential-meta.xml"
-cat > "$NC_FILE" <<NCXML
+echo ""
+echo "=== Step 6: Create External Credential ==="
+echo ""
+echo "In Salesforce Setup UI:"
+echo ""
+echo "  Setup → Named Credentials → External Credentials tab → New"
+echo ""
+echo "  Fill in:"
+echo "    Label:                    Extole Tooling Cred"
+echo "    API Name:                 Extole_Tooling_Cred"
+echo "    Authentication Protocol:  OAuth 2.0"
+echo "    Authentication Flow Type: Browser Flow"
+echo "    Identity Provider:        change the dropdown from 'External Auth Identity Provider'"
+echo "                              to 'Auth Provider', then select 'Extole Tooling Auth'"
+echo "    Scope:                    (leave blank)"
+echo "  Save."
+echo ""
+echo "  Then on the credential detail page, under Principals → New:"
+echo "    Parameter Name:  Admin"
+echo "    Identity Type:   Named Principal"
+echo "    Scope:           (leave blank)"
+echo "  Save."
+echo ""
+echo "Press ENTER once you have created the External Credential and added the principal..."
+read -r
+
+echo ""
+echo "=== Step 7: Deploying Named Credential ==="
+
+cat > "$WORK_DIR/namedCredentials/Extole_Tooling.namedCredential-meta.xml" <<NCXML
 <?xml version="1.0" encoding="UTF-8"?>
 <NamedCredential xmlns="http://soap.sforce.com/2006/04/metadata">
     <label>Extole Tooling</label>
@@ -120,46 +150,16 @@ cat > "$NC_FILE" <<NCXML
     <generateAuthorizationHeader>true</generateAuthorizationHeader>
 </NamedCredential>
 NCXML
-echo "Written: $NC_FILE"
-
-echo ""
-echo "=== Step 5: Deploying AuthProvider ==="
 
 sf project deploy start \
-    --source-dir "$METADATA_DIR/authproviders" \
+    --source-dir "$WORK_DIR/namedCredentials" \
     $ORG_FLAG
 
 echo ""
-echo "=== Step 6: Create External Credential manually ==="
-echo ""
-echo "The Auth Provider is now deployed. Before continuing, create the External"
-echo "Credential in Setup (Salesforce blocks this via the metadata API):"
-echo ""
-echo "  1. Setup → Named Credentials → External Credentials tab → New"
-echo "  2. Label: Extole Tooling Cred"
-echo "  3. API Name: Extole_Tooling_Cred"
-echo "  4. Authentication Protocol: OAuth 2.0"
-echo "  5. Identity Provider: Extole Tooling Auth  (the Auth Provider just deployed)"
-echo "  6. Principal Type: Named Principal"
-echo "  7. Save"
-echo ""
-echo "Press ENTER once you have created the External Credential in Setup..."
-read -r
+echo "=== Step 8: Granting credential access to Extole_App_Admin permission set ==="
 
-echo ""
-echo "=== Step 7: Deploying Named Credential ==="
-
-sf project deploy start \
-    --source-dir "$METADATA_DIR/namedCredentials" \
-    $ORG_FLAG
-
-echo ""
-echo "=== Step 8: Granting Extole_Tooling_Cred access to Extole_App_Admin permission set ==="
-
-PERM_SET_FILE="$METADATA_DIR/permissionsets/Extole_App_Admin.permissionset-meta.xml"
-cp "$PERM_SET_FILE" "${PERM_SET_FILE}.bak"
-
-python3 - "$PERM_SET_FILE" <<'PYEOF'
+python3 - "$METADATA_DIR/permissionsets/Extole_App_Admin.permissionset-meta.xml" \
+          "$WORK_DIR/permissionsets/Extole_App_Admin.permissionset-meta.xml" <<'PYEOF'
 import sys
 with open(sys.argv[1], 'r') as f:
     content = f.read()
@@ -173,26 +173,30 @@ new_block = (
 # Insert after the first closing tag (the Extole_API entry)
 content = content.replace('</externalCredentialPrincipalAccesses>', '</externalCredentialPrincipalAccesses>' + new_block, 1)
 
-with open(sys.argv[1], 'w') as f:
+with open(sys.argv[2], 'w') as f:
     f.write(content)
 PYEOF
 
 sf project deploy start \
-    --source-dir "$METADATA_DIR/permissionsets" \
+    --source-dir "$WORK_DIR/permissionsets" \
     $ORG_FLAG
 
-mv "${PERM_SET_FILE}.bak" "$PERM_SET_FILE"
+echo ""
+echo "=== Step 9: Add Consumer Secret ==="
+echo ""
+echo "Salesforce does not allow setting the Consumer Secret via metadata deploy."
+echo "Add it manually now:"
+echo ""
+echo "  Setup → Auth Providers → Extole Tooling Auth → Edit"
+echo "  Consumer Secret: ${CONSUMER_SECRET}"
+echo "  Save"
 
 echo ""
 echo "================================================================"
-echo "SETUP COMPLETE — One-time authorization required:"
+echo "SETUP COMPLETE"
 echo ""
-echo "  1. In Salesforce Setup → Named Credentials → External Credentials tab"
-echo "  2. Click 'Extole Tooling Cred'"
-echo "  3. Under Principals, click 'Authenticate' next to the Admin principal"
-echo "  4. Log in with an admin account that has 'Customize Application' permission"
-echo "  5. Approve the OAuth prompt"
+echo "One final step — authorize the credential (Step 6 in INSTALL.md):"
 echo ""
-echo "After authorization, the Event Configurator can deploy Flows without"
-echo "any session token in the browser."
+echo "  Setup → Named Credentials → External Credentials tab"
+echo "  → Extole Tooling Cred → Authenticate next to the Admin principal"
 echo "================================================================"
