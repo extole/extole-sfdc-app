@@ -2,6 +2,7 @@
 
 ## Prerequisites
 
+- **Git** with GitHub SSH access configured — [GitHub SSH setup docs](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
 - **Salesforce CLI** (`sf`) installed and authenticated to the target org:
   ```bash
   sf org login web        # opens browser to authenticate
