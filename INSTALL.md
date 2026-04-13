@@ -49,7 +49,6 @@ The `Extole_API` External Credential ships with a placeholder value. Replace it:
 The Event Configurator deploys Salesforce Flows via the Tooling API. This requires an OAuth-connected app.
 
 1. Setup → **External Client App Manager** → **New External Client App**
-   _(If you don't see External Client App Manager, use Setup → **App Manager** → **New Connected App** instead)_
 2. Fill in:
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
