@@ -51,3 +51,6 @@ set_screenshot_dir.sh
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# HubSpot config file
+hubspot.config.yml

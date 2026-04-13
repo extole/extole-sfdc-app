@@ -113,6 +113,30 @@ sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target
 
 ---
 
+## Optional — Extole CLI
+
+If you have access to the Extole CLI (via npm or the private repo), install it and authenticate with your Extole API token. It's useful for verifying connectivity and watching events arrive in real time during testing.
+
+```bash
+# Install (method depends on your access — npm or private GitHub repo)
+npm install -g @extole/cli          # if published to npm
+npm install -g github:extole/<repo> # if installing from the private repo
+
+# Authenticate with your Extole API token
+extole auth login --token <your_token>
+
+# Verify connectivity
+extole ping
+
+# List available reports (confirms the token has the right scopes)
+extole reports list
+
+# Watch events arrive in real time after triggering a Salesforce record change
+extole events stream
+```
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
