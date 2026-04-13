@@ -4,6 +4,7 @@
 
 - **Salesforce CLI** (`sf`) installed and authenticated to the target org
 - **jq** installed (`brew install jq` on macOS)
+- **Extole API token** — generate a long-lived token from the [Extole Security Center](https://my.extole.com/security-center) ([docs](https://dev.extole.com/docs/generate-long-lived-access-tokens))
 - Installing user must be a Salesforce admin with:
   - Author Apex permission
   - Customize Application permission
