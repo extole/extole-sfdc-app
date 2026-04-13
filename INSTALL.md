@@ -2,7 +2,11 @@
 
 ## Prerequisites
 
-- **Salesforce CLI** (`sf`) installed and authenticated to the target org
+- **Salesforce CLI** (`sf`) installed and authenticated to the target org:
+  ```bash
+  sf org login web        # opens browser to authenticate
+  sf org list             # shows your orgs and their aliases
+  ```
 - **jq** installed (`brew install jq` on macOS)
 - **Extole API token** — generate a long-lived token from the [Extole Security Center](https://my.extole.com/security-center) ([docs](https://dev.extole.com/docs/generate-long-lived-access-tokens))
 - Installing user must be a Salesforce admin with:
@@ -17,7 +21,7 @@
 sf project deploy start --target-org <org_alias>
 ```
 
-Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole app.
+Replace `<org_alias>` with the alias shown in `sf org list`. Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole app.
 
 ---
 
@@ -25,13 +29,7 @@ Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole 
 
 The app calls the Extole API using a Named Credential. This requires a long-lived Extole access token.
 
-**2a. Get your Extole API token**
-
-1. Go to [Extole Security Center](https://my.extole.com/security-center)
-2. Generate a long-lived access token ([docs](https://dev.extole.com/docs/generate-long-lived-access-tokens))
-3. Copy the token — you will need it in the next step
-
-**2b. Set the bearer token on the External Credential**
+**Set the bearer token on the External Credential**
 
 The `Extole_API` External Credential ships with a placeholder value. Replace it:
 
@@ -48,6 +46,7 @@ The `Extole_API` External Credential ships with a placeholder value. Replace it:
 The Event Configurator deploys Salesforce Flows via the Tooling API. This requires an OAuth-connected app.
 
 1. Setup → **External Client App Manager** → **New External Client App**
+   _(If you don't see External Client App Manager, use Setup → **App Manager** → **New Connected App** instead)_
 2. Fill in:
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
@@ -64,7 +63,7 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
 After creating the Connected App, run the setup script. It will prompt you for the Consumer Key and Secret, then deploy the Auth Provider and Named Credential.
 
 ```bash
-./scripts/setup_named_credential.sh --target-org <org_alias>
+bash scripts/setup_named_credential.sh --target-org <org_alias>
 ```
 
 **What the script does:**
@@ -96,8 +95,13 @@ This is a one-time step. After authorization, the Event Configurator can deploy 
 | `Extole_App_Admin` | Admins who will configure the integration |
 | `Extole_App_Viewer` | Any user who needs read access to the KPI Dashboard |
 
+**Assign to yourself first** so you can access the app, then assign to any other users as needed.
+
 ```bash
-# Example via CLI
+# Assign to yourself
+sf org assign permset --name Extole_App_Admin --target-org <org_alias>
+
+# Assign to another user
 sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target-org <org_alias>
 ```
 
