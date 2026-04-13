@@ -81,18 +81,17 @@ bash scripts/setup_named_credential.sh --target-org <org_alias>
 4. Pauses and prompts you to manually create the External Credential in Setup (Salesforce blocks this via the API)
 5. Deploys the `Extole_Tooling` Named Credential
 
-**Manual steps the script will prompt you through:**
+**Manual steps the script will prompt you through (after the Auth Provider deploys):**
 
-After the Auth Provider deploys, the script will pause and ask you to:
-
-1. Add the Consumer Secret manually — Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the secret → Save
-2. Create the External Credential — Setup → **Named Credentials** → **External Credentials** tab → New:
+1. Create the External Credential — Setup → **Named Credentials** → **External Credentials** tab → New:
    - **Label:** `Extole Tooling Cred`
    - **API Name:** `Extole_Tooling_Cred`
    - **Authentication Protocol:** OAuth 2.0
-   - **Identity Provider:** Extole Tooling Auth
+   - **Identity Provider:** `Extole Tooling Auth` ← select the Auth Provider just deployed
    - **Principal Type:** Named Principal
    - Save
+2. Return to the terminal and press ENTER to continue
+3. After the script finishes, add the Consumer Secret manually — Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the secret → Save
 
 ---
 

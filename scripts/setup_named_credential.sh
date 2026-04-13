@@ -123,11 +123,17 @@ NCXML
 echo "Written: $NC_FILE"
 
 echo ""
-echo "=== Step 5: Deploying AuthProvider + Named Credential ==="
+echo "=== Step 5: Deploying AuthProvider ==="
+
+sf project deploy start \
+    --source-dir "$METADATA_DIR/authproviders" \
+    $ORG_FLAG
+
 echo ""
-echo "NOTE: The External Credential (Extole_Tooling_Cred) cannot be created via"
-echo "metadata deploy — Salesforce blocks OAuth credential configuration through"
-echo "the API. You must create it manually in Setup BEFORE pressing ENTER:"
+echo "=== Step 6: Create External Credential manually ==="
+echo ""
+echo "The Auth Provider is now deployed. Before continuing, create the External"
+echo "Credential in Setup (Salesforce blocks this via the metadata API):"
 echo ""
 echo "  1. Setup → Named Credentials → External Credentials tab → New"
 echo "  2. Label: Extole Tooling Cred"
@@ -140,13 +146,15 @@ echo ""
 echo "Press ENTER once you have created the External Credential in Setup..."
 read -r
 
+echo ""
+echo "=== Step 7: Deploying Named Credential ==="
+
 sf project deploy start \
-    --source-dir "$METADATA_DIR/authproviders" \
     --source-dir "$METADATA_DIR/namedCredentials" \
     $ORG_FLAG
 
 echo ""
-echo "=== Step 6: Granting Extole_Tooling_Cred access to Extole_App_Admin permission set ==="
+echo "=== Step 8: Granting Extole_Tooling_Cred access to Extole_App_Admin permission set ==="
 
 PERM_SET_FILE="$METADATA_DIR/permissionsets/Extole_App_Admin.permissionset-meta.xml"
 cp "$PERM_SET_FILE" "${PERM_SET_FILE}.bak"
