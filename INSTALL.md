@@ -114,6 +114,7 @@ sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target
 3. Click **Go to Settings**
 4. In **Settings → API Connection**, click **Test Connection** — verify it shows "Connected"
 5. In **Settings → Report Configuration**, click **Add Report** and configure your first KPI
+   - The reports you add here must already exist and be scheduled in the Extole platform — if a report hasn't run yet in Extole, the sync will return no data
 6. Trigger a manual sync — your KPI Dashboard will populate once the first sync completes
 
 ---
