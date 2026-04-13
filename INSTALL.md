@@ -39,6 +39,8 @@ The `Extole_API` External Credential ships with a placeholder value. Replace it:
 4. Replace `REPLACE_WITH_BEARER_TOKEN` with: `Bearer <your_token>`
 5. Save
 
+> **If you have the Extole CLI:** run `extole ping` to verify the token is valid before continuing.
+
 ---
 
 ## Step 3 — Create the External Client App (Connected App)
@@ -116,6 +118,8 @@ sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target
 5. In **Settings → Report Configuration**, click **Add Report** and configure your first KPI
    - The reports you add here must already exist and be scheduled in the Extole platform — if a report hasn't run yet in Extole, the sync will return no data
 6. Trigger a manual sync — your KPI Dashboard will populate once the first sync completes
+
+> **If you have the Extole CLI:** run `extole events stream` and then trigger a Salesforce record change (e.g. create a Lead). You should see the event arrive in Extole in real time, confirming the full end-to-end flow.
 
 ---
 
