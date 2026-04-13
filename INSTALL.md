@@ -55,7 +55,7 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
    - **API Name:** `Extole_Deployer`
    - **Distribution:** Local
 3. Under **App Settings**:
-   - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
+   - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback` _(placeholder — you will replace this in Step 4 below)_
    - **OAuth Scopes** — add:
      - **Manage user data via APIs (api)**
      - **Perform requests at any time (refresh_token, offline_access)**
@@ -83,15 +83,25 @@ bash scripts/setup_named_credential.sh --target-org <org_alias>
 
 **Manual steps the script will prompt you through (after the Auth Provider deploys):**
 
-1. Create the External Credential — Setup → **Named Credentials** → **External Credentials** tab → New:
+1. Update the Connected App callback URL — the Auth Provider generates a specific callback URL that must be registered:
+   - Setup → **Auth Providers** → **Extole Tooling Auth** → copy the **Callback URL** shown on the detail page
+     _(looks like `https://<your-org>.my.salesforce.com/services/authcallback/Extole_Tooling_Auth`)_
+   - Setup → **App Manager** → **Extole Deployer** → Edit → replace the placeholder Callback URL with this value → Save
+
+2. Create the External Credential — Setup → **Named Credentials** → **External Credentials** tab → New:
    - **Label:** `Extole Tooling Cred`
    - **API Name:** `Extole_Tooling_Cred`
    - **Authentication Protocol:** OAuth 2.0
+   - **Authentication Flow Type:** Browser Flow
    - **Identity Provider:** `Extole Tooling Auth` ← select the Auth Provider just deployed
-   - **Principal Type:** Named Principal
+   - Leave **Scope** blank — the Auth Provider's default scopes (`full refresh_token`) are used
    - Save
-2. Return to the terminal and press ENTER to continue
-3. After the script finishes, add the Consumer Secret manually — Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the secret → Save
+3. On the credential detail page, find the **Principals** section and click **New**:
+   - **Parameter Name:** `Admin`
+   - Leave **Scope** blank
+   - Save
+4. Return to the terminal and press ENTER to continue
+5. After the script finishes, add the Consumer Secret manually — Setup → **Auth Providers** → **Extole Tooling Auth** → Edit → paste the secret → Save
 
 ---
 
