@@ -7,6 +7,10 @@
     <label>Extole</label>
     <navType>Standard</navType>
     <tabs>Extole_App</tabs>
+    <tabs>Extole_KPI_Dashboard</tabs>
+    <tabs>Extole_List_View</tabs>
+    <tabs>Extole_Settings</tabs>
+    <tabs>Extole_Event_Configurator</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <formFactors>Small</formFactors>

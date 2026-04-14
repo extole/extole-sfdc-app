@@ -99,8 +99,12 @@
         <tab>Extole_List_View</tab>
         <visibility>Visible</visibility>
     </tabSettings>
-<tabSettings>
+    <tabSettings>
         <tab>Extole_Settings</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Extole_Event_Configurator</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <userPermissions>
