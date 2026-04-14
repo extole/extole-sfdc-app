@@ -76,6 +76,7 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
    - **Contact Email:** your admin email address
+   - **Logo Image URL:** `https://www.extole.com/wp-content/uploads/2023/07/Extole-logo.svg`
    - **Distribution:** Local
 3. Check **Enable OAuth Settings**
 4. Under **OAuth Settings**, configure:
@@ -153,6 +154,8 @@ The script deploys the Auth Provider and Named Credential, and pauses at points 
 3. Under **Principals**, click **Authenticate** next to the Admin principal
 4. Log in with the admin account (must have Author Apex + Customize Application)
 5. Approve the OAuth consent screen
+
+> The orange "Security Warning" block on the consent screen is standard Salesforce behavior for all Connected Apps and is not specific to this app.
 
 This is a one-time step. After authorization, the Event Configurator can deploy Flows without requiring a browser session.
 
