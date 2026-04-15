@@ -87,7 +87,9 @@ cat > "$WORK_DIR/authproviders/Extole_Tooling_Auth.authprovider-meta.xml" <<AUTH
     <friendlyName>Extole Tooling Auth</friendlyName>
     <providerType>Salesforce</providerType>
     <consumerKey>${CONSUMER_KEY}</consumerKey>
+    <consumerSecret>${CONSUMER_SECRET}</consumerSecret>
     <defaultScopes>api refresh_token</defaultScopes>
+    <errorUrl>https://login.salesforce.com</errorUrl>
 </AuthProvider>
 AUTHXML
 
@@ -143,11 +145,22 @@ echo "=== Step 7: Deploying Named Credential ==="
 cat > "$WORK_DIR/namedCredentials/Extole_Tooling.namedCredential-meta.xml" <<NCXML
 <?xml version="1.0" encoding="UTF-8"?>
 <NamedCredential xmlns="http://soap.sforce.com/2006/04/metadata">
-    <label>Extole Tooling</label>
-    <endpoint>${ORG_DOMAIN}/services/data/v59.0/tooling</endpoint>
-    <externalCredential>Extole_Tooling_Cred</externalCredential>
+    <allowMergeFieldsInBody>false</allowMergeFieldsInBody>
+    <allowMergeFieldsInHeader>false</allowMergeFieldsInHeader>
     <calloutStatus>Enabled</calloutStatus>
     <generateAuthorizationHeader>true</generateAuthorizationHeader>
+    <label>Extole Tooling</label>
+    <namedCredentialParameters>
+        <parameterName>Url</parameterName>
+        <parameterType>Url</parameterType>
+        <parameterValue>${ORG_DOMAIN}/services/data/v59.0/tooling</parameterValue>
+    </namedCredentialParameters>
+    <namedCredentialParameters>
+        <externalCredential>Extole_Tooling_Cred</externalCredential>
+        <parameterName>ExternalCredential</parameterName>
+        <parameterType>Authentication</parameterType>
+    </namedCredentialParameters>
+    <namedCredentialType>SecuredEndpoint</namedCredentialType>
 </NamedCredential>
 NCXML
 
@@ -180,16 +193,6 @@ PYEOF
 sf project deploy start \
     --source-dir "$WORK_DIR/permissionsets" \
     $ORG_FLAG
-
-echo ""
-echo "=== Step 9: Add Consumer Secret ==="
-echo ""
-echo "Salesforce does not allow setting the Consumer Secret via metadata deploy."
-echo "Add it manually now:"
-echo ""
-echo "  Setup → Auth Providers → Extole Tooling Auth → Edit"
-echo "  Consumer Secret: ${CONSUMER_SECRET}"
-echo "  Save"
 
 echo ""
 echo "================================================================"

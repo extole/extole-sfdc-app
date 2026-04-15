@@ -52,7 +52,7 @@ Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole 
 
 **In Salesforce Setup UI:**
 
-The `Extole_API` External Credential ships with a placeholder bearer token. Replace it:
+The `Extole API` External Credential ships with a placeholder bearer token. Replace it:
 
 1. Setup → Named Credentials → **External Credentials** tab
 2. Click the **Extole API** name to open the full detail page (do not click Edit — that opens a modal)
@@ -136,12 +136,6 @@ The script deploys the Auth Provider and Named Credential, and pauses at points 
 > - **Scope:** leave blank
 >
 > Save, then return to the terminal and press ENTER.
-
-**d. Add the Consumer Secret** _(after the script finishes)_
-
-> In Salesforce Setup UI:
->
-> Setup → **Auth Providers** → **Extole Tooling Auth** → **Edit** → paste the Consumer Secret into the **Consumer Secret** field → Save
 
 ---
 
