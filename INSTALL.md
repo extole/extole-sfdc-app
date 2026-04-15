@@ -76,7 +76,7 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
    - **Contact Email:** your admin email address
-   - **Logo Image URL:** `https://www.extole.com/wp-content/uploads/2023/07/Extole-logo.svg`
+   - **Logo Image URL:** `https://www.extole.com/wp-content/uploads/2023/07/Extole-icon-bug.svg`
    - **Distribution:** Local
 3. Check **Enable OAuth Settings**
 4. Under **OAuth Settings**, configure:
