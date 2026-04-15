@@ -5,6 +5,7 @@
     <isNavPersonalizationDisabled>true</isNavPersonalizationDisabled>
     <isServiceCloudConsole>false</isServiceCloudConsole>
     <label>Extole</label>
+    <logoUrl>/resource/extole_logo</logoUrl>
     <navType>Standard</navType>
     <tabs>Extole_App</tabs>
     <tabs>Extole_KPI_Dashboard</tabs>

@@ -180,6 +180,12 @@ To assign to another user:
 sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target-org <alias>
 ```
 
+**Also in Salesforce Setup UI** — make the Extole app visible in the App Launcher:
+
+1. Setup → **App Manager** → find **Extole** → click the row action → **Edit**
+2. Click the **App Profiles** tab → add the profiles that need access (e.g. System Administrator)
+3. Save
+
 ---
 
 ## Step 8 — Launch and complete onboarding
@@ -190,7 +196,7 @@ sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target
 2. The Getting Started screen will appear on first launch
 3. Click **Go to Settings**
 4. In **Settings → API Connection**, click **Test Connection** — verify it shows "Connected"
-5. In **Settings → Report Configuration**, click **Add Report** and configure your first KPI
+5. In **Settings → Report Configuration**, click **Add KPI** and configure your first KPI
    - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
 6. Trigger a manual sync — your KPI Dashboard will populate once the first sync completes
 

@@ -69,10 +69,12 @@
         <!-- Empty state -->
         <template lwc:else>
             <div class="ec-empty-state">
-                <lightning-illustration
-                    illustration-name="misc:no-events"
-                    size="small"
-                ></lightning-illustration>
+                <lightning-icon
+                    icon-name="standard:flow"
+                    size="large"
+                    alternative-text="No event flows"
+                    style="--sds-c-icon-color-foreground-default: #c9c7c5;"
+                ></lightning-icon>
                 <h2 class="ec-empty-title">{labelEmptyTitle}</h2>
                 <p class="ec-empty-body">{labelEmptyBody}</p>
                 <lightning-button
