@@ -87,7 +87,9 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
      - **Perform requests at any time (refresh_token, offline_access)**
 5. Under **Flow Enablement**, check:
    - **Enable Authorization Code and Credentials Flow**
-6. Save — the app is enabled immediately
+6. Under **Security**, uncheck:
+   - **Require Proof Key for Code Exchange (PKCE) extension for Supported Authorization Flows**
+7. Save — the app is enabled immediately
 
 ---
 
