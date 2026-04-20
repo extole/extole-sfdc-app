@@ -9,64 +9,22 @@
 
         <lightning-card title="Getting Started">
             <div class="setup-body">
-                <p class="setup-intro">Complete these four steps to connect Salesforce to your Extole program.</p>
+                <p class="setup-intro">Installation complete. Complete these two steps to finish connecting Salesforce to your Extole program.</p>
 
                 <ol class="setup-steps">
                     <li class="setup-step">
                         <div class="step-number">1</div>
                         <div class="step-content">
-                            <div class="step-heading">Get your Extole API token</div>
-                            <p class="step-desc">Generate a long-lived access token from the Extole Security Center.</p>
-                            <div class="step-links">
-                                <a href="https://my.extole.com/security-center" target="_blank" rel="noopener noreferrer" class="setup-link">
-                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
-                                    Extole Security Center
-                                </a>
-                                <a href="https://dev.extole.com/docs/generate-long-lived-access-tokens" target="_blank" rel="noopener noreferrer" class="setup-link">
-                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
-                                    Long-lived token docs
-                                </a>
-                            </div>
+                            <div class="step-heading">Test your API connection</div>
+                            <p class="step-desc">Go to Settings and click <strong>Test Connection</strong> to verify your Extole API credential is working.</p>
                         </div>
                     </li>
 
                     <li class="setup-step">
                         <div class="step-number">2</div>
                         <div class="step-content">
-                            <div class="step-heading">Create Named Credential: <code>Extole_API</code></div>
-                            <p class="step-desc">In Salesforce Setup, create a Named Credential using your Extole API token as the bearer token. Use <strong>Extole_API</strong> as the name.</p>
-                            <div class="step-links">
-                                <a href="/lightning/setup/NamedCredential/home" target="_blank" rel="noopener noreferrer" class="setup-link">
-                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
-                                    Named Credentials Setup
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-
-                    <li class="setup-step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <div class="step-heading">Create Connected App + Named Credential: <code>Extole_Tooling</code></div>
-                            <p class="step-desc">Create a Connected App with OAuth enabled, then create a Named Credential using the consumer key and secret. Use <strong>Extole_Tooling</strong> as the name. This enables the Referral Events configurator.</p>
-                            <div class="step-links">
-                                <a href="/lightning/setup/ConnectedApplication/home" target="_blank" rel="noopener noreferrer" class="setup-link">
-                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
-                                    Connected Apps Setup
-                                </a>
-                                <a href="/lightning/setup/NamedCredential/home" target="_blank" rel="noopener noreferrer" class="setup-link">
-                                    <lightning-icon icon-name="utility:new_window" size="x-small" alternative-text="Open"></lightning-icon>
-                                    Named Credentials Setup
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-
-                    <li class="setup-step">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <div class="step-heading">Test connection and add your first KPI</div>
-                            <p class="step-desc">Go to Settings, test your connection, then add a report configuration. Your KPI dashboard will appear once the first sync completes.</p>
+                            <div class="step-heading">Add your first KPI</div>
+                            <p class="step-desc">In Settings, add a report configuration under <strong>Report Configuration</strong>. Your KPI dashboard will populate once the first sync completes.</p>
                         </div>
                     </li>
                 </ol>

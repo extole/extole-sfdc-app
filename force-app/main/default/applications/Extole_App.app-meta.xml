@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Extole referral program analytics and management</description>
+    <description>Event management and KPI dashboard for Extole programs</description>
     <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
     <isNavPersonalizationDisabled>true</isNavPersonalizationDisabled>
     <isServiceCloudConsole>false</isServiceCloudConsole>
@@ -10,7 +10,6 @@
     <tabs>Extole_KPI_Dashboard</tabs>
     <tabs>Extole_List_View</tabs>
     <tabs>Extole_Settings</tabs>
-    <tabs>Extole_Event_Configurator</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <formFactors>Small</formFactors>

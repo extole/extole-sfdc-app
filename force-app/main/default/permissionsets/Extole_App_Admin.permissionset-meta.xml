@@ -103,10 +103,18 @@
         <tab>Extole_Settings</tab>
         <visibility>Visible</visibility>
     </tabSettings>
-    <tabSettings>
-        <tab>Extole_Event_Configurator</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>ViewRoles</name>
+    </userPermissions>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>ViewSetup</name>
+    </userPermissions>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>ModifyMetadata</name>
+    </userPermissions>
     <userPermissions>
         <enabled>true</enabled>
         <name>RunFlow</name>

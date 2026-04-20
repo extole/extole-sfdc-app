@@ -50,18 +50,21 @@ Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole 
 
 ## Step 3 — Configure the Extole API credential
 
-**In Salesforce Setup UI:**
+**First, generate a long-lived API token in Extole:**
 
-The `Extole API` External Credential ships with a placeholder bearer token. Replace it:
+1. Log in to [my.extole.com](https://my.extole.com)
+2. Go to **Security Center** → **Access Tokens** → **New Token**
+3. Give it a descriptive name (e.g. `Salesforce Integration`) and set an appropriate expiry
+4. Copy the token — you won't be able to see it again
 
-1. Setup → Named Credentials → **External Credentials** tab
-2. Click the **Extole API** name to open the full detail page (do not click Edit — that opens a modal)
-3. Under **Authentication Parameters**, find the `Authorization` row → click **Edit**
-4. Replace `REPLACE_WITH_BEARER_TOKEN` with: `Bearer <your_token>`
+**Then, in Salesforce Setup UI:**
+
+5. Setup → Named Credentials → **External Credentials** tab
+6. Click the **Extole API** name to open the full detail page (do not click Edit — that opens a modal)
+7. Scroll to the **Custom Headers** section → find the `Authorization` row → click the dropdown arrow under **Actions** → **Edit**
+8. Replace `REPLACE_WITH_BEARER_TOKEN` with: `Bearer <your_token>`
    _(include the word `Bearer` followed by a space)_
-5. Save
-
-> **If you have the Extole CLI:** run `extole ping` to verify the token is valid before continuing.
+9. Save
 
 ---
 
@@ -69,9 +72,9 @@ The `Extole API` External Credential ships with a placeholder bearer token. Repl
 
 **In Salesforce Setup UI:**
 
-The Event Configurator deploys Salesforce Flows via the Tooling API. This requires an OAuth app.
+The Extole app lets you configure which Salesforce record changes (e.g. a Lead being created, an Opportunity closing) trigger events sent to Extole. Under the hood, it creates Salesforce Flows to do this — and creating Flows programmatically requires an OAuth app connected to your org.
 
-1. Setup → **External Client App Manager** → **New External Client App**
+1. Setup → **External Client App Manager** → click the **New External Client App** button
 2. Under **Basic Information**, fill in:
    - **App Name:** `Extole Deployer`
    - **API Name:** `Extole_Deployer`
@@ -87,9 +90,10 @@ The Event Configurator deploys Salesforce Flows via the Tooling API. This requir
      - **Perform requests at any time (refresh_token, offline_access)**
 5. Under **Flow Enablement**, check:
    - **Enable Authorization Code and Credentials Flow**
+   - Leave **Require user credentials in the POST body for Authorization Code and Credentials Flow** unchecked
 6. Under **Security**, uncheck:
    - **Require Proof Key for Code Exchange (PKCE) extension for Supported Authorization Flows**
-7. Save — the app is enabled immediately
+7. Click **Create** — the app is enabled immediately
 
 ---
 
@@ -116,7 +120,7 @@ The script deploys the Auth Provider and Named Credential, and pauses at points 
 >
 > 1. Setup → **Auth Providers** → **Extole Tooling Auth** → copy the **Callback URL** shown on the detail page
 >    _(looks like `https://<your-org>.my.salesforce.com/services/authcallback/Extole_Tooling_Auth`)_
-> 2. Setup → **External Client App Manager** → **Extole Deployer** → **Edit** → replace the Callback URL with the value you just copied → Save
+> 2. Setup → **External Client App Manager** → **Extole Deployer** → **Settings** tab → **Edit** → scroll to the **OAuth Settings** section → replace the Callback URL with the value you just copied → **Save**
 
 **c. Create the External Credential** _(after updating the callback URL)_
 
@@ -124,15 +128,15 @@ The script deploys the Auth Provider and Named Credential, and pauses at points 
 >
 > Setup → **Named Credentials** → **External Credentials** tab → **New**:
 > - **Label:** `Extole Tooling Cred`
-> - **API Name:** `Extole_Tooling_Cred`
+> - **Name:** `Extole_Tooling_Cred`
 > - **Authentication Protocol:** OAuth 2.0
-> - **Authentication Flow Type:** Browser Flow
-> - **Identity Provider:** change the dropdown from _External Auth Identity Provider_ to **Auth Provider**, then select `Extole Tooling Auth`
+> - **Authentication Flow Type:** Browser Flow — _this reveals an Identity Provider field_
+> - **Identity Provider:** change the dropdown to **Auth Provider**, then select `Extole Tooling Auth`
 > - **Scope:** leave blank
 >
 > Save.
 >
-> Then on the credential detail page, under **Principals** → **New**:
+> Then on the detail page of the **Extole Tooling Cred** you just created, under **Principals** → **New**:
 > - **Parameter Name:** `Admin`
 > - **Identity Type:** Named Principal
 > - **Scope:** leave blank
@@ -163,36 +167,31 @@ This is a one-time step. After authorization, the Event Configurator can deploy 
 
 **In your terminal:**
 
-| Permission Set | Assign to |
-|---|---|
-| `Extole_App_Admin` | Admins who will configure the integration |
-| `Extole_App_Viewer` | Any user who needs read access to the KPI Dashboard |
-
-Assign to yourself first, then to other users as needed:
+Assign `Extole_App_Admin` to yourself and any other admins who will configure the KPI Dashboard or the events sent to Extole:
 
 ```bash
 sf org assign permset --name Extole_App_Admin --target-org <alias>
 ```
 
-To assign to another user:
+Assign `Extole_App_Viewer` to any user who needs read access to the KPI Dashboard and List View:
 
 ```bash
-sf org assign permset --name Extole_App_Admin --on-behalf-of <username> --target-org <alias>
+sf org assign permset --name Extole_App_Viewer --target-org <alias>
 ```
+
+To assign to another user, add `--on-behalf-of <username>` to either command.
 
 **Also in Salesforce Setup UI** — make the Extole app visible in the App Launcher:
 
 1. Setup → **App Manager** → find **Extole** → click the row action → **Edit**
-2. Click the **App Profiles** tab → add the profiles that need access (e.g. System Administrator)
+2. Click **User Profiles** in the left menu → add the profiles that need access (e.g. System Administrator)
 3. Save
 
 ---
 
 ## Step 8 — Launch and complete onboarding
 
-**In the Salesforce app:**
-
-1. Open the **Extole** app from the App Launcher
+1. Open the **Extole** app from the App Launcher (grid icon, top left)
 2. The Getting Started screen will appear on first launch
 3. Click **Go to Settings**
 4. In **Settings → API Connection**, click **Test Connection** — verify it shows "Connected"

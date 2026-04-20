@@ -60,4 +60,12 @@
         <tab>Extole_App</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <tabSettings>
+        <tab>Extole_KPI_Dashboard</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Extole_List_View</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 </PermissionSet>
