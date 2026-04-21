@@ -42,6 +42,9 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# Claude Code local settings
+.claude/
+
 # Screenshots and local exploration artifacts
 Screenshot*.png
 summary.json
