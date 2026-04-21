@@ -145,6 +145,8 @@ sequenceDiagram
 
 **Record grouping:** If the same Flow fires for multiple records in one transaction (e.g., a bulk update), the handler groups all record IDs into a single Queueable job per config key to minimize job slots consumed.
 
+**Known limitation — bulk imports >100 records:** A single Queueable is capped at 100 callouts. If more than 100 records trigger the same config in one transaction, records 101+ are silently dropped. Fix requires chunking the record list into batches of ≤100 and enqueuing one job per chunk. This is a V2 item; test 22 in `MANUAL_TEST.md` documents the expected behavior post-fix.
+
 ---
 
 ## Event Deploy Flow
