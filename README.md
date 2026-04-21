@@ -36,9 +36,9 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 **App and Tabs** — A Lightning app with three tabs: KPI Dashboard, List View, and Settings. The Event Configurator is embedded in Settings.
 
-**Apex Classes** — Backend logic for syncing, event handling, and Tooling API integration. All classes use `with sharing`.
+**Apex Classes** — Backend logic for syncing, event handling, and Tooling API integration.
 
-**Custom Metadata** — Three built-in event templates: Lead Created, Lead Converted, Opportunity Closed Won.
+**Custom Metadata Type** (`Extole_Event_Config__mdt`) — Stores built-in event templates: Lead Created, Lead Converted, Opportunity Closed Won.
 
 ---
 
