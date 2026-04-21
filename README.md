@@ -34,7 +34,7 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | `Extole_App_Viewer` | Users who need read access to the KPI Dashboard |
 | `Extole_API_Access` | System — grants access to the Extole API credential |
 
-**App and Tabs** — A Lightning app with five tabs: Home, Settings, Event Configurator, KPI Dashboard, and List View.
+**App and Tabs** — A Lightning app with three tabs: KPI Dashboard, List View, and Settings. The Event Configurator is embedded in Settings.
 
 **Apex Classes** — Backend logic for syncing, event handling, and Tooling API integration. All classes use `with sharing`.
 
@@ -56,7 +56,7 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 
 - **Sync cadence** — Change in Settings → Sync Management. The scheduled job is automatically re-registered on save.
 - **Adding KPIs** — Settings → Report Configuration → Add Report. New tiles appear on the KPI Dashboard after the next sync.
-- **Event configs** — Event Configurator tab. Create, edit, deactivate, or delete event triggers. Deleting a config deactivates and removes the associated Flow automatically.
+- **Event configs** — Settings → Event Configurations. Create, edit, deactivate, or delete event triggers. Deleting a config deactivates and removes the associated Flow automatically.
 - **Failure notifications** — Settings → Notifications. Enable email alerts after N consecutive sync failures.
 - **Debug logging** — Settings → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
 
