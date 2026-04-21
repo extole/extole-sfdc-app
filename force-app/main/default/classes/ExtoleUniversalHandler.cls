@@ -17,6 +17,8 @@
  */
 public with sharing class ExtoleUniversalHandler implements Queueable, Database.AllowsCallouts {
 
+    private static final Integer CALLOUT_CHUNK_SIZE = 100;
+
     private String configKey;
     private List<String> recordIds;
 
@@ -51,7 +53,15 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
         }
 
         for (String key : byConfig.keySet()) {
-            System.enqueueJob(new ExtoleUniversalHandler(key, byConfig.get(key)));
+            List<String> allIds = byConfig.get(key);
+            for (Integer i = 0; i < allIds.size(); i += CALLOUT_CHUNK_SIZE) {
+                Integer chunkEnd = Math.min(i + CALLOUT_CHUNK_SIZE, allIds.size());
+                List<String> chunk = new List<String>();
+                for (Integer j = i; j < chunkEnd; j++) {
+                    chunk.add(allIds.get(j));
+                }
+                System.enqueueJob(new ExtoleUniversalHandler(key, chunk));
+            }
         }
     }
 
