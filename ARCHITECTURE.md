@@ -41,7 +41,7 @@ Used for: KPI syncs, event sends, connection test, report runner list, safety ch
 ```mermaid
 flowchart LR
     A[Apex callout\ncallout:Extole_API/...] --> B[Named Credential\nExtole_API]
-    B --> C[External Credential\nExtole API\nCustom Auth Protocol]
+    B --> C[External Credential\nExtole API\nBearer Token Auth]
     C --> D["Authorization: Bearer &lt;token&gt;\nheader injected by Salesforce"]
     D --> E[Extole API\nhttps://my.extole.com]
 
