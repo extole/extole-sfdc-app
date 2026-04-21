@@ -46,7 +46,7 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 The app uses two Named Credentials for all external callouts — no tokens are stored in Apex code or custom fields.
 
-**Extole API** (`Extole_API`) — Custom External Credential using a long-lived bearer token generated from the Extole Security Center. Used by the sync job and event handlers to call `https://my.extole.com`.
+**Extole API** (`Extole_API`) — Custom External Credential using a long-lived bearer token generated from the Extole Security Center. Used by the sync job and event handlers to call `[https://my.extole.com/security-center](https://my.extole.com/security-center)`.
 
 **Salesforce Tooling API** (`Extole_Tooling`) — OAuth External Credential backed by a Connected App. Used by the Event Configurator to deploy generated Flows into the org. Requires a one-time admin OAuth authorization after setup.
 
