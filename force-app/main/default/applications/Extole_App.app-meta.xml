@@ -6,7 +6,6 @@
     <isServiceCloudConsole>false</isServiceCloudConsole>
     <label>Extole</label>
     <navType>Standard</navType>
-    <tabs>Extole_App</tabs>
     <tabs>Extole_KPI_Dashboard</tabs>
     <tabs>Extole_List_View</tabs>
     <tabs>Extole_Settings</tabs>

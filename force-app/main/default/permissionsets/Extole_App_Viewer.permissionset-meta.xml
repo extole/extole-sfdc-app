@@ -56,10 +56,10 @@
     <fieldPermissions><editable>false</editable><field>Extole_Event_Cfg__c.Trigger_To_Value__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>false</editable><field>Extole_Event_Cfg__c.Trigger_Type__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>false</editable><field>Extole_Event_Cfg__c.Trigger_Value__c</field><readable>true</readable></fieldPermissions>
-    <tabSettings>
-        <tab>Extole_App</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
+    <classAccesses>
+        <apexClass>ExtoleController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <tabSettings>
         <tab>Extole_KPI_Dashboard</tab>
         <visibility>Visible</visibility>
