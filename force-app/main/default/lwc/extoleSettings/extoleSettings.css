@@ -21,6 +21,7 @@
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
+    overflow: visible;
 }
 
 .settings-card-header {

@@ -8,6 +8,8 @@
     border-radius: 4px;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
     padding: 16px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Page header */
@@ -63,9 +65,7 @@
 
 /* Table */
 .ec-table-wrapper {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 400px;
+    overflow: visible;
 }
 
 .ec-sortable-th {

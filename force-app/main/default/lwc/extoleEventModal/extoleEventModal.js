@@ -109,8 +109,7 @@ const PRESETS = [
             { paramName: 'email',         field: 'Email' },
             { paramName: 'first_name',    field: 'FirstName' },
             { paramName: 'last_name',     field: 'LastName' },
-            { paramName: 'lead_id',       field: 'Id' },
-            { paramName: 'advocate_code', field: null }
+            { paramName: 'lead_id',       field: 'Id' }
         ]
     },
     {
@@ -128,8 +127,7 @@ const PRESETS = [
             { paramName: 'email',         field: 'Email' },
             { paramName: 'first_name',    field: 'FirstName' },
             { paramName: 'last_name',     field: 'LastName' },
-            { paramName: 'lead_id',       field: 'Id' },
-            { paramName: 'advocate_code', field: null }
+            { paramName: 'lead_id',       field: 'Id' }
         ]
     },
     {

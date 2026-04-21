@@ -3,5 +3,5 @@
     <fullName>Notify_On_Sync_Failure__c</fullName>
     <label>Notify on Sync Failure</label>
     <type>Checkbox</type>
-    <defaultValue>true</defaultValue>
+    <defaultValue>false</defaultValue>
 </CustomField>

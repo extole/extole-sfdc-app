@@ -759,6 +759,10 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     async handleSaveSettings() {
+        if (this.settings.Notify_On_Sync_Failure__c && !this.settings.Failure_Notification_Email__c) {
+            this.showError('A notification email address is required when Notify on Sync Failure is enabled.');
+            return;
+        }
         if (this.settings.Show_List_View__c) {
             if (!this.settings.List_View_Field__c || !this.settings.List_View_Value__c) {
                 this.showError('Please select both an Extole Field and Extole Value before saving.');
