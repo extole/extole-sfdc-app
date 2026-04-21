@@ -203,22 +203,6 @@ To assign to another user, add `--on-behalf-of <username>` to either command.
 
 ---
 
-## Optional — Extole CLI
-
-If you have access to the Extole CLI, install it and authenticate with your Extole API token.
-
-```bash
-npm install -g github:cduskin-cpu/extole-cli
-
-extole auth login --token <your_token>
-
-extole ping
-
-extole events stream
-```
-
----
-
 ## Troubleshooting
 
 | Symptom | Likely cause |
