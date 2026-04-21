@@ -1,5 +1,17 @@
 # Extole SFDC App — Installation Guide
 
+## Overview
+
+Installation takes about 20–30 minutes and has two distinct phases.
+
+**Phase 1 (Steps 1–3)** deploys the app and configures the Extole API connection. This covers the KPI Dashboard — after Step 3 you can sync report data and see metrics in Salesforce.
+
+**Phase 2 (Steps 4–6)** sets up the Tooling API OAuth connection required by the Event Configurator. Salesforce requires a Connected App and a one-time OAuth authorization to allow the app to generate and deploy Flows on your behalf. This is the most involved part of the setup but only needs to be done once per org.
+
+Steps 7–8 assign permissions and launch the app.
+
+---
+
 ## Prerequisites
 
 - **Git** with GitHub SSH access configured — [GitHub SSH setup docs](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
