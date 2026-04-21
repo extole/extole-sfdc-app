@@ -181,6 +181,8 @@ sf org assign permset --name Extole_App_Viewer --target-org <alias>
 
 To assign to another user, add `--on-behalf-of <username>` to either command.
 
+> **Recommended for production orgs:** Create a dedicated Integration User (a non-human Salesforce user with a full license) and assign it `Extole_App_Admin`. Perform the Tooling API OAuth authorization in Step 6 while logged in as that user. This ensures the Event Configurator remains functional even if the original admin's account is deactivated or their session expires.
+
 **Also in Salesforce Setup UI** — make the Extole app visible in the App Launcher:
 
 1. Setup → **App Manager** → find **Extole** → click the row action → **Edit**

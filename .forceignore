@@ -4,9 +4,11 @@
 
 package.xml
 
-# Never deploy Named Credentials — deploying the metadata file clears the stored token.
-# Set the token manually once in Setup → Named Credentials → Extole_API.
+# Never deploy Named Credentials or External Credentials — deploying these files resets
+# stored tokens/secrets to placeholder values, breaking all API callouts immediately.
+# Both are configured once manually at install time and must not be overwritten by deploys.
 **/namedCredentials/**
+**/externalCredentials/**
 
 # LWC configuration files
 **/jsconfig.json

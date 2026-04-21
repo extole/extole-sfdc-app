@@ -228,7 +228,7 @@ Extole_Debug_Log__c (one per log entry when debug enabled)
 
 ## Key Behaviors for Maintainers
 
-**Bearer token reset on deploy** — Deploying `Extole_API.externalCredential-meta.xml` resets the Authorization header to a placeholder. This will cause 401 errors until the token is re-entered in Setup → External Credentials → Extole API → Custom Headers. Avoid deploying this file unless the credential structure itself needs to change.
+**Bearer token reset on deploy** — Deploying `Extole_API.externalCredential-meta.xml` resets the Authorization header to a placeholder, causing immediate 401 errors. This is a Salesforce platform constraint: secrets are never exported in metadata and any deploy of the file overwrites the live value with whatever is in source (a placeholder). Both `externalCredentials/` and `namedCredentials/` are excluded in `.forceignore` to prevent this from happening during normal code deploys. These files should be treated as install-time-only artifacts — configure once manually, never redeploy. If the credential structure itself genuinely needs to change, update it directly in Setup rather than via a metadata deploy.
 
 **Tooling OAuth session expiry** — If the `Extole_Tooling_Cred-Admin` principal's OAuth token expires or is revoked, all Flow deploys will fail with an auth error. Fix: Setup → Named Credentials → Extole Tooling → External Credential Principals → Authorize.
 
