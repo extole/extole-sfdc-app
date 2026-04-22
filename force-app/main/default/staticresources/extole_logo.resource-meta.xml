@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
     <cacheControl>Private</cacheControl>
-    <contentType>image/svg+xml</contentType>
-    <description>Extole brand logo SVG for use in app header and onboarding screen.</description>
+    <contentType>image/png</contentType>
+    <description>Extole brand logo PNG for use in app header and onboarding screen.</description>
 </StaticResource>

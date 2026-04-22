@@ -87,6 +87,14 @@ export default class ExtoleEventConfigurator extends LightningElement {
         this.loadConfigs();
     }
 
+    renderedCallback() {
+        if (this.isModalOpen || this.isDeleteModalOpen) {
+            this.template.host.classList.add('ec-modal-active');
+        } else {
+            this.template.host.classList.remove('ec-modal-active');
+        }
+    }
+
     async loadConfigs() {
         this.isLoading = true;
         try {
