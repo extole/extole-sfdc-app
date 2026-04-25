@@ -208,7 +208,7 @@ public with sharing class ExtoleToolingService {
             + '        for (SObject r : records) {\n'
             + '            Map<String, Object> dataMap = new Map<String, Object>();\n'
             + dataMapLines
-            + '            dataMap.put(\'app_type\', \'salesforce_crm\');\n'
+            + '            dataMap.put(\'app_type\', \'extole-sfdc-app\');\n'
             + '\n'
             + '            Map<String, Object> payload = new Map<String, Object>{\n'
             + '                \'event_name\' => \'' + escapeApexString(eventName) + '\',\n'

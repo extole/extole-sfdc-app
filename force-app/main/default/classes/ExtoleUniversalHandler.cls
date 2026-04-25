@@ -125,7 +125,7 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
 
         for (SObject r : records) {
             Map<String, Object> dataMap = buildDataMap(r, mappings);
-            dataMap.put('app_type', 'salesforce_crm');
+            dataMap.put('app_type', 'extole-sfdc-app');
 
             Map<String, Object> payload = new Map<String, Object>{
                 'event_name' => cfg.Event_Name__c,

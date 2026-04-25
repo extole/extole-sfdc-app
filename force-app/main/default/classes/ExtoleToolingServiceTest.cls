@@ -120,7 +120,7 @@ private class ExtoleToolingServiceTest {
         System.assert(body.contains('class Extole_Handler_test_key'), 'Should contain class declaration');
         System.assert(body.contains('lead_created'), 'Should contain event name');
         System.assert(body.contains('Email'), 'Should contain mapped field');
-        System.assert(body.contains('salesforce_crm'), 'Should inject app_type');
+        System.assert(body.contains('extole-sfdc-app'), 'Should inject app_type');
         System.assert(body.contains('callout:Extole_API/v5/events'), 'Should target Extole events endpoint');
     }
 

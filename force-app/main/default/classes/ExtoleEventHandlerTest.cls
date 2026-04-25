@@ -810,7 +810,7 @@ private class ExtoleEventHandlerTest {
         System.assertNotEquals(null, payload);
         System.assert(payload.contains('lead_created'), 'Event name in payload');
         System.assert(payload.contains('preview@extole-test.com'), 'Email value in payload');
-        System.assert(payload.contains('salesforce_crm'), 'app_type in payload');
+        System.assert(payload.contains('extole-sfdc-app'), 'app_type in payload');
     }
 
     @isTest

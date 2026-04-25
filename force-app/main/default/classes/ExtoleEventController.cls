@@ -321,7 +321,7 @@ public with sharing class ExtoleEventController {
             }
         }
 
-        dataMap.put('app_type', 'salesforce_crm');
+        dataMap.put('app_type', 'extole-sfdc-app');
 
         Map<String, Object> payload = new Map<String, Object>{
             'event_name' => eventName,
