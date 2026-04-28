@@ -472,6 +472,10 @@ public class ExtoleSyncJob implements Schedulable {
             SELECT Id FROM Extole_Event_Log__c WHERE Timestamp__c < :cutoff
         ];
         if (!oldEventLogs.isEmpty()) delete oldEventLogs;
+        List<Extole_Backfill_Log__c> oldBackfillLogs = [
+            SELECT Id FROM Extole_Backfill_Log__c WHERE Started_At__c < :cutoff
+        ];
+        if (!oldBackfillLogs.isEmpty()) delete oldBackfillLogs;
 
         // ── Update Last_Sync_Timestamp + Consecutive_Failure_Count ──────────
         Integer prevConsecutive = settings.Consecutive_Failure_Count__c != null

@@ -387,6 +387,66 @@
                     <p class="empty-text">No event logs found.</p>
                 </template>
             </template>
+            <!-- Backfill Log -->
+            <div class="section-header-row diag-header-row">
+                <div class="diag-subsection-label">
+                    <h3 class="subsection-title">Backfill Log</h3>
+                    <lightning-helptext content="Records each share-link backfill run — one row per run. Retained for 30 days."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearBackfillLog}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearBackfillLog} disabled={isClearingBackfillLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearBackfillLog}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshBackfillLogs}></lightning-button>
+                        <lightning-button label="Clear Backfill Logs" variant="destructive-text" onclick={handleClearBackfillLogs} disabled={isClearingBackfillLogs}></lightning-button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={isLoadingBackfillLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasBackfillLogs}>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Started</div></th>
+                                    <th scope="col"><div class="slds-truncate">Object</div></th>
+                                    <th scope="col"><div class="slds-truncate">Audience</div></th>
+                                    <th scope="col"><div class="slds-truncate">Program</div></th>
+                                    <th scope="col"><div class="slds-truncate">Field</div></th>
+                                    <th scope="col"><div class="slds-truncate">Status</div></th>
+                                    <th scope="col"><div class="slds-truncate">Total</div></th>
+                                    <th scope="col"><div class="slds-truncate">Success</div></th>
+                                    <th scope="col"><div class="slds-truncate">Errors</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={backfillLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.formattedStarted}</td>
+                                        <td>{log.Object_Type__c}</td>
+                                        <td class="truncated-cell" title={log.Audience_Criteria__c}>{log.Audience_Type__c}</td>
+                                        <td>{log.Program_Label__c}</td>
+                                        <td>{log.Target_Field__c}</td>
+                                        <td><span class={log.statusClass}>{log.Status__c}</span></td>
+                                        <td>{log.Total_Count__c}</td>
+                                        <td>{log.Success_Count__c}</td>
+                                        <td class="error-cell">{log.Error_Count__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No backfill runs found.</p>
+                </template>
+            </template>
         </div>
 
         <!-- SECTION 7: Debug / Orphan Management -->

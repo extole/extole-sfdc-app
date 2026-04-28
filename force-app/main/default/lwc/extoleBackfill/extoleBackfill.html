@@ -1,0 +1,239 @@
+<template>
+    <div class="backfill-container">
+
+        <!-- Object -->
+        <div class="settings-card">
+            <div class="card-title-row">
+                <div class="settings-card-title">Object</div>
+                <lightning-helptext content="Choose whether to backfill Contacts or Leads. This selection also determines which fields are available below."></lightning-helptext>
+            </div>
+            <div class="slds-form-element__control radio-group-spaced">
+                <span class="slds-radio radio-with-desc">
+                    <input type="radio" name="objectType" id="radio-contact"
+                           value="Contact" checked={isContact} onchange={handleObjectRadioChange} />
+                    <label class="slds-radio__label" for="radio-contact">
+                        <span class="slds-radio_faux"></span>
+                        <span class="slds-form-element__label">Contacts</span>
+                    </label>
+                    <p class="radio-desc">Contacts with an email address</p>
+                </span>
+                <span class="slds-radio radio-with-desc">
+                    <input type="radio" name="objectType" id="radio-lead"
+                           value="Lead" checked={isLead} onchange={handleObjectRadioChange} />
+                    <label class="slds-radio__label" for="radio-lead">
+                        <span class="slds-radio_faux"></span>
+                        <span class="slds-form-element__label">Leads</span>
+                    </label>
+                    <p class="radio-desc">Unconverted leads with an email address</p>
+                </span>
+            </div>
+        </div>
+
+        <!-- Audience -->
+        <div class="settings-card">
+            <div class="card-title-row">
+                <div class="settings-card-title">Audience</div>
+                <lightning-helptext content="Choose which records to process. All three options scale to any org size except Report, which is capped at 2,000 rows."></lightning-helptext>
+            </div>
+            <div class="slds-form-element__control radio-group-spaced">
+                <span class="slds-radio radio-with-desc">
+                    <input type="radio" name="audienceType" id="radio-default"
+                           value="default" checked={isDefaultFilter} onchange={handleAudienceRadioChange} />
+                    <label class="slds-radio__label" for="radio-default">
+                        <span class="slds-radio_faux"></span>
+                        <span class="slds-form-element__label">Default filter</span>
+                    </label>
+                    <p class="radio-desc">{defaultFilterDescription}</p>
+                </span>
+                <span class="slds-radio radio-with-desc">
+                    <input type="radio" name="audienceType" id="radio-date"
+                           value="date" checked={isDateFilter} onchange={handleAudienceRadioChange} />
+                    <label class="slds-radio__label" for="radio-date">
+                        <span class="slds-radio_faux"></span>
+                        <span class="slds-form-element__label">Created after date</span>
+                    </label>
+                    <p class="radio-desc">{dateFilterDescription}</p>
+                </span>
+                <span class="slds-radio radio-with-desc">
+                    <input type="radio" name="audienceType" id="radio-report"
+                           value="report" checked={isReportFilter} onchange={handleAudienceRadioChange} />
+                    <label class="slds-radio__label" for="radio-report">
+                        <span class="slds-radio_faux"></span>
+                        <span class="slds-form-element__label">Salesforce Report</span>
+                    </label>
+                    <p class="radio-desc">Use a saved report to target a specific audience (max 2,000 rows)</p>
+                </span>
+            </div>
+
+            <template lwc:if={isDateFilter}>
+                <lightning-input
+                    type="date"
+                    label="Created on or after"
+                    value={selectedDate}
+                    onchange={handleDateChange}>
+                </lightning-input>
+            </template>
+
+            <template lwc:if={isReportFilter}>
+                <template lwc:if={isLoadingReports}>
+                    <lightning-spinner size="small" alternative-text="Loading reports..."></lightning-spinner>
+                </template>
+                <template lwc:else>
+                    <lightning-combobox
+                        name="report"
+                        label="Select a report"
+                        value={selectedReportId}
+                        options={reportOptions}
+                        placeholder="Search reports..."
+                        onchange={handleReportChange}>
+                    </lightning-combobox>
+                </template>
+            </template>
+        </div>
+
+        <!-- Program -->
+        <div class="settings-card">
+            <div class="card-title-row">
+                <div class="settings-card-title">Program</div>
+                <lightning-helptext content="The Extole program to generate share links for. Leave blank to use the default program."></lightning-helptext>
+            </div>
+            <template lwc:if={isLoadingCampaigns}>
+                <lightning-spinner size="small" alternative-text="Loading programs..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <lightning-combobox
+                    name="program"
+                    label="Program (optional)"
+                    value={selectedProgram}
+                    options={campaignOptionsWithNone}
+                    onchange={handleProgramChange}>
+                </lightning-combobox>
+            </template>
+        </div>
+
+        <!-- Share Link Field -->
+        <div class="settings-card">
+            <div class="card-title-row">
+                <div class="settings-card-title">Share Link Field</div>
+                <lightning-helptext content="The field where the generated share link will be written. Shows custom text and URL fields on the selected object only."></lightning-helptext>
+            </div>
+            <template lwc:if={isLoadingFields}>
+                <lightning-spinner size="small" alternative-text="Loading fields..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasFieldOptions}>
+                    <lightning-combobox
+                        name="targetField"
+                        label={shareLinkFieldLabel}
+                        value={selectedField}
+                        options={fieldOptions}
+                        placeholder="Select a field..."
+                        onchange={handleFieldChange}>
+                    </lightning-combobox>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">
+                        No custom Text or URL fields found on {selectedObject}.
+                        Create one first, then return here to select it.
+                    </p>
+                </template>
+            </template>
+        </div>
+
+        <!-- Actions -->
+        <div class="settings-card action-card">
+            <div class="action-row">
+                <lightning-button
+                    label="Run Backfill"
+                    variant="brand"
+                    icon-name="utility:upload"
+                    onclick={handleRunClick}
+                    disabled={isRunDisabled}>
+                </lightning-button>
+                <template lwc:if={isCountingForRun}>
+                    <lightning-spinner size="small" alternative-text="Calculating..."></lightning-spinner>
+                </template>
+            </div>
+        </div>
+
+        <!-- Last Run -->
+        <div class="settings-card">
+            <div class="settings-card-title">Last Run</div>
+            <template lwc:if={isLoadingLastRun}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:elseif={lastRun}>
+                <div class="last-run-row">
+                    <span class="last-run-meta">{lastRunTimestamp}</span>
+                    <span class={lastRunStatusClass}>{lastRun.Status__c}</span>
+                    <span class="last-run-counts">
+                        {lastRun.Success_Count__c} succeeded
+                        <template lwc:if={lastRunHasErrors}>
+                            &nbsp;&middot;&nbsp;{lastRun.Error_Count__c} failed
+                        </template>
+                    </span>
+                    <template lwc:if={lastRunHasErrors}>
+                        <lightning-button
+                            label="View Logs"
+                            variant="base"
+                            icon-name="utility:list"
+                            onclick={handleViewLogs}>
+                        </lightning-button>
+                    </template>
+                </div>
+                <template lwc:if={showErrorDetail}>
+                    <div class="error-detail-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Record</div></th>
+                                    <th scope="col"><div class="slds-truncate">Error</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={parsedErrors} for:item="err">
+                                    <tr key={err.id}>
+                                        <td>{err.name}</td>
+                                        <td>{err.error}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            </template>
+            <template lwc:else>
+                <p class="empty-text">No backfill has been run yet.</p>
+            </template>
+        </div>
+
+    </div>
+
+    <!-- Confirmation Modal -->
+    <template lwc:if={showConfirmModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header">
+                    <h2 class="slds-modal__title">Confirm Backfill</h2>
+                    <button class="slds-button slds-button_icon slds-modal__close" onclick={handleCancel}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                </div>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p>{confirmMessage}</p>
+                    <p class="confirm-note">This will overwrite any existing value in that field.</p>
+                </div>
+                <div class="slds-modal__footer">
+                    <lightning-button label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
+                    <lightning-button
+                        label="Continue"
+                        variant="brand"
+                        onclick={handleConfirm}
+                        disabled={isRunning}>
+                    </lightning-button>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

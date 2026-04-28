@@ -17,6 +17,8 @@ import getDebugLogs from '@salesforce/apex/ExtoleController.getDebugLogs';
 import getScheduleStatus from '@salesforce/apex/ExtoleController.getScheduleStatus';
 import getEventLogs from '@salesforce/apex/ExtoleEventController.getEventLogs';
 import clearEventLog from '@salesforce/apex/ExtoleEventController.clearEventLog';
+import getBackfillLogs from '@salesforce/apex/ExtoleBackfillController.getBackfillLogs';
+import clearBackfillLogs from '@salesforce/apex/ExtoleBackfillController.clearBackfillLogs';
 
 import LABEL_TITLE from '@salesforce/label/c.Extole_Settings_Title';
 import LABEL_CONNECTION_SECTION from '@salesforce/label/c.Extole_Settings_Connection_Section';
@@ -135,6 +137,10 @@ export default class ExtoleSettings extends LightningElement {
     @track isClearingSyncLogs = false;
     @track confirmClearSync = false;
     @track confirmClearEventLog = false;
+    @track backfillLogs = [];
+    @track isLoadingBackfillLogs = false;
+    @track isClearingBackfillLogs = false;
+    @track confirmClearBackfillLog = false;
     @track confirmClearDebug = false;
     @track isTesting = false;
     @track isSaving = false;
@@ -252,6 +258,7 @@ export default class ExtoleSettings extends LightningElement {
             this.loadSyncLogs(),
             this.loadDebugLogs(),
             this.loadEventLogs(),
+            this.loadBackfillLogs(),
             this.checkScheduleStatus()
         ]);
         // Load attribution dropdowns after settings are loaded
@@ -473,8 +480,54 @@ export default class ExtoleSettings extends LightningElement {
         }
     }
 
-    handleRefreshSyncLogs() { this.loadSyncLogs(); }
-    handleRefreshEventLogs() { this.loadEventLogs(); }
+    handleRefreshSyncLogs()      { this.loadSyncLogs(); }
+    handleRefreshEventLogs()     { this.loadEventLogs(); }
+    handleRefreshBackfillLogs()  { this.loadBackfillLogs(); }
+
+    handleClearBackfillLogs()    { this.confirmClearBackfillLog = true; }
+    handleCancelClearBackfillLog() { this.confirmClearBackfillLog = false; }
+    async handleConfirmClearBackfillLog() {
+        this.confirmClearBackfillLog = false;
+        this.isClearingBackfillLogs = true;
+        try {
+            await clearBackfillLogs();
+            this.backfillLogs = [];
+            this.showSuccess('Backfill log cleared.');
+        } catch (error) {
+            this.showError('Failed to clear backfill log.', error);
+        } finally {
+            this.isClearingBackfillLogs = false;
+        }
+    }
+
+    async loadBackfillLogs() {
+        this.isLoadingBackfillLogs = true;
+        try {
+            const result = await getBackfillLogs();
+            this.backfillLogs = (result || []).map(log => ({
+                ...log,
+                formattedStarted: log.Started_At__c
+                    ? new Intl.DateTimeFormat('en-US', {
+                        month: 'short', day: 'numeric',
+                        hour: 'numeric', minute: '2-digit',
+                        hour12: true
+                      }).format(new Date(log.Started_At__c))
+                    : '',
+                statusClass: this.getBackfillStatusClass(log.Status__c)
+            }));
+        } catch (error) {
+            this.showError('Failed to load backfill logs.', error);
+        } finally {
+            this.isLoadingBackfillLogs = false;
+        }
+    }
+
+    getBackfillStatusClass(status) {
+        if (status === 'COMPLETED') return 'status-pill status-success';
+        if (status === 'IN_PROGRESS') return 'status-pill status-progress';
+        if (status === 'COMPLETED_WITH_ERRORS') return 'status-pill status-warn';
+        return 'status-pill status-error';
+    }
 
     handleCopySyncLogMd() {
         const now = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date());
@@ -551,6 +604,10 @@ export default class ExtoleSettings extends LightningElement {
 
     get hasEventLogs() {
         return this.eventLogs && this.eventLogs.length > 0;
+    }
+
+    get hasBackfillLogs() {
+        return this.backfillLogs && this.backfillLogs.length > 0;
     }
 
     get connectionStatusLabel() {

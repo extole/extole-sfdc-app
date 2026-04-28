@@ -1,0 +1,130 @@
+:host {
+    display: block;
+}
+
+.backfill-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-card {
+    background: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.settings-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #080707;
+    margin: 0;
+}
+
+.card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Custom radio group spacing */
+.radio-group-spaced .slds-radio {
+    display: block;
+    margin-bottom: 14px;
+}
+
+.radio-group-spaced .slds-radio:last-child {
+    margin-bottom: 0;
+}
+
+/* Sub-description aligned under the radio label text */
+.radio-with-desc .radio-desc {
+    margin: 3px 0 0 1.5rem;
+    font-size: 12px;
+    color: #54698d;
+    line-height: 1.4;
+}
+
+.filter-description {
+    margin: 0;
+    font-size: 13px;
+    color: #54698d;
+}
+
+.action-card {
+    flex-direction: row;
+    align-items: center;
+}
+
+.action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.preview-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.preview-count {
+    font-size: 13px;
+    color: #54698d;
+    font-style: italic;
+}
+
+.empty-text {
+    margin: 0;
+    font-size: 13px;
+    color: #54698d;
+}
+
+.last-run-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.last-run-meta {
+    font-size: 13px;
+    color: #54698d;
+}
+
+.last-run-counts {
+    font-size: 13px;
+    color: #3e3e3c;
+}
+
+.status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.status-success  { background: #e3f5ee; color: #1d9e75; }
+.status-progress { background: #e8f0fe; color: #1a6fd8; }
+.status-warn     { background: #fef3e2; color: #b26800; }
+.status-error    { background: #fde8e8; color: #c23934; }
+
+.error-detail-table {
+    overflow-x: auto;
+}
+
+.confirm-note {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #c23934;
+}

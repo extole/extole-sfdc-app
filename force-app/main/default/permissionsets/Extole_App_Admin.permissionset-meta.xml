@@ -36,6 +36,15 @@
         <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>true</modifyAllRecords>
+        <object>Extole_Backfill_Log__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
         <object>Extole_Sync_Log__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
@@ -66,6 +75,19 @@
         <object>Extole_Event_Cfg__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Criteria__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Batch_Job_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Completed_At__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Error_Count__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Error_Detail__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Object_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Program_Label__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Started_At__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Status__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Success_Count__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Target_Field__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Total_Count__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Active__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Apex_Class_Name__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
@@ -97,6 +119,10 @@
     </tabSettings>
     <tabSettings>
         <tab>Extole_List_View</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Extole_Backfill</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>

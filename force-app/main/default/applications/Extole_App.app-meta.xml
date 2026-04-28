@@ -8,6 +8,8 @@
     <navType>Standard</navType>
     <tabs>Extole_KPI_Dashboard</tabs>
     <tabs>Extole_List_View</tabs>
+    <tabs>Extole_Backfill</tabs>
+    <tabs>Extole_Event_Configurator</tabs>
     <tabs>Extole_Settings</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
