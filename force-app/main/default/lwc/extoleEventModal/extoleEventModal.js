@@ -74,6 +74,7 @@ import LABEL_ERROR_PREVIEW from '@salesforce/label/c.Extole_EC_Error_Preview';
 import LABEL_ERROR_SAVE_REQUIRED from '@salesforce/label/c.Extole_EC_Error_SaveRequired';
 import LABEL_ERROR_EVENT_NAME_REQUIRED from '@salesforce/label/c.Extole_EC_Error_EventNameRequired';
 import LABEL_ERROR_EVENT_NAME_DUPLICATE from '@salesforce/label/c.Extole_EC_Error_EventNameDuplicate';
+import LABEL_ERROR_EVENT_NAME_INVALID from '@salesforce/label/c.Extole_EC_Error_EventNameInvalid';
 import LABEL_ERROR_OBJECT_REQUIRED from '@salesforce/label/c.Extole_EC_Error_ObjectRequired';
 import LABEL_TOOLTIP_TRIGGER_OBJECT from '@salesforce/label/c.Extole_EC_Tooltip_TriggerObject';
 import LABEL_TOOLTIP_TRIGGER_CONDITION from '@salesforce/label/c.Extole_EC_Tooltip_TriggerCondition';
@@ -151,6 +152,7 @@ const PRESETS = [
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_ATTEMPTS = 20;
+const EVENT_NAME_PATTERN = /^[0-9a-zA-Z_\-.\s]{2,200}$/;
 
 export default class ExtoleEventModal extends LightningElement {
     @api config = null; // null = add mode, object = edit mode
@@ -638,8 +640,10 @@ export default class ExtoleEventModal extends LightningElement {
 
     handleEventNameChange(event) {
         this.eventName = event.target.value;
-        this.eventNameError = null;
         this.eventNameAdjusted = false;
+        this.eventNameError = this.eventName && !EVENT_NAME_PATTERN.test(this.eventName)
+            ? LABEL_ERROR_EVENT_NAME_INVALID
+            : null;
     }
 
     // Parameters
@@ -876,6 +880,11 @@ export default class ExtoleEventModal extends LightningElement {
                 this.step2Error = LABEL_ERROR_EVENT_NAME_REQUIRED;
                 return;
             }
+            if (!EVENT_NAME_PATTERN.test(this.eventName)) {
+                this.eventNameError = LABEL_ERROR_EVENT_NAME_INVALID;
+                return;
+            }
+            this.eventNameError = null;
             // Validate event name uniqueness — exclude the config already saved in this session
             const excludeKey = this.isEditMode ? this.config.Config_Key__c : (this.savedConfigKey || null);
             try {

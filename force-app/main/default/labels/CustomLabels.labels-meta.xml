@@ -75,7 +75,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync management section header</shortDescription>
-        <value>Data Import Management</value>
+        <value>KPI Data Import Management</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_Debug_Section</fullName>
@@ -91,7 +91,6 @@
         <shortDescription>Clear debug logs button label</shortDescription>
         <value>Clear Debug Logs</value>
     </labels>
-
     <labels>
         <fullName>Extole_Settings_ApiTokenNote</fullName>
         <language>en_US</language>
@@ -1456,6 +1455,13 @@
         <protected>false</protected>
         <shortDescription>Validation error when event name is already in use</shortDescription>
         <value>This event name is already in use.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_EC_Error_EventNameInvalid</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Validation error for invalid event name format</shortDescription>
+        <value>Must be 2–200 characters and contain only letters, numbers, underscores ( _ ), hyphens ( - ), periods ( . ), or spaces.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Error_ObjectRequired</fullName>

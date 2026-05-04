@@ -8,6 +8,7 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value><fullName>Default Filter</fullName><default>true</default><label>Default Filter</label></value>
+            <value><fullName>Date Filter</fullName><default>false</default><label>Date Filter</label></value>
             <value><fullName>Report</fullName><default>false</default><label>Report</label></value>
         </valueSetDefinition>
     </valueSet>

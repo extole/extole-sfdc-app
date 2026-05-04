@@ -16,12 +16,12 @@
  */
 public with sharing class ExtoleSafetyCheckService {
 
-    // Extole API endpoint for campaign trigger information
-    // v4/campaigns returns campaigns with their trigger event_names
-    private static final String CAMPAIGNS_ENDPOINT = 'callout:Extole_API/v4/campaigns?state=PUBLISHED,ACTIVE';
+    // /v2/campaigns returns full campaign objects including steps[].triggers[].event_names
+    // /v4/campaigns is defunct (404). State LIVE = active/published.
+    private static final String CAMPAIGNS_ENDPOINT = 'callout:Extole_API/v2/campaigns?state=LIVE';
 
     // Statuses that count as "in active use"
-    private static final Set<String> ACTIVE_STATES = new Set<String>{ 'PUBLISHED', 'ACTIVE' };
+    private static final Set<String> ACTIVE_STATES = new Set<String>{ 'LIVE' };
 
     /**
      * Check whether the given Extole event name is referenced by an active/published campaign.
@@ -124,7 +124,7 @@ public with sharing class ExtoleSafetyCheckService {
             if (campaignReferencesEvent(campaign, eventName)) {
                 result.put('status', 'FOUND');
                 result.put('campaignName', campaign.get('name'));
-                result.put('campaignId',   campaign.get('id'));
+                result.put('campaignId',   campaign.get('campaign_id'));
                 return result; // Short-circuit on first match
             }
         }
@@ -137,6 +137,27 @@ public with sharing class ExtoleSafetyCheckService {
      * Checks multiple known response shapes from the Extole API.
      */
     private static Boolean campaignReferencesEvent(Map<String, Object> campaign, String eventName) {
+        // Shape 4 (primary — /v2/campaigns): campaign.steps[].triggers[].event_names[]
+        // event_names is a List<String> when concrete; skip String values (buildtime expressions)
+        Object stepsRaw = campaign.get('steps');
+        if (stepsRaw instanceof List<Object>) {
+            for (Object rawStep : (List<Object>) stepsRaw) {
+                if (!(rawStep instanceof Map<String, Object>)) continue;
+                Map<String, Object> step = (Map<String, Object>) rawStep;
+                Object stepTriggersRaw = step.get('triggers');
+                if (!(stepTriggersRaw instanceof List<Object>)) continue;
+                for (Object rawTrigger : (List<Object>) stepTriggersRaw) {
+                    if (!(rawTrigger instanceof Map<String, Object>)) continue;
+                    Map<String, Object> trig = (Map<String, Object>) rawTrigger;
+                    Object enRaw = trig.get('event_names');
+                    if (!(enRaw instanceof List<Object>)) continue; // skip buildtime expressions
+                    for (Object en : (List<Object>) enRaw) {
+                        if (eventName.equalsIgnoreCase(String.valueOf(en))) return true;
+                    }
+                }
+            }
+        }
+
         // Shape 1: campaign.event_names = ["lead_created", ...]
         Object eventNamesRaw = campaign.get('event_names');
         if (eventNamesRaw instanceof List<Object>) {

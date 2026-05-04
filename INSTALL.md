@@ -217,6 +217,29 @@ To assign to another user, add `--on-behalf-of <username>` to either command.
 
 ---
 
+## Step 9 — Add the Share Link field to Contact and Lead page layouts _(if using Share Link Backfill)_
+
+The **Manage Share Links** tab generates Extole share links and writes them to a custom field on Contact or Lead records. The field is deployed with the package but must be manually added to your page layouts to be visible on individual records.
+
+**For Contact:**
+
+1. Setup → **Object Manager** → **Contact** → **Page Layouts**
+2. Open the layout in use (typically `Contact Layout`)
+3. In the field palette, find **Extole Share Link** (under the URL fields section or search by name)
+4. Drag it onto the layout in the desired section
+5. Save
+
+**For Lead:**
+
+1. Setup → **Object Manager** → **Lead** → **Page Layouts**
+2. Open the layout in use (typically `Lead Layout`)
+3. Find **Extole Share Link** and drag it onto the layout
+4. Save
+
+> This step only applies if you plan to use the Share Link Backfill feature. The field is a URL field named `Extole_Share_Link__c`.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause |

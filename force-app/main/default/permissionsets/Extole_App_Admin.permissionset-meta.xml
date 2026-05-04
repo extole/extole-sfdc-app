@@ -75,6 +75,7 @@
         <object>Extole_Event_Cfg__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
+    <fieldPermissions><editable>true</editable><field>Contact.Extole_Share_Link__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Criteria__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Type__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Batch_Job_Id__c</field><readable>true</readable></fieldPermissions>
@@ -88,6 +89,7 @@
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Success_Count__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Target_Field__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Total_Count__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Lead.Extole_Share_Link__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Active__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Apex_Class_Name__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Config_Key__c</field><readable>true</readable></fieldPermissions>

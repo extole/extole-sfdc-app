@@ -39,7 +39,7 @@ public with sharing class ExtoleBackfillController {
         List<Map<String, String>> options = new List<Map<String, String>>();
         try {
             HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:Extole_API/v4/campaigns?state=PUBLISHED,ACTIVE');
+            req.setEndpoint('callout:Extole_API/v2/campaign-summaries');
             req.setMethod('GET');
             req.setTimeout(10000);
             req.setHeader('Accept', 'application/json');
@@ -55,15 +55,24 @@ public with sharing class ExtoleBackfillController {
                 if (raw instanceof List<Object>) campaigns = (List<Object>) raw;
             }
 
+            // Group by program_label — one dropdown entry per program, exclude hidden
+            Map<String, String> seenLabels = new Map<String, String>();
             for (Object c : campaigns) {
                 if (!(c instanceof Map<String, Object>)) continue;
                 Map<String, Object> campaign = (Map<String, Object>) c;
-                String label = (String) campaign.get('label');
-                String name  = (String) campaign.get('name');
-                if (String.isBlank(label)) continue;
+                String programLabel = (String) campaign.get('program_label');
+                String name         = (String) campaign.get('name');
+                List<Object> tags   = campaign.get('tags') instanceof List<Object> ? (List<Object>) campaign.get('tags') : new List<Object>();
+                if (String.isBlank(programLabel)) continue;
+                if (tags.contains('hidden')) continue;
+                if (!seenLabels.containsKey(programLabel)) {
+                    seenLabels.put(programLabel, String.isNotBlank(name) ? name : programLabel);
+                }
+            }
+            for (String programLabel : seenLabels.keySet()) {
                 options.add(new Map<String, String>{
-                    'label' => String.isNotBlank(name) ? name + ' (' + label + ')' : label,
-                    'value' => label
+                    'label' => seenLabels.get(programLabel),
+                    'value' => programLabel
                 });
             }
             options.sort(new FieldLabelComparator());
@@ -78,10 +87,15 @@ public with sharing class ExtoleBackfillController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
-    public static List<Map<String, String>> getReports() {
+    public static List<Map<String, String>> getReports(String searchTerm) {
         List<Map<String, String>> options = new List<Map<String, String>>();
         try {
-            for (Report r : [SELECT Id, Name FROM Report ORDER BY Name LIMIT 200]) {
+            String q = 'SELECT Id, Name FROM Report';
+            if (String.isNotBlank(searchTerm)) {
+                q += ' WHERE Name LIKE \'%' + String.escapeSingleQuotes(searchTerm) + '%\'';
+            }
+            q += ' ORDER BY Name LIMIT 200';
+            for (Report r : Database.query(q)) {
                 options.add(new Map<String, String>{ 'label' => r.Name, 'value' => r.Id });
             }
         } catch (Exception e) {

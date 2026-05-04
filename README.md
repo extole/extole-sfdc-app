@@ -54,11 +54,11 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 
 ## Ongoing maintenance
 
-- **Sync cadence** — Change in Settings → Sync Management. The scheduled job is automatically re-registered on save.
-- **Adding KPIs** — Settings → Report Configuration → Add Report. New tiles appear on the KPI Dashboard after the next sync.
-- **Event configs** — Settings → Event Configurations. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
-- **Failure notifications** — Settings → Notifications. Enable email alerts after N consecutive sync failures.
-- **Debug logging** — Settings → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
+- **Sync cadence** — Change in Manage App Settings → KPI Data Import Management. The scheduled job is automatically re-registered on save.
+- **Adding KPIs** — Manage App Settings → KPI Dashboard Configuration → Add Report. New tiles appear on the KPI Dashboard after the next sync.
+- **Event configs** — Manage App Settings → Event Configurations. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
+- **Failure notifications** — Manage App Settings → Notifications. Enable email alerts after N consecutive sync failures.
+- **Debug logging** — Manage App Settings → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
 - **Log retention** — Sync logs, event logs, and debug logs are automatically purged after 30 days on each sync run.
 
 ---

@@ -17,7 +17,7 @@
 .sc-dropdown {
     position: fixed;
     z-index: 9999;
-    max-height: 240px;
+    max-height: 240px; /* fallback — overridden by inline style computed in _open() */
     overflow-y: auto;
     border: 1px solid #dddbda;
     border-radius: 4px;

@@ -2,6 +2,6 @@
 <CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
     <lwcComponent>extoleSettings</lwcComponent>
     <description>Extole Settings and Configuration</description>
-    <label>Extole Settings</label>
+    <label>Manage App Settings</label>
     <motif>Custom73: Gear</motif>
 </CustomTab>

@@ -388,9 +388,9 @@
                 </template>
             </template>
             <!-- Backfill Log -->
-            <div class="section-header-row diag-header-row">
+            <div class="section-header-row diag-header-row" data-section="backfill-log">
                 <div class="diag-subsection-label">
-                    <h3 class="subsection-title">Backfill Log</h3>
+                    <h3 class="subsection-title">Share Link Backfill Log</h3>
                     <lightning-helptext content="Records each share-link backfill run — one row per run. Retained for 30 days."></lightning-helptext>
                 </div>
                 <div class="diag-header-actions">
@@ -401,6 +401,7 @@
                     </template>
                     <template lwc:else>
                         <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshBackfillLogs}></lightning-button>
+                        <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopyBackfillLogMd}></lightning-button>
                         <lightning-button label="Clear Backfill Logs" variant="destructive-text" onclick={handleClearBackfillLogs} disabled={isClearingBackfillLogs}></lightning-button>
                     </template>
                 </div>
@@ -423,6 +424,7 @@
                                     <th scope="col"><div class="slds-truncate">Total</div></th>
                                     <th scope="col"><div class="slds-truncate">Success</div></th>
                                     <th scope="col"><div class="slds-truncate">Errors</div></th>
+                                    <th scope="col"><div class="slds-truncate">Details</div></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -433,10 +435,11 @@
                                         <td class="truncated-cell" title={log.Audience_Criteria__c}>{log.Audience_Type__c}</td>
                                         <td>{log.Program_Label__c}</td>
                                         <td>{log.Target_Field__c}</td>
-                                        <td><span class={log.statusClass}>{log.Status__c}</span></td>
+                                        <td><span class={log.statusClass}>{log.statusLabel}</span></td>
                                         <td>{log.Total_Count__c}</td>
                                         <td>{log.Success_Count__c}</td>
-                                        <td class="error-cell">{log.Error_Count__c}</td>
+                                        <td>{log.Error_Count__c}</td>
+                                        <td class={log.detailClass} title={log.Error_Detail__c}>{log.errorDetail}</td>
                                     </tr>
                                 </template>
                             </tbody>

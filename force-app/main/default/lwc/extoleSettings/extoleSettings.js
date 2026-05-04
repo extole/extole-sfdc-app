@@ -266,6 +266,7 @@ export default class ExtoleSettings extends LightningElement {
         if (this.settings.List_View_Field__c) {
             await this.loadAttributionValues();
         }
+
     }
 
     async loadAttributionFields() {
@@ -504,17 +505,29 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingBackfillLogs = true;
         try {
             const result = await getBackfillLogs();
-            this.backfillLogs = (result || []).map(log => ({
-                ...log,
-                formattedStarted: log.Started_At__c
-                    ? new Intl.DateTimeFormat('en-US', {
-                        month: 'short', day: 'numeric',
-                        hour: 'numeric', minute: '2-digit',
-                        hour12: true
-                      }).format(new Date(log.Started_At__c))
-                    : '',
-                statusClass: this.getBackfillStatusClass(log.Status__c)
-            }));
+            this.backfillLogs = (result || []).map(log => {
+                const s = log.Status__c;
+                let errorDetail = '';
+                if (log.Error_Detail__c) {
+                    try {
+                        const errs = JSON.parse(log.Error_Detail__c);
+                        if (errs.length > 0) {
+                            const first = errs[0].name ? `${errs[0].name}: ${errs[0].error}` : errs[0].error;
+                            errorDetail = errs.length > 1 ? `${first} (+${errs.length - 1} more)` : first;
+                        }
+                    } catch (e) { /* leave empty */ }
+                }
+                return {
+                    ...log,
+                    formattedStarted: log.Started_At__c
+                        ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(log.Started_At__c))
+                        : '',
+                    statusClass: this.getBackfillStatusClass(s),
+                    statusLabel: { IN_PROGRESS: 'In Progress', COMPLETED: 'Completed', COMPLETED_WITH_ERRORS: 'Errors', FAILED: 'Failed' }[s] || s,
+                    errorDetail,
+                    detailClass: errorDetail ? 'error-cell' : 'truncated-cell'
+                };
+            });
         } catch (error) {
             this.showError('Failed to load backfill logs.', error);
         } finally {
@@ -523,10 +536,10 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     getBackfillStatusClass(status) {
-        if (status === 'COMPLETED') return 'status-pill status-success';
-        if (status === 'IN_PROGRESS') return 'status-pill status-progress';
-        if (status === 'COMPLETED_WITH_ERRORS') return 'status-pill status-warn';
-        return 'status-pill status-error';
+        if (status === 'COMPLETED')             return 'log-badge-success';
+        if (status === 'IN_PROGRESS')           return 'log-badge-skipped';
+        if (status === 'COMPLETED_WITH_ERRORS') return 'log-badge-unknown';
+        return 'log-badge-failed';
     }
 
     handleCopySyncLogMd() {
@@ -548,6 +561,20 @@ export default class ExtoleSettings extends LightningElement {
             l.formattedTimestamp || '', l.Detail__c || ''
         ]);
         this.copyToClipboard(this.buildMarkdownTable(`Event Log — ${now}`, headers, rows), 'Event log copied to clipboard.');
+    }
+
+    handleCopyBackfillLogMd() {
+        const now = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date());
+        const headers = ['Started', 'Object', 'Audience', 'Program', 'Field', 'Status', 'Total', 'Success', 'Errors', 'Details'];
+        const rows = this.backfillLogs.map(l => [
+            l.formattedStarted || '', l.Object_Type__c || '', l.Audience_Type__c || '',
+            l.Program_Label__c || '', l.Target_Field__c || '', l.Status__c || '',
+            l.Total_Count__c != null ? l.Total_Count__c : '',
+            l.Success_Count__c != null ? l.Success_Count__c : '',
+            l.Error_Count__c != null ? l.Error_Count__c : '',
+            l.errorDetail || ''
+        ]);
+        this.copyToClipboard(this.buildMarkdownTable(`Share Link Backfill Log — ${now}`, headers, rows), 'Backfill log copied to clipboard.');
     }
 
     copyToClipboard(text, successMessage) {

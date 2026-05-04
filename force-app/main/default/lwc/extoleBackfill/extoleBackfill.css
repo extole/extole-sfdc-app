@@ -44,12 +44,18 @@
     margin-bottom: 0;
 }
 
-/* Sub-description aligned under the radio label text */
+/* Sub-description inline after the radio label text */
 .radio-with-desc .radio-desc {
-    margin: 3px 0 0 1.5rem;
+    display: inline;
+    margin-left: 6px;
     font-size: 12px;
     color: #54698d;
-    line-height: 1.4;
+    vertical-align: middle;
+}
+
+.radio-nested-input {
+    margin-top: 8px;
+    padding-left: 1.5rem;
 }
 
 .filter-description {
@@ -88,39 +94,73 @@
     color: #54698d;
 }
 
-.last-run-row {
+.run-history-table {
+    overflow-x: auto;
+}
+
+.section-header-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.diag-subsection-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.diag-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
-.last-run-meta {
+.confirm-clear-label {
     font-size: 13px;
-    color: #54698d;
+    color: #c23934;
 }
 
-.last-run-counts {
-    font-size: 13px;
-    color: #3e3e3c;
+.truncated-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.status-badge {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
+.log-badge-success,
+.log-badge-failed,
+.log-badge-unknown,
+.log-badge-skipped {
+    display: inline-block;
+    padding: 2px 10px;
     border-radius: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.log-badge-success { background: #ecfdf5; color: #027a48; border: 1px solid #a6f4c5; }
+.log-badge-failed  { background: #fde8e8; color: #c23934; border: 1px solid #fca5a5; }
+.log-badge-unknown { background: #fff3e0; color: #b45309; border: 1px solid #f9c23c; }
+.log-badge-skipped { background: #f3f3f3; color: #706e6b; border: 1px solid #dddbda; }
+
+.error-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: #c23934;
 }
 
-.status-success  { background: #e3f5ee; color: #1d9e75; }
-.status-progress { background: #e8f0fe; color: #1a6fd8; }
-.status-warn     { background: #fef3e2; color: #b26800; }
-.status-error    { background: #fde8e8; color: #c23934; }
-
-.error-detail-table {
-    overflow-x: auto;
+.truncated-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .confirm-note {

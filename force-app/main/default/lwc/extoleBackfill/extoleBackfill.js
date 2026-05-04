@@ -1,13 +1,14 @@
 import { LightningElement, track } from 'lwc';
-import { NavigationMixin } from 'lightning/navigation';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getWritebackFields  from '@salesforce/apex/ExtoleBackfillController.getWritebackFields';
 import getExtoleCampaigns  from '@salesforce/apex/ExtoleBackfillController.getExtoleCampaigns';
 import getReports          from '@salesforce/apex/ExtoleBackfillController.getReports';
 import previewCount        from '@salesforce/apex/ExtoleBackfillController.previewCount';
 import startBackfill       from '@salesforce/apex/ExtoleBackfillController.startBackfill';
-import getLastBackfillRun  from '@salesforce/apex/ExtoleBackfillController.getLastBackfillRun';
+import getBackfillLogs     from '@salesforce/apex/ExtoleBackfillController.getBackfillLogs';
+import clearBackfillLogs   from '@salesforce/apex/ExtoleBackfillController.clearBackfillLogs';
 
-export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
+export default class ExtoleBackfill extends LightningElement {
 
     @track selectedObject    = 'Contact';
     @track audienceType      = 'default';
@@ -23,15 +24,18 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
     @track isLoadingCampaigns = false;
     @track isLoadingReports  = false;
 
-    @track previewCountValue = null;
-    @track isCountingForRun  = false;
+    @track previewCountValue  = null;
+    @track isCountingForRun   = false;
 
-    @track isRunning         = false;
-    @track showConfirmModal  = false;
+    @track isRunning          = false;
+    @track showConfirmModal   = false;
 
-    @track lastRun           = null;
-    @track isLoadingLastRun  = true;
-    @track showErrorDetail   = false;
+    @track logs               = [];
+    @track isLoadingLogs      = true;
+    @track isClearingLogs     = false;
+    @track confirmClearLogs   = false;
+
+    _pollTimer = null;
 
     get isContact()       { return this.selectedObject === 'Contact'; }
     get isLead()          { return this.selectedObject === 'Lead'; }
@@ -39,6 +43,7 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
     get isDateFilter()    { return this.audienceType === 'date'; }
     get isReportFilter()  { return this.audienceType === 'report'; }
     get hasFieldOptions() { return this.fieldOptions.length > 0; }
+    get hasLogs()         { return this.logs && this.logs.length > 0; }
 
     get campaignOptionsWithNone() {
         return [{ label: 'None', value: '' }, ...this.campaignOptions];
@@ -68,7 +73,7 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
 
     get confirmMessage() {
         const field   = this.selectedField  || '';
-        const program = this.selectedProgram || 'default';
+        const campaign = this.selectedProgram || 'default';
         const count   = this.previewCountValue !== null
             ? this.previewCountValue.toLocaleString()
             : 'the matching';
@@ -77,38 +82,18 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
         if (this.audienceType === 'date' && this.selectedDate) {
             audienceClause = ` created on or after ${this.selectedDate}`;
         }
-        return `You are about to generate "${program}" share links and write them to the ${field} field on ${count} ${obj}${audienceClause}. Continue?`;
-    }
-
-    get lastRunTimestamp() {
-        if (!this.lastRun || !this.lastRun.Started_At__c) return '';
-        return new Date(this.lastRun.Started_At__c).toLocaleString();
-    }
-
-    get lastRunStatusClass() {
-        if (!this.lastRun) return '';
-        const s = this.lastRun.Status__c;
-        if (s === 'COMPLETED')             return 'status-badge status-success';
-        if (s === 'IN_PROGRESS')           return 'status-badge status-progress';
-        if (s === 'COMPLETED_WITH_ERRORS') return 'status-badge status-warn';
-        return 'status-badge status-error';
-    }
-
-    get lastRunHasErrors() {
-        return this.lastRun && this.lastRun.Error_Count__c > 0;
-    }
-
-    get parsedErrors() {
-        if (!this.lastRun || !this.lastRun.Error_Detail__c) return [];
-        try { return JSON.parse(this.lastRun.Error_Detail__c); }
-        catch (e) { return []; }
+        return `You are about to generate "${campaign}" share links and write them to the ${field} field on ${count} ${obj}${audienceClause}. Continue?`;
     }
 
     connectedCallback() {
         this.loadFields();
         this.loadCampaigns();
         this.loadReports();
-        this.loadLastRun();
+        this.loadLogs();
+    }
+
+    disconnectedCallback() {
+        this._stopPolling();
     }
 
     async loadFields() {
@@ -135,10 +120,10 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
         }
     }
 
-    async loadReports() {
+    async loadReports(searchTerm) {
         this.isLoadingReports = true;
         try {
-            this.reportOptions = await getReports() || [];
+            this.reportOptions = await getReports({ searchTerm: searchTerm || '' }) || [];
         } catch (e) {
             this.reportOptions = [];
         } finally {
@@ -146,14 +131,66 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
         }
     }
 
-    async loadLastRun() {
-        this.isLoadingLastRun = true;
+    async loadLogs() {
+        this.isLoadingLogs = true;
         try {
-            this.lastRun = await getLastBackfillRun();
+            const result = await getBackfillLogs();
+            this.logs = (result || []).map(l => this._mapLog(l));
+            if (this.logs.some(l => l.isInProgress)) this._startPolling();
         } catch (e) {
-            this.lastRun = null;
+            this.logs = [];
         } finally {
-            this.isLoadingLastRun = false;
+            this.isLoadingLogs = false;
+        }
+    }
+
+    _mapLog(l) {
+        const s = l.Status__c;
+        const statusLabel = { IN_PROGRESS: 'In Progress', COMPLETED: 'Completed', COMPLETED_WITH_ERRORS: 'Errors', FAILED: 'Failed' }[s] || s;
+        const statusClass = s === 'COMPLETED'             ? 'log-badge-success'
+            : s === 'IN_PROGRESS'           ? 'log-badge-skipped'
+            : s === 'COMPLETED_WITH_ERRORS' ? 'log-badge-unknown'
+            : 'log-badge-failed';
+        let errorDetail = '';
+        if (l.Error_Detail__c) {
+            try {
+                const errs = JSON.parse(l.Error_Detail__c);
+                if (errs.length > 0) {
+                    const first = errs[0].name ? `${errs[0].name}: ${errs[0].error}` : errs[0].error;
+                    errorDetail = errs.length > 1 ? `${first} (+${errs.length - 1} more)` : first;
+                }
+            } catch (e) { /* leave empty */ }
+        }
+        return {
+            ...l,
+            statusLabel,
+            statusClass,
+            isInProgress: s === 'IN_PROGRESS',
+            errorDetail,
+            detailClass: errorDetail ? 'error-cell' : 'truncated-cell',
+            formattedStarted: l.Started_At__c
+                ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(l.Started_At__c))
+                : ''
+        };
+    }
+
+    _startPolling() {
+        if (this._pollTimer) return;
+        this._pollTimer = setInterval(async () => {
+            try {
+                const result = await getBackfillLogs();
+                this.logs = (result || []).map(l => this._mapLog(l));
+                if (!this.logs.some(l => l.isInProgress)) this._stopPolling();
+            } catch (e) {
+                this._stopPolling();
+            }
+        }, 3000);
+    }
+
+    _stopPolling() {
+        if (this._pollTimer) {
+            clearInterval(this._pollTimer);
+            this._pollTimer = null;
         }
     }
 
@@ -172,6 +209,14 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
 
     handleReportChange(evt) {
         this.selectedReportId = evt.detail.value;
+    }
+
+    handleReportSearch(evt) {
+        clearTimeout(this._reportSearchTimer);
+        const term = evt.detail.value;
+        this._reportSearchTimer = setTimeout(() => {
+            this.loadReports(term);
+        }, 300);
     }
 
     handleFieldChange(evt) {
@@ -223,7 +268,7 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
                 targetField:   this.selectedField,
                 programLabel:  this.selectedProgram || ''
             });
-            await this.loadLastRun();
+            await this.loadLogs();
         } catch (e) {
             console.error('Backfill start failed', e);
         } finally {
@@ -231,7 +276,63 @@ export default class ExtoleBackfill extends NavigationMixin(LightningElement) {
         }
     }
 
-    handleViewLogs() {
-        this.showErrorDetail = !this.showErrorDetail;
+    handleRefreshLogs() {
+        this.loadLogs();
+    }
+
+    handleCopyLogMd() {
+        const now = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date());
+        const headers = ['Started', 'Object', 'Audience', 'Program', 'Field', 'Status', 'Total', 'Success', 'Errors', 'Details'];
+        const rows = this.logs.map(l => [
+            l.formattedStarted || '', l.Object_Type__c || '', l.Audience_Type__c || '',
+            l.Program_Label__c || '', l.Target_Field__c || '', l.Status__c || '',
+            l.Total_Count__c != null ? l.Total_Count__c : '',
+            l.Success_Count__c != null ? l.Success_Count__c : '',
+            l.Error_Count__c != null ? l.Error_Count__c : '',
+            l.errorDetail || ''
+        ]);
+        this._copyToClipboard(this._buildMarkdownTable(`Share Link Backfill Log — ${now}`, headers, rows));
+    }
+
+    handleClearLogs()          { this.confirmClearLogs = true; }
+    handleCancelClearLogs()    { this.confirmClearLogs = false; }
+
+    async handleConfirmClearLogs() {
+        this.confirmClearLogs = false;
+        this.isClearingLogs   = true;
+        try {
+            await clearBackfillLogs();
+            this.logs = [];
+        } catch (e) {
+            this.dispatchEvent(new ShowToastEvent({ title: 'Error', message: 'Failed to clear logs.', variant: 'error' }));
+        } finally {
+            this.isClearingLogs = false;
+        }
+    }
+
+    _copyToClipboard(text) {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        try {
+            document.execCommand('copy');
+            this.dispatchEvent(new ShowToastEvent({ title: 'Copied', message: 'Log copied to clipboard.', variant: 'success' }));
+        } catch (e) {
+            this.dispatchEvent(new ShowToastEvent({ title: 'Error', message: 'Could not copy to clipboard.', variant: 'error' }));
+        } finally {
+            document.body.removeChild(el);
+        }
+    }
+
+    _buildMarkdownTable(title, headers, rows) {
+        const esc = s => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+        const header  = `| ${headers.map(esc).join(' | ')} |`;
+        const divider = `| ${headers.map(() => '---').join(' | ')} |`;
+        const body    = rows.map(r => `| ${r.map(esc).join(' | ')} |`).join('\n');
+        return `## ${title}\n\n${header}\n${divider}\n${body || '| (no records) |'}`;
     }
 }

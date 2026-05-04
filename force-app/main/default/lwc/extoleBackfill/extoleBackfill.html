@@ -42,8 +42,8 @@
                     <label class="slds-radio__label" for="radio-default">
                         <span class="slds-radio_faux"></span>
                         <span class="slds-form-element__label">Default filter</span>
+                        <span class="radio-desc">{defaultFilterDescription}</span>
                     </label>
-                    <p class="radio-desc">{defaultFilterDescription}</p>
                 </span>
                 <span class="slds-radio radio-with-desc">
                     <input type="radio" name="audienceType" id="radio-date"
@@ -51,8 +51,18 @@
                     <label class="slds-radio__label" for="radio-date">
                         <span class="slds-radio_faux"></span>
                         <span class="slds-form-element__label">Created after date</span>
+                        <span class="radio-desc">{dateFilterDescription}</span>
                     </label>
-                    <p class="radio-desc">{dateFilterDescription}</p>
+                    <template lwc:if={isDateFilter}>
+                        <div class="radio-nested-input">
+                            <lightning-input
+                                type="date"
+                                label="Created on or after"
+                                value={selectedDate}
+                                onchange={handleDateChange}>
+                            </lightning-input>
+                        </div>
+                    </template>
                 </span>
                 <span class="slds-radio radio-with-desc">
                     <input type="radio" name="audienceType" id="radio-report"
@@ -60,50 +70,37 @@
                     <label class="slds-radio__label" for="radio-report">
                         <span class="slds-radio_faux"></span>
                         <span class="slds-form-element__label">Salesforce Report</span>
+                        <span class="radio-desc">Use a saved report to target a specific audience (max 2,000 rows)</span>
                     </label>
-                    <p class="radio-desc">Use a saved report to target a specific audience (max 2,000 rows)</p>
+                    <template lwc:if={isReportFilter}>
+                        <div class="radio-nested-input">
+                            <c-searchable-combobox
+                                label="Select a report"
+                                value={selectedReportId}
+                                options={reportOptions}
+                                placeholder="Search reports..."
+                                onchange={handleReportChange}
+                                onsearch={handleReportSearch}>
+                            </c-searchable-combobox>
+                        </div>
+                    </template>
                 </span>
             </div>
-
-            <template lwc:if={isDateFilter}>
-                <lightning-input
-                    type="date"
-                    label="Created on or after"
-                    value={selectedDate}
-                    onchange={handleDateChange}>
-                </lightning-input>
-            </template>
-
-            <template lwc:if={isReportFilter}>
-                <template lwc:if={isLoadingReports}>
-                    <lightning-spinner size="small" alternative-text="Loading reports..."></lightning-spinner>
-                </template>
-                <template lwc:else>
-                    <lightning-combobox
-                        name="report"
-                        label="Select a report"
-                        value={selectedReportId}
-                        options={reportOptions}
-                        placeholder="Search reports..."
-                        onchange={handleReportChange}>
-                    </lightning-combobox>
-                </template>
-            </template>
         </div>
 
-        <!-- Program -->
+        <!-- Campaign -->
         <div class="settings-card">
             <div class="card-title-row">
-                <div class="settings-card-title">Program</div>
-                <lightning-helptext content="The Extole program to generate share links for. Leave blank to use the default program."></lightning-helptext>
+                <div class="settings-card-title">Campaign</div>
+                <lightning-helptext content="The Extole campaign to generate share links for. Leave blank to use the default campaign."></lightning-helptext>
             </div>
             <template lwc:if={isLoadingCampaigns}>
-                <lightning-spinner size="small" alternative-text="Loading programs..."></lightning-spinner>
+                <lightning-spinner size="small" alternative-text="Loading campaigns..."></lightning-spinner>
             </template>
             <template lwc:else>
                 <lightning-combobox
                     name="program"
-                    label="Program (optional)"
+                    label="Campaign (optional)"
                     value={selectedProgram}
                     options={campaignOptionsWithNone}
                     onchange={handleProgramChange}>
@@ -122,14 +119,13 @@
             </template>
             <template lwc:else>
                 <template lwc:if={hasFieldOptions}>
-                    <lightning-combobox
-                        name="targetField"
+                    <c-searchable-combobox
                         label={shareLinkFieldLabel}
                         value={selectedField}
                         options={fieldOptions}
-                        placeholder="Select a field..."
+                        placeholder="Search fields..."
                         onchange={handleFieldChange}>
-                    </lightning-combobox>
+                    </c-searchable-combobox>
                 </template>
                 <template lwc:else>
                     <p class="empty-text">
@@ -156,54 +152,72 @@
             </div>
         </div>
 
-        <!-- Last Run -->
+        <!-- Share Link Backfill Log -->
         <div class="settings-card">
-            <div class="settings-card-title">Last Run</div>
-            <template lwc:if={isLoadingLastRun}>
-                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
-            </template>
-            <template lwc:elseif={lastRun}>
-                <div class="last-run-row">
-                    <span class="last-run-meta">{lastRunTimestamp}</span>
-                    <span class={lastRunStatusClass}>{lastRun.Status__c}</span>
-                    <span class="last-run-counts">
-                        {lastRun.Success_Count__c} succeeded
-                        <template lwc:if={lastRunHasErrors}>
-                            &nbsp;&middot;&nbsp;{lastRun.Error_Count__c} failed
-                        </template>
-                    </span>
-                    <template lwc:if={lastRunHasErrors}>
-                        <lightning-button
-                            label="View Logs"
-                            variant="base"
-                            icon-name="utility:list"
-                            onclick={handleViewLogs}>
-                        </lightning-button>
+            <div class="section-header-row diag-header-row">
+                <div class="diag-subsection-label">
+                    <div class="settings-card-title">Share Link Backfill Log</div>
+                    <lightning-helptext content="Each row is one backfill run. Details shows a summary of any errors."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearLogs}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearLogs} disabled={isClearingLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearLogs}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshLogs}></lightning-button>
+                        <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopyLogMd}></lightning-button>
+                        <lightning-button label="Clear Log" variant="destructive-text" onclick={handleClearLogs} disabled={isClearingLogs}></lightning-button>
                     </template>
                 </div>
-                <template lwc:if={showErrorDetail}>
-                    <div class="error-detail-table">
-                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
-                            <thead>
-                                <tr class="slds-line-height_reset">
-                                    <th scope="col"><div class="slds-truncate">Record</div></th>
-                                    <th scope="col"><div class="slds-truncate">Error</div></th>
+            </div>
+            <template lwc:if={isLoadingLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:elseif={hasLogs}>
+                <div class="run-history-table">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col"><div class="slds-truncate">Started</div></th>
+                                <th scope="col"><div class="slds-truncate">Object</div></th>
+                                <th scope="col"><div class="slds-truncate">Audience</div></th>
+                                <th scope="col"><div class="slds-truncate">Program</div></th>
+                                <th scope="col"><div class="slds-truncate">Field</div></th>
+                                <th scope="col"><div class="slds-truncate">Status</div></th>
+                                <th scope="col"><div class="slds-truncate">Total</div></th>
+                                <th scope="col"><div class="slds-truncate">Success</div></th>
+                                <th scope="col"><div class="slds-truncate">Errors</div></th>
+                                <th scope="col"><div class="slds-truncate">Details</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={logs} for:item="log">
+                                <tr key={log.Id}>
+                                    <td>{log.formattedStarted}</td>
+                                    <td>{log.Object_Type__c}</td>
+                                    <td class="truncated-cell" title={log.Audience_Criteria__c}>{log.Audience_Type__c}</td>
+                                    <td>{log.Program_Label__c}</td>
+                                    <td>{log.Target_Field__c}</td>
+                                    <td>
+                                        <span class={log.statusClass}>{log.statusLabel}</span>
+                                        <template lwc:if={log.isInProgress}>
+                                            <lightning-spinner size="x-small" alternative-text="Running..."></lightning-spinner>
+                                        </template>
+                                    </td>
+                                    <td>{log.Total_Count__c}</td>
+                                    <td>{log.Success_Count__c}</td>
+                                    <td>{log.Error_Count__c}</td>
+                                    <td class={log.detailClass} title={log.Error_Detail__c}>{log.errorDetail}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <template for:each={parsedErrors} for:item="err">
-                                    <tr key={err.id}>
-                                        <td>{err.name}</td>
-                                        <td>{err.error}</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </template>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </template>
             <template lwc:else>
-                <p class="empty-text">No backfill has been run yet.</p>
+                <p class="empty-text">No backfill runs yet.</p>
             </template>
         </div>
 
@@ -221,13 +235,14 @@
                 </div>
                 <div class="slds-modal__content slds-p-around_medium">
                     <p>{confirmMessage}</p>
-                    <p class="confirm-note">This will overwrite any existing value in that field.</p>
+                    <p class="confirm-note">Continuing will overwrite any existing value in that field.</p>
                 </div>
                 <div class="slds-modal__footer">
                     <lightning-button label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
                     <lightning-button
                         label="Continue"
                         variant="brand"
+                        class="slds-m-left_x-small"
                         onclick={handleConfirm}
                         disabled={isRunning}>
                     </lightning-button>

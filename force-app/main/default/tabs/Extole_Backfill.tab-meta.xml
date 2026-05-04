@@ -2,6 +2,6 @@
 <CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
     <lwcComponent>extoleBackfill</lwcComponent>
     <description>Bulk enroll existing contacts and leads into Extole and write share links back to SFDC</description>
-    <label>Backfill</label>
+    <label>Manage Share Links</label>
     <motif>Custom73: Upload</motif>
 </CustomTab>

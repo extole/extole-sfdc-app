@@ -112,6 +112,7 @@ export default class SearchableCombobox extends LightningElement {
     handleInputClick(event) {
         event.stopPropagation();
         if (!this.isOpen) {
+            this._searchTerm = '';
             this._open();
         }
     }
@@ -122,6 +123,7 @@ export default class SearchableCombobox extends LightningElement {
         if (!this.isOpen) {
             this._open();
         }
+        this.dispatchEvent(new CustomEvent('search', { detail: { value: this._searchTerm } }));
     }
 
     handleKeyDown(event) {
@@ -182,16 +184,21 @@ export default class SearchableCombobox extends LightningElement {
             (wrapper || document.body).appendChild(s);
             const o = s.getBoundingClientRect();
             (wrapper || document.body).removeChild(s);
-            const spaceBelow = window.innerHeight - rect.bottom;
-            const flip = spaceBelow < 220;
+            // Use clientHeight as a more reliable measure of the usable viewport in Salesforce's
+            // iframe rendering context, where window.innerHeight may exceed the clipped area.
+            const viewportH = document.documentElement.clientHeight || window.innerHeight;
+            const spaceBelow = viewportH - rect.bottom - 8;
+            const spaceAbove = rect.top - o.top - 8;
+            const flip = spaceBelow < 200 && spaceAbove > spaceBelow;
             this._dropdownFlipped = flip;
             const left = rect.left - o.left;
             const width = rect.width;
+            const maxH = Math.max(80, Math.min(240, flip ? spaceAbove : spaceBelow));
             let posStyle;
             if (flip) {
-                posStyle = `top:auto;bottom:${window.innerHeight - rect.top - o.top + 2}px;left:${left}px;width:${width}px`;
+                posStyle = `top:auto;bottom:${viewportH - rect.top - o.top + 2}px;left:${left}px;width:${width}px;max-height:${maxH}px`;
             } else {
-                posStyle = `top:${rect.bottom - o.top + 2}px;bottom:auto;left:${left}px;width:${width}px`;
+                posStyle = `top:${rect.bottom - o.top + 2}px;bottom:auto;left:${left}px;width:${width}px;max-height:${maxH}px`;
             }
             this._dropdownStyle = posStyle;
         }
