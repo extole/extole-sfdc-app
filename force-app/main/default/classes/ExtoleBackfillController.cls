@@ -124,7 +124,7 @@ public with sharing class ExtoleBackfillController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
-    public static Id startBackfill(String objectType, String audienceType, String selectedDate, String reportId, String targetField, String programLabel) {
+    public static Id startBackfill(String objectType, String audienceType, String selectedDate, String reportId, String targetField, String programLabel, String programName) {
         String audienceTypeLabel;
         String audienceCriteria;
         if (audienceType == 'report') {
@@ -143,7 +143,7 @@ public with sharing class ExtoleBackfillController {
             Audience_Type__c     = audienceTypeLabel,
             Audience_Criteria__c = audienceCriteria,
             Target_Field__c      = targetField,
-            Program_Label__c     = programLabel,
+            Program_Label__c     = String.isNotBlank(programName) ? programName : programLabel,
             Status__c            = 'IN_PROGRESS',
             Started_At__c        = DateTime.now()
         );
@@ -185,7 +185,7 @@ public with sharing class ExtoleBackfillController {
     public static List<Extole_Backfill_Log__c> getBackfillLogs() {
         return [
             SELECT Id, Name, Object_Type__c, Audience_Type__c, Audience_Criteria__c,
-                   Target_Field__c, Status__c, Started_At__c, Completed_At__c,
+                   Target_Field__c, Program_Label__c, Status__c, Started_At__c, Completed_At__c,
                    Total_Count__c, Success_Count__c, Error_Count__c, Error_Detail__c
             FROM Extole_Backfill_Log__c
             ORDER BY Started_At__c DESC

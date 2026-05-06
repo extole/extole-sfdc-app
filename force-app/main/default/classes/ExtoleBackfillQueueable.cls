@@ -80,7 +80,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                 reportOffset = 0;
             }
             if (reportIds == null || reportIds.isEmpty()) {
-                finalize(0, 0, null);
+                finalize();
                 return;
             }
             Integer endIdx = Math.min(reportOffset + CHUNK_SIZE, reportIds.size());
@@ -92,7 +92,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         }
 
         if (chunk == null || chunk.isEmpty()) {
-            finalize(0, 0, null);
+            finalize();
             return;
         }
 
@@ -148,7 +148,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                     logId, objectType, targetField, programLabel, reportIds, nextOffset
                 ));
             } else {
-                finalize(successCount, errorCount, errors);
+                finalize();
             }
         } else {
             if (chunk.size() == CHUNK_SIZE) {
@@ -157,7 +157,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                     logId, objectType, audienceType, selectedDate, reportId, targetField, programLabel, newCursor
                 ));
             } else {
-                finalize(successCount, errorCount, errors);
+                finalize();
             }
         }
     }
@@ -387,14 +387,14 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         }
     }
 
-    private void finalize(Integer finalSuccesses, Integer finalErrors, List<Map<String, String>> errorDetails) {
+    private void finalize() {
         try {
             Extole_Backfill_Log__c log = [
                 SELECT Id, Success_Count__c, Error_Count__c
                 FROM Extole_Backfill_Log__c WHERE Id = :logId LIMIT 1
             ];
-            Integer totalSuccess = (log.Success_Count__c != null ? (Integer) log.Success_Count__c : 0) + finalSuccesses;
-            Integer totalErrors  = (log.Error_Count__c   != null ? (Integer) log.Error_Count__c   : 0) + finalErrors;
+            Integer totalSuccess = log.Success_Count__c != null ? (Integer) log.Success_Count__c : 0;
+            Integer totalErrors  = log.Error_Count__c   != null ? (Integer) log.Error_Count__c   : 0;
             log.Success_Count__c = totalSuccess;
             log.Error_Count__c   = totalErrors;
             log.Total_Count__c   = totalSuccess + totalErrors;

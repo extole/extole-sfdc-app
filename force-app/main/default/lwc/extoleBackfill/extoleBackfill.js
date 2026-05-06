@@ -260,13 +260,15 @@ export default class ExtoleBackfill extends LightningElement {
         this.showConfirmModal = false;
         this.isRunning        = true;
         try {
+            const selectedOption = this.campaignOptions.find(o => o.value === this.selectedProgram);
             await startBackfill({
                 objectType:    this.selectedObject,
                 audienceType:  this.audienceType,
                 selectedDate:  this.selectedDate,
                 reportId:      this.selectedReportId,
                 targetField:   this.selectedField,
-                programLabel:  this.selectedProgram || ''
+                programLabel:  this.selectedProgram || '',
+                programName:   selectedOption ? selectedOption.label : ''
             });
             await this.loadLogs();
         } catch (e) {
