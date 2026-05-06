@@ -117,6 +117,9 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
 
         // 5. Send one Extole event per record
         // Telemetry is accumulated and written once after the loop to avoid N+1 DML.
+        ExtoleConfig extoleConfig = new ExtoleConfig('Extole_API');
+        ExtoleClient extoleClient = new ExtoleClient();
+
         DateTime lastAttemptedAt = null;
         String   lastRecordId    = null;
         Boolean  lastSuccess     = null;
@@ -127,22 +130,14 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
             Map<String, Object> dataMap = buildDataMap(r, mappings);
             dataMap.put('app_type', 'extole-sfdc-app');
 
-            Map<String, Object> payload = new Map<String, Object>{
-                'event_name' => cfg.Event_Name__c,
-                'data'       => dataMap
-            };
-
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:Extole_API/v5/events');
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
-            req.setBody(JSON.serialize(payload));
-            req.setTimeout(30000);
+            HttpRequest req = new ExtoleEventFireRequest(cfg.Event_Name__c)
+                .withDataMap(dataMap)
+                .build(extoleConfig);
 
             DateTime attemptedAt = DateTime.now();
             HttpResponse res;
             try {
-                res = new Http().send(req);
+                res = extoleClient.send(extoleConfig, req);
             } catch (Exception e) {
                 lastAttemptedAt = attemptedAt;
                 lastRecordId    = (String) r.get('Id');

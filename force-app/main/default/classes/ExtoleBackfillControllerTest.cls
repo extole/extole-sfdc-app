@@ -92,7 +92,7 @@ private class ExtoleBackfillControllerTest {
 
     @IsTest
     static void testGetReportsNotNull() {
-        List<Map<String, String>> reports = ExtoleBackfillController.getReports();
+        List<Map<String, String>> reports = ExtoleBackfillController.getReports('');
         System.assertNotEquals(null, reports, 'Should return non-null list');
     }
 

@@ -179,35 +179,26 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         return createOrGetShareable(personId);
     }
 
+    private static final ExtoleConfig EXTOLE_CONFIG = new ExtoleConfig('Extole_API');
+    private static final ExtoleClient EXTOLE_CLIENT = new ExtoleClient();
+
     private String lookupOrCreatePerson(String email) {
         try {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:Extole_API/v5/persons?identity_key_value=' + EncodingUtil.urlEncode(email, 'UTF-8'));
-            req.setMethod('GET');
-            req.setTimeout(30000);
-            HttpResponse res = new Http().send(req);
-
-            if (res.getStatusCode() == 200) {
-                Object parsed = JSON.deserializeUntyped(res.getBody());
-                List<Object> persons = parsed instanceof List<Object>
-                    ? (List<Object>) parsed
-                    : new List<Object>();
-                if (!persons.isEmpty()) {
-                    Map<String, Object> p = (Map<String, Object>) persons[0];
-                    return (String) p.get('id');
-                }
-            }
+            HttpResponse res = EXTOLE_CLIENT.send(EXTOLE_CONFIG,
+                ExtoleGetPersonRequest.byEmail(email).build(EXTOLE_CONFIG));
+            ExtoleGetPersonResponse lookup = ExtoleGetPersonResponse.fromResponse(res);
+            if (lookup.person != null) return lookup.person.id;
 
             // Person not found — create
             HttpRequest createReq = new HttpRequest();
-            createReq.setEndpoint('callout:Extole_API/v5/persons');
+            createReq.setEndpoint('callout:Extole_API' + ExtoleConstants.PEOPLE_PATH);
             createReq.setMethod('POST');
             createReq.setHeader('Content-Type', 'application/json');
             createReq.setBody(JSON.serialize(new Map<String, Object>{
                 'identity_key_value' => email
             }));
             createReq.setTimeout(30000);
-            HttpResponse createRes = new Http().send(createReq);
+            HttpResponse createRes = EXTOLE_CLIENT.send(EXTOLE_CONFIG, createReq);
 
             if (createRes.getStatusCode() >= 200 && createRes.getStatusCode() < 300) {
                 Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(createRes.getBody());
