@@ -550,7 +550,7 @@ export default class ExtoleSettings extends LightningElement {
             l.Trigger_Type__c || '', l.formattedTimestamp || '', l.Value_Extracted__c || '',
             l.HTTP_Status_Code__c || '', l.Error_Message__c || ''
         ]);
-        this.copyToClipboard(this.buildMarkdownTable(`Sync Log — ${now}`, headers, rows), 'Sync log copied to clipboard.');
+        this.copyToClipboard(this.buildMarkdownTable(`KPI Data Import Log — ${now}`, headers, rows), 'KPI data import log copied to clipboard.');
     }
 
     handleCopyEventLogMd() {
@@ -560,7 +560,7 @@ export default class ExtoleSettings extends LightningElement {
             l.Config_Key__c || '', l.Event_Type__c || '', l.Result__c || '',
             l.formattedTimestamp || '', l.Detail__c || ''
         ]);
-        this.copyToClipboard(this.buildMarkdownTable(`Event Log — ${now}`, headers, rows), 'Event log copied to clipboard.');
+        this.copyToClipboard(this.buildMarkdownTable(`Event Configuration History — ${now}`, headers, rows), 'Event configuration history copied to clipboard.');
     }
 
     handleCopyBackfillLogMd() {

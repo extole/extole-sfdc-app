@@ -264,21 +264,17 @@
                 </template>
 
                 <p class="api-token-note">{labelApiTokenNote}</p>
-                <div class="token-links">
-                    <a href="https://my.extole.com/security-center" target="_blank" rel="noopener noreferrer" class="extole-link">{labelGenerateToken}</a>
-                    <a href="https://dev.extole.com/docs/generate-long-lived-access-tokens" target="_blank" rel="noopener noreferrer" class="extole-link">{labelLongLivedToken}</a>
-                </div>
         </div>
 
         <!-- SECTION 6: Diagnostics -->
         <div class="settings-card">
             <div class="settings-card-title">Diagnostics<lightning-helptext content="Recent sync and event activity logs. Use these to verify data is flowing correctly and diagnose failures. Both logs are retained for 30 days."></lightning-helptext></div>
 
-            <!-- Sync Log -->
+            <!-- KPI Data Import Log -->
             <div class="section-header-row diag-header-row">
                 <div class="diag-subsection-label">
-                    <h3 class="subsection-title">Sync Log</h3>
-                    <lightning-helptext content="Records each report sync attempt — one row per report runner per run. Corresponds to the report configurations defined in the Report Configuration section above."></lightning-helptext>
+                    <h3 class="subsection-title">KPI Data Import Log</h3>
+                    <lightning-helptext content="Records each report sync attempt — one row per report runner per run. Corresponds to the report configurations defined in the KPI Dashboard Configuration section above."></lightning-helptext>
                 </div>
                 <div class="diag-header-actions">
                     <template lwc:if={confirmClearSync}>
@@ -289,7 +285,7 @@
                     <template lwc:else>
                         <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshSyncLogs}></lightning-button>
                         <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopySyncLogMd}></lightning-button>
-                        <lightning-button label="Clear Sync Logs" variant="destructive-text" onclick={handleClearSyncLogs} disabled={isClearingSyncLogs}></lightning-button>
+                        <lightning-button label="Clear Import Log" variant="destructive-text" onclick={handleClearSyncLogs} disabled={isClearingSyncLogs}></lightning-button>
                     </template>
                 </div>
             </div>
@@ -330,15 +326,15 @@
                     </div>
                 </template>
                 <template lwc:else>
-                    <p class="empty-text">No sync logs found.</p>
+                    <p class="empty-text">No import log entries found.</p>
                 </template>
             </template>
 
-            <!-- Event Log -->
+            <!-- Event Configuration History -->
             <div class="section-header-row diag-header-row">
                 <div class="diag-subsection-label">
-                    <h3 class="subsection-title">Event Log</h3>
-                    <lightning-helptext content="Records each Extole event fired from Salesforce — one row per trigger. Corresponds to the event configurations defined in the Referral Events section above."></lightning-helptext>
+                    <h3 class="subsection-title">Event Configuration History</h3>
+                    <lightning-helptext content="Audit trail of configuration changes — deploys, activations, and failures for each event config."></lightning-helptext>
                 </div>
                 <div class="diag-header-actions">
                     <template lwc:if={confirmClearEventLog}>
@@ -349,7 +345,7 @@
                     <template lwc:else>
                         <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshEventLogs}></lightning-button>
                         <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopyEventLogMd}></lightning-button>
-                        <lightning-button label="Clear Event Logs" variant="destructive-text" onclick={handleClearEventLogs} disabled={isClearingEventLogs}></lightning-button>
+                        <lightning-button label="Clear History" variant="destructive-text" onclick={handleClearEventLogs} disabled={isClearingEventLogs}></lightning-button>
                     </template>
                 </div>
             </div>
@@ -384,7 +380,7 @@
                     </div>
                 </template>
                 <template lwc:else>
-                    <p class="empty-text">No event logs found.</p>
+                    <p class="empty-text">No configuration history found.</p>
                 </template>
             </template>
             <!-- Backfill Log -->
