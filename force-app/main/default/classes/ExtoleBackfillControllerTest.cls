@@ -133,7 +133,7 @@ private class ExtoleBackfillControllerTest {
     static void testStartBackfillCreatesLogInProgress() {
         // Don't use startTest/stopTest here — we want to verify the log state BEFORE
         // the queueable runs, and stopTest() flushes the queue synchronously.
-        Id logId = ExtoleBackfillController.startBackfill('Contact', 'default', null, null, 'Extole_Share_Link__c', '');
+        Id logId = ExtoleBackfillController.startBackfill('Contact', 'default', null, null, 'Extole_Share_Link__c', '', '');
 
         System.assertNotEquals(null, logId, 'Should return a log ID');
         Extole_Backfill_Log__c log = [
@@ -148,7 +148,7 @@ private class ExtoleBackfillControllerTest {
 
     @IsTest
     static void testStartBackfillDateAudienceStoresDate() {
-        Id logId = ExtoleBackfillController.startBackfill('Contact', 'date', '2025-01-01', null, 'Extole_Share_Link__c', 'my-program');
+        Id logId = ExtoleBackfillController.startBackfill('Contact', 'date', '2025-01-01', null, 'Extole_Share_Link__c', 'my-program', 'My Program');
 
         Extole_Backfill_Log__c log = [SELECT Audience_Type__c, Audience_Criteria__c, Program_Label__c FROM Extole_Backfill_Log__c WHERE Id = :logId];
         System.assertEquals('Date Filter', log.Audience_Type__c, 'Audience type should be Date Filter');
@@ -158,7 +158,7 @@ private class ExtoleBackfillControllerTest {
 
     @IsTest
     static void testStartBackfillReportAudienceStoresReportId() {
-        Id logId = ExtoleBackfillController.startBackfill('Lead', 'report', null, '00O000000000000', 'Extole_Share_Link__c', '');
+        Id logId = ExtoleBackfillController.startBackfill('Lead', 'report', null, '00O000000000000', 'Extole_Share_Link__c', '', '');
 
         Extole_Backfill_Log__c log = [SELECT Audience_Type__c, Audience_Criteria__c FROM Extole_Backfill_Log__c WHERE Id = :logId];
         System.assertEquals('Report', log.Audience_Type__c, 'Audience type should be Report');

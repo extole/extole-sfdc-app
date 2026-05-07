@@ -10,6 +10,10 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 **Event Configurator** — Lets admins define record-triggered events that fire to Extole when Salesforce records change. For example: send an event to Extole when a Lead is created, or when an Opportunity moves to Closed Won. No code required — the app generates and deploys the necessary Salesforce Flow automatically.
 
+**Share Link Backfill** — Bulk-enrolls existing Contacts and Leads into Extole and writes their share links back to Salesforce. Audiences can be a Closed/Won opportunity filter, a date range, or a custom Salesforce report.
+
+**List View** — A configurable list of Contacts or Leads filtered by a chosen field/value (e.g. by share-link source) for at-a-glance attribution review.
+
 ---
 
 ## What gets installed
@@ -21,9 +25,12 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | `Extole_App_Settings__c` | Org-wide configuration (sync cadence, notifications, feature toggles) |
 | `Extole_Report_Config__c` | Admin-defined list of Extole reports to sync |
 | `Extole_Report_Snapshot__c` | Latest synced values from each report |
-| `Extole_Sync_Log__c` | Audit log of every sync attempt |
+| `Extole_Sync_Log__c` | Audit log of every KPI report sync attempt |
 | `Extole_Event_Cfg__c` | Event trigger configurations created in the Event Configurator |
-| `Extole_Event_Log__c` | Audit log of every event fired to Extole |
+| `Extole_Event_Log__c` | Audit trail of event configuration lifecycle actions (deploys, activations, failures) |
+| `Extole_Event_Fire_Log__c` | Runtime log of every Extole event fired by configured triggers |
+| `Extole_Backfill_Log__c` | Audit log of share link backfill jobs |
+| `Extole_Person_Snapshot__c` | Cached Extole person data for Contacts and Leads |
 | `Extole_Debug_Log__c` | Optional detailed debug logs for troubleshooting |
 
 **Permission Sets**
@@ -34,7 +41,16 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | `Extole_App_Viewer` | Users who need read access to the KPI Dashboard |
 | `Extole_API_Access` | System — grants access to the Extole API credential |
 
-**App and Tabs** — A Lightning app with three tabs: KPI Dashboard, List View, and Settings. The Event Configurator is embedded in Settings.
+**App and Tabs** — A Lightning app with six tabs:
+
+| Tab | Purpose |
+|---|---|
+| KPI Dashboard | Metric tiles for synced Extole reports |
+| List View | Configurable Contact/Lead list filtered by an attribution field |
+| Manage Share Links | Bulk backfill share links onto existing Contacts and Leads |
+| Configure Events | Event Configurator, connection test, configuration history, fire log, and debug logging |
+| Configure KPIs | KPI report configuration, sync schedule, notifications, and import log |
+| Manage List View | Settings for which records and columns appear on the List View tab |
 
 **Apex Classes** — Backend logic for syncing, event handling, and Tooling API integration.
 
@@ -54,11 +70,13 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 
 ## Ongoing maintenance
 
-- **Sync cadence** — Change in Manage App Settings → KPI Data Import Management. The scheduled job is automatically re-registered on save.
-- **Adding KPIs** — Manage App Settings → KPI Dashboard Configuration → Add Report. New tiles appear on the KPI Dashboard after the next sync.
-- **Event configs** — Manage App Settings → Event Configurations. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
-- **Failure notifications** — Manage App Settings → Notifications. Enable email alerts after N consecutive sync failures.
-- **Debug logging** — Manage App Settings → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
+- **Sync cadence** — Change in Configure KPIs → Sync Management. The scheduled job is automatically re-registered on save.
+- **Adding KPIs** — Configure KPIs → Add Report. New tiles appear on the KPI Dashboard after the next sync.
+- **Event configs** — Configure Events. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
+- **Failure notifications** — Configure KPIs → Sync Management. Enable email alerts after N consecutive sync failures.
+- **Debug logging** — Configure Events → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
+- **Backfilling share links** — Manage Share Links. Pick an audience (Closed/Won opps, date range, or custom report), choose the target field, and run. Progress and results are recorded in the backfill log.
+- **List View setup** — Manage List View. Choose the object, filter field/value, columns, and start date for the List View tab.
 - **Log retention** — Sync logs, event logs, and debug logs are automatically purged after 30 days on each sync run.
 
 ---

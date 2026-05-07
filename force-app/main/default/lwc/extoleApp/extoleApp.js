@@ -6,7 +6,6 @@ import getSnapshots from '@salesforce/apex/ExtoleController.getSnapshots';
 import getConfigs from '@salesforce/apex/ExtoleController.getConfigs';
 
 import LABEL_TAB_KPI_DASHBOARD from '@salesforce/label/c.Extole_Tab_Overview';
-import LABEL_TAB_SETTINGS from '@salesforce/label/c.Extole_Tab_Settings';
 import LABEL_TAB_LIST_VIEW from '@salesforce/label/c.Extole_Tab_ListView';
 import LABEL_APP_TITLE from '@salesforce/label/c.Extole_App_Title';
 
@@ -21,7 +20,6 @@ export default class ExtoleApp extends LightningElement {
     @track tabsetItems = [{ key: 0 }];
 
     labelTabKpiDashboard = LABEL_TAB_KPI_DASHBOARD;
-    labelTabSettings = LABEL_TAB_SETTINGS;
     labelTabListView = LABEL_TAB_LIST_VIEW;
     labelAppTitle = LABEL_APP_TITLE;
     extoleLogoUrl = EXTOLE_LOGO;
@@ -68,27 +66,9 @@ export default class ExtoleApp extends LightningElement {
         }
     }
 
-    handleNavigateToSettings() {
-        this.activeTab = 'settings';
-    }
-
-    handleSettingsSaved(event) {
-        // lightning-tabset does not pick up dynamically added tabs after initial render.
-        // Changing the key in tabsetItems forces LWC to fully destroy and recreate
-        // the tabset with the updated tab visibility.
-        this.settings = event.detail;
-        this.settingsTimestamp = Date.now();
-        this.activeTab = 'settings'; // stay on settings after remount
-        const nextKey = this.tabsetItems[0].key + 1;
-        this.tabsetItems = [{ key: nextKey }];
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-
     async handleOnboardingComplete() {
-        // Reload app state after onboarding
         await this.initApp();
         this.showOnboarding = false;
-        this.activeTab = 'settings';
+        this.activeTab = 'overview';
     }
 }

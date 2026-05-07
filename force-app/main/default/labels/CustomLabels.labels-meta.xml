@@ -701,6 +701,55 @@
         <value>Email address that receives sync failure alerts. Defaults to the org admin address if left blank.</value>
     </labels>
     <labels>
+        <fullName>Extole_Tooltip_Section_Connection</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Connection section tooltip</shortDescription>
+        <value>Connects Salesforce to your Extole account via API. Generate a long-lived token in the Extole Security Center and configure it as a Named Credential.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_Section_Debug</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Debug section tooltip</shortDescription>
+        <value>Enable detailed HTTP and value-extraction logging to troubleshoot sync issues. Logs are automatically purged after 30 days.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_Section_ListView</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>List View section tooltip</shortDescription>
+        <value>Identify which Salesforce records are Extole-influenced. The List View tab uses these settings to filter and display the people your program has generated.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_Section_ReportConfig</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Report config section tooltip</shortDescription>
+        <value>Define which Extole reports appear as KPI tiles on the dashboard. Each config maps a report runner to a single metric.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_Section_SyncManagement</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Sync management section tooltip</shortDescription>
+        <value>Control how often Extole data syncs to Salesforce and configure failure alert emails.</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_DisplayOrder</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>KPI display order tooltip</shortDescription>
+        <value>Controls the left-to-right position of this widget on the dashboard. Lower numbers appear first (1 = leftmost).</value>
+    </labels>
+    <labels>
+        <fullName>Extole_Tooltip_Active</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>KPI Active checkbox tooltip</shortDescription>
+        <value>When unchecked, this report will be hidden from the dashboard and skipped during sync.</value>
+    </labels>
+    <labels>
         <fullName>Extole_Tab_EventConfigurator</fullName>
         <language>en_US</language>
         <protected>false</protected>

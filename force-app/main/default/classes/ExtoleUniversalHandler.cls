@@ -126,6 +126,8 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
         Integer  lastHttpStatus  = null;
         String   lastSummary     = null;
 
+        List<Extole_Event_Fire_Log__c> fireLogs = new List<Extole_Event_Fire_Log__c>();
+
         for (SObject r : records) {
             Map<String, Object> dataMap = buildDataMap(r, mappings);
             dataMap.put('app_type', 'extole-sfdc-app');
@@ -135,15 +137,24 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
                 .build(extoleConfig);
 
             DateTime attemptedAt = DateTime.now();
+            String   recordId    = (String) r.get('Id');
             HttpResponse res;
             try {
                 res = extoleClient.send(extoleConfig, req);
             } catch (Exception e) {
                 lastAttemptedAt = attemptedAt;
-                lastRecordId    = (String) r.get('Id');
+                lastRecordId    = recordId;
                 lastSuccess     = false;
                 lastHttpStatus  = null;
                 lastSummary     = 'Callout exception: ' + e.getMessage();
+                fireLogs.add(new Extole_Event_Fire_Log__c(
+                    Config_Key__c  = cfg.Config_Key__c,
+                    Event_Name__c  = cfg.Event_Name__c,
+                    Record_Id__c   = recordId,
+                    Result__c      = 'FAILED',
+                    Timestamp__c   = attemptedAt,
+                    Detail__c      = lastSummary
+                ));
                 continue;
             }
 
@@ -156,16 +167,43 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
             }
 
             lastAttemptedAt = attemptedAt;
-            lastRecordId    = (String) r.get('Id');
+            lastRecordId    = recordId;
             lastSuccess     = success;
             lastHttpStatus  = res.getStatusCode();
             lastSummary     = summary;
+
+            fireLogs.add(new Extole_Event_Fire_Log__c(
+                Config_Key__c  = cfg.Config_Key__c,
+                Event_Name__c  = cfg.Event_Name__c,
+                Record_Id__c   = recordId,
+                Result__c      = success ? 'SUCCESS' : 'FAILED',
+                HTTP_Status__c = res.getStatusCode(),
+                Timestamp__c   = attemptedAt,
+                Detail__c      = success ? null : summary
+            ));
         }
 
         // Single DML write after all callouts complete
         if (lastAttemptedAt != null) {
             updateTelemetry(cfg, lastRecordId, lastAttemptedAt,
                 lastSuccess, lastHttpStatus, lastSummary);
+        }
+        if (!fireLogs.isEmpty()) {
+            try {
+                insert fireLogs;
+            } catch (Exception e) {
+                System.debug('ExtoleUniversalHandler: failed to insert fire logs: ' + e.getMessage());
+                try {
+                    insert new Extole_Debug_Log__c(
+                        Report_Name__c   = 'SYSTEM',
+                        Log_Timestamp__c = System.now(),
+                        Event_Type__c    = 'EVENT_FIRE_LOG_INSERT_FAILED',
+                        Detail__c        = 'Config: ' + cfg.Config_Key__c
+                                         + ' | Records: ' + fireLogs.size()
+                                         + ' | Error: ' + e.getMessage()
+                    );
+                } catch (Exception ignored) { }
+            }
         }
     }
 

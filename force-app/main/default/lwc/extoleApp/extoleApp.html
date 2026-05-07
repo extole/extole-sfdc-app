@@ -25,17 +25,12 @@
                 <lightning-tabset key={tabsetItem.key} variant="standard" active-tab-value={activeTab} onactive={handleTabChange}>
                     <!-- KPI Dashboard tab -->
                     <lightning-tab lwc:if={showKPIDashboard} label={labelTabKpiDashboard} value="overview">
-                        <c-extole-kpi-dashboard onnavigatetosettings={handleNavigateToSettings}></c-extole-kpi-dashboard>
+                        <c-extole-kpi-dashboard></c-extole-kpi-dashboard>
                     </lightning-tab>
 
                     <!-- List View tab -->
                     <lightning-tab lwc:if={showListView} label={labelTabListView} value="leads">
                         <c-extole-list-view settings-timestamp={settingsTimestamp}></c-extole-list-view>
-                    </lightning-tab>
-
-                    <!-- Settings tab -->
-                    <lightning-tab label={labelTabSettings} value="settings">
-                        <c-extole-settings onsettingssaved={handleSettingsSaved}></c-extole-settings>
                     </lightning-tab>
                 </lightning-tabset>
             </template>

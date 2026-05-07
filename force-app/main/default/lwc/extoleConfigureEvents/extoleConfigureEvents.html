@@ -1,0 +1,218 @@
+<template>
+    <div class="settings-container">
+
+        <!-- Event Configurator -->
+        <c-extole-event-configurator></c-extole-event-configurator>
+
+        <!-- Connection -->
+        <div class="settings-card">
+            <div class="settings-card-title">{labelConnectionSection}<lightning-helptext content={tooltipSectionConnection}></lightning-helptext></div>
+            <div class="connection-action-row">
+                <lightning-button
+                    label={labelTestConnection}
+                    variant="neutral"
+                    onclick={handleTestConnection}
+                    disabled={isTesting}
+                ></lightning-button>
+                <template lwc:if={isTesting}>
+                    <lightning-spinner size="small" alternative-text="Testing..."></lightning-spinner>
+                </template>
+            </div>
+            <template lwc:if={connectionResult}>
+                <div class="connection-result-row">
+                    <span class={connectionBadgeClass}>
+                        <lightning-icon icon-name={connectionIcon} size="x-small" alternative-text="Connection status"></lightning-icon>
+                        {connectionStatusLabel}
+                    </span>
+                    <template lwc:if={connectionResult.success}>
+                        <span class="connection-report-count">{connectionResult.reportCount} {labelReportCount}</span>
+                    </template>
+                    <template lwc:else>
+                        <span class="connection-error">{connectionResult.errorMessage}</span>
+                    </template>
+                </div>
+            </template>
+            <p class="api-token-note">{labelApiTokenNote}</p>
+        </div>
+
+        <!-- Event Configuration History -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-title">
+                    Event Configuration History
+                    <lightning-helptext content="Audit trail of configuration changes — deploys, activations, and failures for each event config."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearEventLog}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearEventLog} disabled={isClearingEventLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearEventLog}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshEventLogs}></lightning-button>
+                        <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopyEventLogMd}></lightning-button>
+                        <lightning-button label="Clear History" variant="destructive-text" onclick={handleClearEventLogs} disabled={isClearingEventLogs}></lightning-button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={isLoadingEventLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasEventLogs}>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Config Key</div></th>
+                                    <th scope="col"><div class="slds-truncate">Action</div></th>
+                                    <th scope="col"><div class="slds-truncate">Result</div></th>
+                                    <th scope="col"><div class="slds-truncate">Timestamp</div></th>
+                                    <th scope="col"><div class="slds-truncate">Detail</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={eventLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.Config_Key__c}</td>
+                                        <td>{log.Event_Type__c}</td>
+                                        <td><span class={log.resultClass}>{log.Result__c}</span></td>
+                                        <td>{log.formattedTimestamp}</td>
+                                        <td class={log.detailClass} title={log.Detail__c}>{log.Detail__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No configuration history found.</p>
+                </template>
+            </template>
+        </div>
+
+        <!-- Event Fire Log -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-title">
+                    Event Fire Log
+                    <lightning-helptext content="One row per Extole event fired by your configs — records the triggering Salesforce record, result, and HTTP status for each fire."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearFireLog}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearFireLog} disabled={isClearingFireLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearFireLog}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshFireLogs}></lightning-button>
+                        <lightning-button label="Copy as Markdown" variant="neutral" icon-name="utility:copy" onclick={handleCopyFireLogMd}></lightning-button>
+                        <lightning-button label="Clear Log" variant="destructive-text" onclick={handleClearFireLogs} disabled={isClearingFireLogs}></lightning-button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={isLoadingFireLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasFireLogs}>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Event Name</div></th>
+                                    <th scope="col"><div class="slds-truncate">Record ID</div></th>
+                                    <th scope="col"><div class="slds-truncate">Result</div></th>
+                                    <th scope="col"><div class="slds-truncate">HTTP</div></th>
+                                    <th scope="col"><div class="slds-truncate">Timestamp</div></th>
+                                    <th scope="col"><div class="slds-truncate">Detail</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={fireLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.Event_Name__c}</td>
+                                        <td class="truncated-cell">{log.Record_Id__c}</td>
+                                        <td><span class={log.resultClass}>{log.Result__c}</span></td>
+                                        <td>{log.HTTP_Status__c}</td>
+                                        <td>{log.formattedTimestamp}</td>
+                                        <td class={log.detailClass} title={log.Detail__c}>{log.Detail__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No event fires recorded yet. Events are logged when a configured trigger fires.</p>
+                </template>
+            </template>
+        </div>
+
+        <!-- Debug -->
+        <div class="settings-card">
+            <div class="settings-card-title">{labelDebugSection}<lightning-helptext content={tooltipSectionDebug}></lightning-helptext></div>
+            <lightning-input
+                type="checkbox"
+                label={labelDebugLogging}
+                checked={settings.Debug_Logging_Enabled__c}
+                data-field="Debug_Logging_Enabled__c"
+                field-level-help={tooltipDebugLogging}
+                onchange={handleSettingsChange}
+            ></lightning-input>
+            <p class="debug-actions-desc">{labelDebugClearActionsDesc}</p>
+            <div class="debug-action-row">
+                <template lwc:if={confirmClearDebug}>
+                    <span class="confirm-clear-label">Clear all log entries?</span>
+                    <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearDebugLogs} disabled={isClearingLogs}></lightning-button>
+                    <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearDebugLogs}></lightning-button>
+                </template>
+                <template lwc:else>
+                    <lightning-button label={labelClearDebugLogs} variant="destructive-text" onclick={handleClearDebugLogs} disabled={isClearingLogs}></lightning-button>
+                </template>
+            </div>
+            <template lwc:if={debugClearResult}>
+                <p class="debug-result">{debugClearResult}</p>
+            </template>
+            <template lwc:if={hasDebugLogs}>
+                <div class="section-header-row">
+                    <h3 class="subsection-title">Debug Log</h3>
+                </div>
+                <div class="sync-log-table">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_fixed-layout">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th style="width:150px">Timestamp</th>
+                                <th style="width:130px">Event Type</th>
+                                <th style="width:220px">Report Name</th>
+                                <th>Detail</th>
+                                <th style="width:90px">Batch ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={debugLogs} for:item="log">
+                                <tr key={log.Id}>
+                                    <td>{log.formattedTimestamp}</td>
+                                    <td>{log.Event_Type__c}</td>
+                                    <td>{log.Report_Name__c}</td>
+                                    <td class="truncated-cell" title={log.Detail__c}>{log.Detail__c}</td>
+                                    <td class="truncated-cell" title={log.Sync_Batch_Id__c}>{log.Sync_Batch_Id__c}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+            <div class="section-footer">
+                <template lwc:if={hasDirtySettings}>
+                    <span class="unsaved-badge">
+                        <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                        Unsaved changes
+                    </span>
+                </template>
+                <lightning-button label="Save Settings" variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
+            </div>
+        </div>
+
+    </div>
+</template>

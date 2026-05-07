@@ -1,4 +1,5 @@
 import { LightningElement, track, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getSnapshots from '@salesforce/apex/ExtoleController.getSnapshots';
 import getConfigs from '@salesforce/apex/ExtoleController.getConfigs';
@@ -9,7 +10,7 @@ import LABEL_NO_DATA_ADMIN from '@salesforce/label/c.Extole_Overview_NoDataAdmin
 import LABEL_NO_DATA_VIEWER from '@salesforce/label/c.Extole_Overview_NoDataViewer';
 import LABEL_TOKEN_INVALID from '@salesforce/label/c.Extole_Overview_TokenInvalid';
 
-export default class ExtoleKpiDashboard extends LightningElement {
+export default class ExtoleKpiDashboard extends NavigationMixin(LightningElement) {
     @track snapshots = [];
     @track configs = [];
     @track settings = null;
@@ -73,6 +74,9 @@ export default class ExtoleKpiDashboard extends LightningElement {
     }
 
     handleGoToSettings() {
-        this.dispatchEvent(new CustomEvent('navigatetosettings'));
+        this[NavigationMixin.Navigate]({
+            type: 'standard__navItemPage',
+            attributes: { apiName: 'Extole_Configure_KPIs' }
+        });
     }
 }

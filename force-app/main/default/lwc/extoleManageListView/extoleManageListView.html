@@ -1,0 +1,70 @@
+<template>
+    <div class="settings-container">
+        <div class="settings-card">
+            <div class="settings-card-title">{labelListViewSection}<lightning-helptext content={tooltipSectionListView}></lightning-helptext></div>
+            <p class="section-description">Define which Salesforce people count as Extole-influenced. The List View tab uses these settings to show you the people your program has generated.</p>
+            <lightning-input
+                type="checkbox"
+                label={labelShowListView}
+                checked={settings.Show_List_View__c}
+                data-field="Show_List_View__c"
+                field-level-help="Show or hide the List View tab in the app navigation. Configure the object, field, and value below to define which records appear in the list."
+                onchange={handleSettingsChange}
+            ></lightning-input>
+            <lightning-combobox
+                label="Salesforce Object"
+                value={settings.List_View_Object__c}
+                options={attributionObjectOptions}
+                field-level-help="Choose whether your Extole-influenced people are tracked as Contacts or Leads."
+                onchange={handleAttributionObjectChange}
+            ></lightning-combobox>
+            <c-searchable-combobox
+                label={labelLeadField}
+                value={settings.List_View_Field__c}
+                options={attributionFieldOptions}
+                disabled={isLoadingAttributionFields}
+                placeholder="Select a field..."
+                field-level-help="The field on the selected object that identifies Extole-influenced records."
+                onchange={handleAttributionFieldChange}
+            ></c-searchable-combobox>
+            <c-searchable-combobox
+                label={labelLeadValue}
+                value={settings.List_View_Value__c}
+                options={attributionValueOptions}
+                disabled={isValueDisabled}
+                placeholder="Select a field first"
+                field-level-help="The value that marks a record as Extole-influenced."
+                data-field="List_View_Value__c"
+                onchange={handleSettingsChange}
+            ></c-searchable-combobox>
+            <lightning-dual-listbox
+                label="Display Columns"
+                source-label="Available"
+                selected-label="Selected (up to 3)"
+                field-level-help="Choose which additional fields appear as columns on the List View tab. Defaults are pre-selected based on the object type."
+                options={attributionFieldOptions}
+                value={selectedAttributionColumns}
+                max="3"
+                disabled={isLoadingAttributionFields}
+                onchange={handleAttributionColumnsChange}
+            ></lightning-dual-listbox>
+            <lightning-input
+                type="date"
+                label={labelTrackingStart}
+                field-level-help="Only records created on or after this date will appear in the List View."
+                value={settings.List_View_Start_Date__c}
+                data-field="List_View_Start_Date__c"
+                onchange={handleSettingsChange}
+            ></lightning-input>
+            <div class="section-footer">
+                <template lwc:if={hasDirtySettings}>
+                    <span class="unsaved-badge">
+                        <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                        Unsaved changes
+                    </span>
+                </template>
+                <lightning-button label={labelSaveSettings} variant="brand" onclick={handleSaveSettings} disabled={isSaving}></lightning-button>
+            </div>
+        </div>
+    </div>
+</template>

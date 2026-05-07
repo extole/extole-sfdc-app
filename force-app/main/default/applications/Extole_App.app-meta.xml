@@ -9,8 +9,9 @@
     <tabs>Extole_KPI_Dashboard</tabs>
     <tabs>Extole_List_View</tabs>
     <tabs>Extole_Backfill</tabs>
-    <tabs>Extole_Event_Configurator</tabs>
-    <tabs>Extole_Settings</tabs>
+    <tabs>Extole_Configure_Events</tabs>
+    <tabs>Extole_Configure_KPIs</tabs>
+    <tabs>Extole_Manage_List_View</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <formFactors>Small</formFactors>

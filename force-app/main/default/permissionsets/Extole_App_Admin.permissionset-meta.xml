@@ -72,6 +72,15 @@
         <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>true</modifyAllRecords>
+        <object>Extole_Event_Fire_Log__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
         <object>Extole_Event_Cfg__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
@@ -89,6 +98,13 @@
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Success_Count__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Target_Field__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Total_Count__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Detail__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Event_Name__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.HTTP_Status__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Record_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Result__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Timestamp__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Lead.Extole_Share_Link__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Active__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Apex_Class_Name__c</field><readable>true</readable></fieldPermissions>
@@ -128,7 +144,15 @@
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
-        <tab>Extole_Settings</tab>
+        <tab>Extole_Configure_Events</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Extole_Configure_KPIs</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Extole_Manage_List_View</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <userPermissions>

@@ -632,17 +632,58 @@ public with sharing class ExtoleEventController {
             'Config deactivated: ' + configKey);
     }
 
-    /**
-     * Delete all Extole_Event_Log__c records in the org.
-     * Used by the "Clear Event Log" button in the Event Configurator.
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Event Fire Log (runtime event firings from ExtoleUniversalHandler)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @AuraEnabled(cacheable=false)
+    public static List<Extole_Event_Fire_Log__c> getEventFireLogs() {
+        return [
+            SELECT Id, Name, Config_Key__c, Event_Name__c, Record_Id__c,
+                   Result__c, HTTP_Status__c, Timestamp__c, Detail__c
+            FROM Extole_Event_Fire_Log__c
+            ORDER BY Timestamp__c DESC
+            LIMIT 500
+        ];
+    }
+
     @AuraEnabled
-    public static void clearEventLog() {
+    public static Map<String, Integer> clearEventFireLogs() {
         try {
-            List<Extole_Event_Log__c> logs = [SELECT Id FROM Extole_Event_Log__c LIMIT 10000];
+            List<Extole_Event_Fire_Log__c> logs = [SELECT Id FROM Extole_Event_Fire_Log__c LIMIT 10000];
+            Integer deletedCount = logs.size();
             if (!logs.isEmpty()) {
                 delete logs;
             }
+            Integer remainingCount = [SELECT COUNT() FROM Extole_Event_Fire_Log__c];
+            return new Map<String, Integer>{
+                'deletedCount'   => deletedCount,
+                'remainingCount' => remainingCount
+            };
+        } catch (Exception e) {
+            throw new AuraHandledException('Failed to clear event fire log: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * Delete Extole_Event_Log__c records in the org.
+     * Used by the "Clear History" button in Configure Events.
+     * Synchronous Apex caps at 10k DML rows per transaction; returns the
+     * count remaining so the LWC can prompt the admin to click again.
+     */
+    @AuraEnabled
+    public static Map<String, Integer> clearEventLog() {
+        try {
+            List<Extole_Event_Log__c> logs = [SELECT Id FROM Extole_Event_Log__c LIMIT 10000];
+            Integer deletedCount = logs.size();
+            if (!logs.isEmpty()) {
+                delete logs;
+            }
+            Integer remainingCount = [SELECT COUNT() FROM Extole_Event_Log__c];
+            return new Map<String, Integer>{
+                'deletedCount'   => deletedCount,
+                'remainingCount' => remainingCount
+            };
         } catch (Exception e) {
             throw new AuraHandledException('Failed to clear event log: ' + e.getMessage());
         }
