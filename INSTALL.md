@@ -207,36 +207,43 @@ To assign to another user, add `--on-behalf-of <username>` to either command.
 
 1. Open the **Extole** app from the App Launcher (grid icon, top left)
 2. The Getting Started screen will appear on first launch
-3. Click **Go to Settings**
-4. In **Settings → API Connection**, click **Test Connection** — verify it shows "Connected"
-5. In **Settings → Report Configuration**, click **Add KPI** and configure your first KPI
+3. Open the **Configure Events** tab → click **Test Connection** — verify it shows "Connected"
+4. Open the **Configure KPIs** tab → click **Add Report** and configure your first KPI
    - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
-6. Trigger a manual sync — your KPI Dashboard will populate once the first sync completes
+5. Trigger a manual sync from the Configure KPIs tab — your KPI Dashboard will populate once the first sync completes
 
 > **If you have the Extole CLI:** run `extole events stream` and then trigger a Salesforce record change (e.g. create a Lead). You should see the event arrive in Extole in real time.
 
 ---
 
-## Step 9 — Add the Share Link field to Contact and Lead page layouts _(if using Share Link Backfill)_
+## Step 9 — Set up Share Link Backfill _(optional)_
 
-The **Manage Share Links** tab generates Extole share links and writes them to a custom field on Contact or Lead records. The field is deployed with the package but must be manually added to your page layouts to be visible on individual records.
+The **Manage Share Links** tab generates Extole share links for existing Contacts or Leads and writes them to a custom field on each record. The custom field (`Extole_Share_Link__c`, type URL) is deployed with the package automatically — but it must be manually added to your page layouts to be visible on individual records.
 
-**For Contact:**
+**Add the field to the Contact page layout:**
 
 1. Setup → **Object Manager** → **Contact** → **Page Layouts**
 2. Open the layout in use (typically `Contact Layout`)
-3. In the field palette, find **Extole Share Link** (under the URL fields section or search by name)
+3. In the field palette, find **Extole Share Link** (under URL fields, or search by name)
 4. Drag it onto the layout in the desired section
 5. Save
 
-**For Lead:**
+**Add the field to the Lead page layout:**
 
 1. Setup → **Object Manager** → **Lead** → **Page Layouts**
 2. Open the layout in use (typically `Lead Layout`)
 3. Find **Extole Share Link** and drag it onto the layout
 4. Save
 
-> This step only applies if you plan to use the Share Link Backfill feature. The field is a URL field named `Extole_Share_Link__c`.
+**Run a backfill:**
+
+1. Open the **Manage Share Links** tab
+2. Choose an audience: **Closed/Won opps** (Contacts on accounts with Closed Won opportunities), **Date range** (records created in a window), or **Custom report** (any Salesforce report you've built)
+3. Choose the program/campaign from Extole — share links are scoped to a campaign
+4. Click **Start Backfill**
+5. Monitor progress in the backfill log on the same tab — each record's outcome (success / error / skipped) is recorded
+
+> The backfill is idempotent — re-running for the same person fetches their existing share link rather than creating a duplicate.
 
 ---
 
@@ -247,7 +254,8 @@ The **Manage Share Links** tab generates Extole share links and writes them to a
 | `InvalidProjectWorkspaceError` on deploy | You are not inside the cloned repo directory. Run `cd extole-sfdc-app` first. |
 | "Test Connection" fails | Bearer token wrong, missing, or expired. Re-check Step 3. |
 | Event Configurator deploy fails | Tooling OAuth not completed. Re-check Step 6. |
-| Scheduled sync not running | Go to Settings, change Sync Cadence and save to re-register the job. |
+| Scheduled sync not running | Go to **Configure KPIs**, change Sync Cadence and save to re-register the job. |
 | Permission errors on objects | User missing `Extole_App_Admin` or `Extole_App_Viewer` permission set. |
+| Share Link field not visible on Contact/Lead | Field is deployed but not on the page layout — see Step 9. |
 
-For detailed diagnostics, enable **Debug Logging** in Settings and check the Sync Log entries.
+For detailed diagnostics, enable **Debug Logging** on the **Configure Events** tab and check the KPI Data Import Log on the **Configure KPIs** tab.
