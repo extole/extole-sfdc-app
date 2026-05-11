@@ -11,6 +11,7 @@
     <tabs>Extole_Backfill</tabs>
     <tabs>Extole_Configure_Events</tabs>
     <tabs>Extole_Configure_KPIs</tabs>
+    <tabs>Extole_Manage_Audiences</tabs>
     <tabs>Extole_Manage_List_View</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>

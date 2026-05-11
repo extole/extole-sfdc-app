@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Show_KPI_Dashboard__c</fullName>
-    <label>Show KPI Dashboard Tab</label>
+    <fullName>Active__c</fullName>
+    <label>Active</label>
     <type>Checkbox</type>
     <defaultValue>true</defaultValue>
 </CustomField>

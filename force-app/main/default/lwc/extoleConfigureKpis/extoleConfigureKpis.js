@@ -66,7 +66,7 @@ import LABEL_TOOLTIP_DISPLAY_ORDER from '@salesforce/label/c.Extole_Tooltip_Disp
 import LABEL_TOOLTIP_ACTIVE from '@salesforce/label/c.Extole_Tooltip_Active';
 
 const DEFAULT_SETTINGS = {
-    Show_KPI_Dashboard__c: true,
+    Show_Analytics__c: true,
     Sync_Cadence__c: 'Nightly',
     History_Depth__c: 30,
     Notify_On_Sync_Failure__c: false,
@@ -493,7 +493,7 @@ export default class ExtoleConfigureKpis extends LightningElement {
     }
 
     handleKpiDashboardToggle(event) {
-        this.settings = { ...this.settings, Show_KPI_Dashboard__c: event.detail.checked };
+        this.settings = { ...this.settings, Show_Analytics__c: event.detail.checked };
         this.hasDirtySettings = true;
     }
 

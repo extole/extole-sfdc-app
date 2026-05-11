@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Operation_State__c</fullName>
+    <label>Last Operation State</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>PREPARING</fullName><default>false</default><label>PREPARING</label></value>
+            <value><fullName>BUILDING</fullName><default>false</default><label>BUILDING</label></value>
+            <value><fullName>VALIDATING</fullName><default>false</default><label>VALIDATING</label></value>
+            <value><fullName>READY</fullName><default>false</default><label>READY</label></value>
+            <value><fullName>FAILED</fullName><default>false</default><label>FAILED</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

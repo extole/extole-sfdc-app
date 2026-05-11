@@ -84,6 +84,45 @@
         <object>Extole_Event_Cfg__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <object>Extole_Audience_Cfg__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <object>Extole_Audience_Sync_Log__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Active__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Extole_Audience_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Extole_Audience_Name__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Identity_Column__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Error__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Member_Count__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Operation_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Operation_State__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Sync_At__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Source_Report_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Source_Report_Name__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Sync_Cadence__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Audience_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Detail__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Member_Count__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Operation_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Operation_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.State__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Timestamp__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Contact.Extole_Share_Link__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Criteria__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Type__c</field><readable>true</readable></fieldPermissions>
@@ -149,6 +188,10 @@
     </tabSettings>
     <tabSettings>
         <tab>Extole_Configure_KPIs</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Extole_Manage_Audiences</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>

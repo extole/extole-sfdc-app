@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Identity_Column__c</fullName>
+    <label>Identity Column</label>
+    <description>API name of the report column that holds the member identity value (typically Email).</description>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+</CustomField>

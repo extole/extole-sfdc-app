@@ -50,8 +50,8 @@ export default class ExtoleApp extends LightningElement {
         }
     }
 
-    get showKPIDashboard() {
-        return !this.settings || this.settings.Show_KPI_Dashboard__c !== false;
+    get showAnalytics() {
+        return !this.settings || this.settings.Show_Analytics__c !== false;
     }
 
     get showListView() {

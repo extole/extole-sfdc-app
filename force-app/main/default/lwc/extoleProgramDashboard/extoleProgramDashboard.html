@@ -1,0 +1,176 @@
+<template>
+    <div class="program-dashboard">
+
+        <!-- Loading programs -->
+        <template lwc:if={isLoadingPrograms}>
+            <div class="loading-row">
+                <lightning-spinner size="small" alternative-text="Loading programs..."></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- No programs found -->
+        <template lwc:elseif={hasNoPrograms}>
+            <div class="empty-state">
+                <lightning-icon icon-name="utility:info" size="small" alternative-text="No programs"></lightning-icon>
+                <span>No live Extole programs found for this account.</span>
+            </div>
+        </template>
+
+        <!-- Header: program selector + period preset + refresh -->
+        <template lwc:else>
+            <div class="dashboard-header">
+                <template lwc:if={hasMultiplePrograms}>
+                    <lightning-combobox
+                        label="Program"
+                        variant="label-hidden"
+                        value={selectedProgram}
+                        options={programOptions}
+                        onchange={handleProgramChange}
+                        class="program-selector"
+                    ></lightning-combobox>
+                </template>
+                <template lwc:elseif={hasOneProgram}>
+                    <h2 class="single-program-name">{selectedProgramLabel}</h2>
+                </template>
+
+                <lightning-combobox
+                    label="Period"
+                    variant="label-hidden"
+                    value={selectedPreset}
+                    options={presetOptions}
+                    onchange={handlePresetChange}
+                    class="period-selector"
+                ></lightning-combobox>
+
+                <lightning-combobox
+                    label="Granularity"
+                    variant="label-hidden"
+                    value={selectedGranularity}
+                    options={granularityOptions}
+                    onchange={handleGranularityChange}
+                    class="granularity-selector"
+                ></lightning-combobox>
+
+                <lightning-button-icon
+                    icon-name="utility:refresh"
+                    alternative-text="Refresh"
+                    onclick={handleRefresh}
+                    disabled={isLoadingDashboard}
+                ></lightning-button-icon>
+            </div>
+
+            <!-- Dashboard body -->
+            <template lwc:if={isLoadingDashboard}>
+                <div class="loading-row">
+                    <lightning-spinner size="medium" alternative-text="Loading dashboard..."></lightning-spinner>
+                    <span class="loading-text">Generating program report…</span>
+                </div>
+            </template>
+
+            <template lwc:elseif={errorMessage}>
+                <div class="error-banner">
+                    <lightning-icon icon-name="utility:error" size="small" variant="error" alternative-text="Error"></lightning-icon>
+                    <span>{errorMessage}</span>
+                </div>
+            </template>
+
+            <template lwc:elseif={hasDashboardData}>
+                <!-- Time-series chart for selected step -->
+                <template lwc:if={chartSeries}>
+                    <div class="chart-card">
+                        <!-- Y-axis labels rendered in HTML so they aren't stretched by SVG -->
+                        <div class="chart-y-axis">
+                            <template for:each={chartSeries.yLabels} for:item="l">
+                                <span key={l.label} class="chart-y-label">{l.label}</span>
+                            </template>
+                        </div>
+                        <div class="chart-plot">
+                            <svg class="chart-svg"
+                                 viewBox="0 0 800 200"
+                                 preserveAspectRatio="none"
+                                 width="100%"
+                                 height="200">
+                                <!-- Gridlines (top + bottom), non-scaling stroke so they stay 1px -->
+                                <template for:each={chartSeries.yGridLines} for:item="gl">
+                                    <line key={gl.y}
+                                          x1="0" x2="800" y1={gl.y} y2={gl.y}
+                                          stroke="#ecebea" stroke-width="1"
+                                          vector-effect="non-scaling-stroke"></line>
+                                </template>
+                                <!-- Series fill + line -->
+                                <path d={chartSeries.fillD} fill="rgba(29,158,117,0.12)" stroke="none"></path>
+                                <path d={chartSeries.pathD}
+                                      fill="none"
+                                      stroke="#1D9E75"
+                                      stroke-width="2"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      vector-effect="non-scaling-stroke"></path>
+                            </svg>
+                            <!-- X-axis labels in HTML, absolutely positioned by leftPct -->
+                            <div class="chart-x-axis">
+                                <template for:each={chartSeries.xLabels} for:item="xl">
+                                    <span key={xl.leftPct}
+                                          class="chart-x-label"
+                                          style={xl.style}>{xl.label}</span>
+                                </template>
+                            </div>
+                        </div>
+                        <template lwc:if={showEmptyChartOverlay}>
+                            <div class="chart-empty-overlay">No activity in this period</div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Funnel row -->
+                <div class="funnel-row">
+                    <template for:each={funnelStages} for:item="stage">
+                        <div key={stage.stepName}
+                             class={stage.stageClass}
+                             data-step={stage.stepName}
+                             onclick={handleStepClick}>
+                            <div class="funnel-count">{stage.totalCount}</div>
+                            <div class="funnel-rate">{stage.rateLabel}</div>
+                            <div class="funnel-label">{stage.displayName}</div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Promotions section -->
+                <template lwc:if={isLoadingPromotions}>
+                    <div class="promotions-loading">
+                        <lightning-spinner size="small" alternative-text="Loading promotions..."></lightning-spinner>
+                    </div>
+                </template>
+                <template lwc:elseif={hasAnyPromotionActivity}>
+                    <div class="promotions-section">
+                        <div class="promotions-header">Promotions</div>
+                        <div class="promotions-table">
+                            <template for:each={promotionRows} for:item="p">
+                                <div key={p.key} class="promotion-row">
+                                    <div class="promotion-bar-cell">
+                                        <div class="promotion-bar-fill" style={p.barStyle}></div>
+                                        <span class="promotion-name">{p.displayName}</span>
+                                        <span class="promotion-total">{p.total}</span>
+                                    </div>
+                                    <svg class="promotion-spark"
+                                         width="200" height="48"
+                                         viewBox="0 0 200 48"
+                                         preserveAspectRatio="none">
+                                        <path d={p.sparkPath}
+                                              fill="none"
+                                              stroke="#1D9E75"
+                                              stroke-width="1.5"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                    </svg>
+                                    <div class="promotion-rate">{p.shareRate}</div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </template>
+    </div>
+</template>

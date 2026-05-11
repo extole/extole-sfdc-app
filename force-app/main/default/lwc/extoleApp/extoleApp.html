@@ -23,8 +23,8 @@
         <template lwc:else>
             <template for:each={tabsetItems} for:item="tabsetItem">
                 <lightning-tabset key={tabsetItem.key} variant="standard" active-tab-value={activeTab} onactive={handleTabChange}>
-                    <!-- KPI Dashboard tab -->
-                    <lightning-tab lwc:if={showKPIDashboard} label={labelTabKpiDashboard} value="overview">
+                    <!-- Analytics tab -->
+                    <lightning-tab lwc:if={showAnalytics} label={labelTabKpiDashboard} value="overview">
                         <c-extole-kpi-dashboard></c-extole-kpi-dashboard>
                     </lightning-tab>
 

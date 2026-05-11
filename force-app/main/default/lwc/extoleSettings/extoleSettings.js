@@ -101,7 +101,7 @@ const ATTRIBUTION_COLUMN_DEFAULTS = {
 };
 
 const DEFAULT_SETTINGS = {
-    Show_KPI_Dashboard__c: true,
+    Show_Analytics__c: true,
     Show_List_View__c: false,
     List_View_Object__c: 'Contact',
     List_View_Field__c: '',
@@ -824,7 +824,7 @@ export default class ExtoleSettings extends LightningElement {
 
     // Event handlers
     async handleKpiDashboardToggle(event) {
-        this.settings = { ...this.settings, Show_KPI_Dashboard__c: event.detail.checked };
+        this.settings = { ...this.settings, Show_Analytics__c: event.detail.checked };
         await this.handleSaveSettings();
     }
 

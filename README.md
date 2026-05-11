@@ -6,7 +6,7 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 ## What it does
 
-**KPI Dashboard** — Pulls report data from the Extole API on a configurable schedule (hourly, daily, or weekly) and displays it as metric tiles inside Salesforce. Admins choose which Extole reports to surface and how frequently to sync.
+**Analytics** — Pulls report data from the Extole API on a configurable schedule (hourly, daily, or weekly) and displays it as metric tiles inside Salesforce. Admins choose which Extole reports to surface and how frequently to sync.
 
 **Event Configurator** — Lets admins define record-triggered events that fire to Extole when Salesforce records change. For example: send an event to Extole when a Lead is created, or when an Opportunity moves to Closed Won. No code required — the app generates and deploys the necessary Salesforce Flow automatically.
 
@@ -38,14 +38,14 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | Permission Set | Assign to |
 |---|---|
 | `Extole_App_Admin` | Admins who configure the integration |
-| `Extole_App_Viewer` | Users who need read access to the KPI Dashboard |
+| `Extole_App_Viewer` | Users who need read access to the Analytics |
 | `Extole_API_Access` | System — grants access to the Extole API credential |
 
 **App and Tabs** — A Lightning app with six tabs:
 
 | Tab | Purpose |
 |---|---|
-| KPI Dashboard | Metric tiles for synced Extole reports |
+| Analytics | Metric tiles for synced Extole reports |
 | List View | Configurable Contact/Lead list filtered by an attribution field |
 | Manage Share Links | Bulk backfill share links onto existing Contacts and Leads |
 | Configure Events | Event Configurator, connection test, configuration history, fire log, and debug logging |
@@ -71,7 +71,7 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 ## Ongoing maintenance
 
 - **Sync cadence** — Change in Configure KPIs → Sync Management. The scheduled job is automatically re-registered on save.
-- **Adding KPIs** — Configure KPIs → Add Report. New tiles appear on the KPI Dashboard after the next sync.
+- **Adding KPIs** — Configure KPIs → Add Report. New tiles appear on the Analytics after the next sync.
 - **Event configs** — Configure Events. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
 - **Failure notifications** — Configure KPIs → Sync Management. Enable email alerts after N consecutive sync failures.
 - **Debug logging** — Configure Events → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.

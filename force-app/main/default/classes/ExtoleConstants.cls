@@ -9,4 +9,5 @@ public class ExtoleConstants {
     public static final String REPORT_RUNNERS_PATH       = '/v7/report-runners';
     public static final String REPORT_V4_PATH            = '/v4/reports';
     public static final String REPORT_DOWNLOAD_PATH      = '/download.json';
+    public static final String AUDIENCES_PATH            = '/v1/audiences';
 }

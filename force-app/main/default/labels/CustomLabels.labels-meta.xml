@@ -424,8 +424,8 @@
         <fullName>Extole_Tab_Overview</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>KPI Dashboard tab label</shortDescription>
-        <value>KPI Dashboard</value>
+        <shortDescription>Analytics tab label</shortDescription>
+        <value>Analytics</value>
     </labels>
     <labels>
         <fullName>Extole_Tab_Settings</fullName>
@@ -473,8 +473,8 @@
         <fullName>Extole_Settings_ShowKPIDashboard</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Show KPI Dashboard tab checkbox label</shortDescription>
-        <value>Show KPI Dashboard Tab</value>
+        <shortDescription>Show Analytics tab checkbox label</shortDescription>
+        <value>Show Analytics Tab</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_ShowListView</fullName>

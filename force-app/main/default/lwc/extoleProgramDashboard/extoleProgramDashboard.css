@@ -1,0 +1,278 @@
+:host {
+    --extole-green: #1D9E75;
+    display: block;
+}
+
+.program-dashboard {
+    background: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.program-selector     { min-width: 240px; }
+.period-selector      { min-width: 160px; }
+.granularity-selector { min-width: 110px; }
+
+.single-program-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #080707;
+    margin: 0;
+    flex: 1;
+}
+
+.loading-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 0;
+    justify-content: center;
+}
+
+.loading-text {
+    color: #54698d;
+    font-size: 13px;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #54698d;
+    padding: 24px 0;
+    justify-content: center;
+}
+
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fdecea;
+    color: #c23934;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+/* ── Chart ──────────────────────────────────────────────────────────────── */
+
+.chart-card {
+    border: 1px solid #ecebea;
+    border-radius: 4px;
+    padding: 12px 16px;
+    background: #fafaf9;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    position: relative;
+}
+
+.chart-y-axis {
+    width: 32px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 4px 4px 16px 0;
+    box-sizing: border-box;
+}
+
+.chart-y-label {
+    font-size: 11px;
+    color: #54698d;
+    line-height: 1;
+}
+
+.chart-plot {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-svg {
+    display: block;
+    width: 100%;
+    height: 200px;
+}
+
+.chart-x-axis {
+    position: relative;
+    height: 16px;
+    margin-top: 2px;
+}
+
+.chart-x-label {
+    position: absolute;
+    font-size: 11px;
+    color: #54698d;
+    white-space: nowrap;
+    top: 0;
+}
+
+.chart-empty-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #54698d;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* ── Funnel ─────────────────────────────────────────────────────────────── */
+
+.funnel-row {
+    display: flex;
+    gap: 4px;
+    align-items: stretch;
+}
+
+.funnel-stage {
+    flex: 1;
+    padding: 12px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.15s ease;
+    min-width: 0;
+}
+
+.funnel-stage:hover {
+    background: #f3f3f3;
+}
+
+.funnel-stage-selected {
+    background: #e8f5ef;
+    border-color: var(--extole-green);
+}
+
+.funnel-count {
+    font-size: 20px;
+    font-weight: 700;
+    color: #080707;
+}
+
+.funnel-rate {
+    font-size: 11px;
+    color: #54698d;
+    margin-top: 2px;
+}
+
+.funnel-label {
+    font-size: 12px;
+    color: #54698d;
+    margin-top: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Promotions section ─────────────────────────────────────────────────── */
+
+.promotions-loading {
+    display: flex;
+    justify-content: center;
+    padding: 16px 0;
+}
+
+.promotions-section {
+    margin-top: 8px;
+    border-top: 1px solid #ecebea;
+    padding-top: 12px;
+}
+
+.promotions-header {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #54698d;
+    margin-bottom: 8px;
+}
+
+.promotions-table {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.promotion-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 3fr) 200px 60px;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.promotion-row:not(:last-child) {
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.promotion-bar-cell {
+    position: relative;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #f4f5f7;
+}
+
+.promotion-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(29, 158, 117, 0.20);
+    border-left: 2px solid var(--extole-green);
+    z-index: 0;
+}
+
+.promotion-name {
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    color: #080707;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.promotion-total {
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #080707;
+    margin-left: 8px;
+}
+
+.promotion-spark {
+    width: 200px;
+    height: 48px;
+    display: block;
+}
+
+.promotion-rate {
+    font-size: 13px;
+    color: #54698d;
+    text-align: left;
+}

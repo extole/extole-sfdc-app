@@ -1,0 +1,197 @@
+<template>
+    <div class="settings-container">
+
+        <!-- Audience Configurations -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-title">
+                    Manage Audiences
+                    <lightning-helptext content={tooltipSectionAudiences}></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <lightning-button label="Run Scheduler Now" variant="neutral" icon-name="utility:clock" onclick={handleRunSchedulerNow} title="Evaluate scheduled audiences immediately — useful for testing Hourly/Daily/Weekly without waiting for the next tick."></lightning-button>
+                    <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshConfigs}></lightning-button>
+                    <lightning-button label="Add Audience" variant="brand" icon-name="utility:add" onclick={handleAddAudience}></lightning-button>
+                </div>
+            </div>
+            <template lwc:if={isLoadingConfigs}>
+                <lightning-spinner size="small" alternative-text="Loading configs..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasConfigs}>
+                    <div class="audience-table-wrapper">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col" class="audience-sortable-th" data-field="Extole_Audience_Name__c" onclick={handleSortColumn}>Extole Audience{sortIconAudience}</th>
+                                    <th scope="col" class="audience-sortable-th" data-field="Source_Report_Name__c"   onclick={handleSortColumn}>Source Report{sortIconReport}</th>
+                                    <th scope="col" class="audience-sortable-th" data-field="Identity_Column__c"       onclick={handleSortColumn}>Identity Column{sortIconColumn}</th>
+                                    <th scope="col" class="audience-sortable-th" data-field="Sync_Cadence__c"          onclick={handleSortColumn}>Cadence{sortIconCadence}</th>
+                                    <th scope="col" class="audience-sortable-th" data-field="Last_Member_Count__c"     onclick={handleSortColumn}>Members{sortIconMembers}</th>
+                                    <th scope="col" class="audience-sortable-th" data-field="Last_Operation_State__c"  onclick={handleSortColumn}>State{sortIconState}</th>
+                                    <th scope="col" class="audience-sortable-th" data-field="Last_Sync_At__c"          onclick={handleSortColumn}>Last Sync{sortIconLastSync}</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={configs} for:item="cfg">
+                                    <tr key={cfg.Id}>
+                                        <td>{cfg.Extole_Audience_Name__c}</td>
+                                        <td>{cfg.Source_Report_Name__c}</td>
+                                        <td>{cfg.Identity_Column__c}</td>
+                                        <td>{cfg.Sync_Cadence__c}</td>
+                                        <td>{cfg.Last_Member_Count__c}</td>
+                                        <td><span class={cfg.stateBadgeClass}>{cfg.stateLabel}</span></td>
+                                        <td>{cfg.formattedLastSync}</td>
+                                        <td class="audience-col-actions">
+                                            <lightning-button-menu icon-name="utility:down" variant="bare" menu-alignment="right" alternative-text="Actions" data-key={cfg.Config_Key__c} onselect={handleRowMenu}>
+                                                <lightning-menu-item value="sync"   label="Sync Now" disabled={cfg.syncDisabled}></lightning-menu-item>
+                                                <lightning-menu-item value="edit"   label="Edit"></lightning-menu-item>
+                                                <lightning-menu-item value="delete" label="Delete"></lightning-menu-item>
+                                            </lightning-button-menu>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No audiences configured yet. Click <strong>Add Audience</strong> to map a Salesforce report to an Extole audience.</p>
+                </template>
+            </template>
+        </div>
+
+        <!-- Audience Sync Log -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-title">
+                    Audience Sync Log
+                    <lightning-helptext content="One row per audience sync attempt — records the Extole operation ID, state, and member count."></lightning-helptext>
+                </div>
+                <div class="diag-header-actions">
+                    <template lwc:if={confirmClearLogs}>
+                        <span class="confirm-clear-label">Clear all log entries?</span>
+                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearLogs} disabled={isClearingLogs}></lightning-button>
+                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearLogs}></lightning-button>
+                    </template>
+                    <template lwc:else>
+                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshLogs}></lightning-button>
+                        <lightning-button label="Clear Log" variant="destructive-text" onclick={handleClearLogs} disabled={isClearingLogs}></lightning-button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={isLoadingLogs}>
+                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+            </template>
+            <template lwc:else>
+                <template lwc:if={hasSyncLogs}>
+                    <div class="sync-log-table">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Audience</div></th>
+                                    <th scope="col"><div class="slds-truncate">Type</div></th>
+                                    <th scope="col"><div class="slds-truncate">State</div></th>
+                                    <th scope="col"><div class="slds-truncate">Members</div></th>
+                                    <th scope="col"><div class="slds-truncate">Timestamp</div></th>
+                                    <th scope="col"><div class="slds-truncate">Detail</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={syncLogs} for:item="log">
+                                    <tr key={log.Id}>
+                                        <td>{log.audienceName}</td>
+                                        <td>{log.Operation_Type__c}</td>
+                                        <td><span class={log.stateClass}>{log.State__c}</span></td>
+                                        <td>{log.Member_Count__c}</td>
+                                        <td>{log.formattedTimestamp}</td>
+                                        <td title={log.detailTooltip}>{log.Detail__c}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <p class="empty-text">No sync log entries yet.</p>
+                </template>
+            </template>
+        </div>
+    </div>
+
+    <!-- Add / Edit Modal -->
+    <template lwc:if={isModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true" aria-labelledby="modal-heading">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={handleCloseModal}>
+                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                    </button>
+                    <h2 id="modal-heading" class="slds-modal__title">{modalTitle}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-input
+                        type="text"
+                        label="Extole Audience Name"
+                        value={editingConfig.Extole_Audience_Name__c}
+                        data-field="Extole_Audience_Name__c"
+                        max-length="255"
+                        message-when-too-long="Audience name must be 255 characters or fewer."
+                        message-when-value-missing="Audience name is required."
+                        field-level-help="The name of the audience in Extole (max 255 chars). If it doesn't exist yet, we'll create it on first sync."
+                        onchange={handleModalFieldChange}
+                        required
+                    ></lightning-input>
+
+                    <template lwc:if={isLoadingReports}>
+                        <lightning-spinner size="small" alternative-text="Loading reports..."></lightning-spinner>
+                    </template>
+                    <template lwc:else>
+                        <c-searchable-combobox
+                            label="Salesforce Report"
+                            value={editingConfig.Source_Report_Id__c}
+                            options={reportPickerOptions}
+                            placeholder="Search reports..."
+                            field-level-help="Source of audience members. Each row in the report becomes a member."
+                            onchange={handleModalReportChange}
+                        ></c-searchable-combobox>
+                    </template>
+
+                    <template lwc:if={isLoadingColumns}>
+                        <lightning-spinner size="small" alternative-text="Loading columns..."></lightning-spinner>
+                    </template>
+                    <template lwc:elseif={hasReportColumns}>
+                        <lightning-combobox
+                            label="Identity Column"
+                            value={editingConfig.Identity_Column__c}
+                            options={reportColumnOptions}
+                            placeholder="Pick the column holding the email address"
+                            field-level-help="The report column whose value identifies each person (typically Email)."
+                            onchange={handleModalColumnChange}
+                            required
+                        ></lightning-combobox>
+                    </template>
+
+                    <lightning-combobox
+                        label="Sync Cadence"
+                        value={editingConfig.Sync_Cadence__c}
+                        options={cadenceOptions}
+                        data-field="Sync_Cadence__c"
+                        field-level-help="V1 only supports Manual — scheduled cadences will be honored in a future release."
+                        onchange={handleModalFieldChange}
+                    ></lightning-combobox>
+
+                    <template lwc:if={modalError}>
+                        <div class="form-error">{modalError}</div>
+                    </template>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" variant="neutral" onclick={handleCloseModal}></lightning-button>
+                    <lightning-button label="Save" variant="brand" onclick={handleSaveModal} disabled={isSaving}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

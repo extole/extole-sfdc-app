@@ -4,7 +4,7 @@
 
 Installation takes about 20–30 minutes and has two distinct phases.
 
-**Phase 1 (Steps 1–3)** deploys the app and configures the Extole API connection. This covers the KPI Dashboard — after Step 3 you can sync report data and see metrics in Salesforce.
+**Phase 1 (Steps 1–3)** deploys the app and configures the Extole API connection. This covers the Analytics — after Step 3 you can sync report data and see metrics in Salesforce.
 
 **Phase 2 (Steps 4–6)** sets up the Tooling API OAuth connection required by the Event Configurator. Salesforce requires a Connected App and a one-time OAuth authorization to allow the app to generate and deploy Flows on your behalf. This is the most involved part of the setup but only needs to be done once per org.
 
@@ -179,13 +179,13 @@ This is a one-time step. After authorization, the Event Configurator can deploy 
 
 **In your terminal:**
 
-Assign `Extole_App_Admin` to yourself and any other admins who will configure the KPI Dashboard or the events sent to Extole:
+Assign `Extole_App_Admin` to yourself and any other admins who will configure the Analytics or the events sent to Extole:
 
 ```bash
 sf org assign permset --name Extole_App_Admin --target-org <alias>
 ```
 
-Assign `Extole_App_Viewer` to any user who needs read access to the KPI Dashboard and List View:
+Assign `Extole_App_Viewer` to any user who needs read access to the Analytics and List View:
 
 ```bash
 sf org assign permset --name Extole_App_Viewer --target-org <alias>
@@ -210,7 +210,7 @@ To assign to another user, add `--on-behalf-of <username>` to either command.
 3. Open the **Configure Events** tab → click **Test Connection** — verify it shows "Connected"
 4. Open the **Configure KPIs** tab → click **Add Report** and configure your first KPI
    - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
-5. Trigger a manual sync from the Configure KPIs tab — your KPI Dashboard will populate once the first sync completes
+5. Trigger a manual sync from the Configure KPIs tab — your Analytics will populate once the first sync completes
 
 > **If you have the Extole CLI:** run `extole events stream` and then trigger a Salesforce record change (e.g. create a Lead). You should see the event arrive in Extole in real time.
 

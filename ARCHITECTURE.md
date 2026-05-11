@@ -4,7 +4,7 @@
 
 The app has two independent features that share a common auth and settings layer:
 
-- **KPI Dashboard** — Scheduled Apex job pulls report data from the Extole API and stores it as snapshots. LWC reads snapshots and renders metric tiles.
+- **Analytics** — Scheduled Apex job pulls report data from the Extole API and stores it as snapshots. LWC reads snapshots and renders metric tiles.
 - **Event Configurator** — Admin defines record-triggered event rules in the UI. The app generates and deploys a Salesforce Flow via the Tooling API. The Flow invokes an Apex handler that sends events to Extole in real time.
 
 ---
@@ -218,7 +218,7 @@ Extole_Debug_Log__c (one per log entry when debug enabled)
 
 | Class | Role |
 |---|---|
-| `ExtoleController` | LWC backend for Settings and KPI Dashboard — settings CRUD, sync trigger, report config CRUD, connection test |
+| `ExtoleController` | LWC backend for Settings and Analytics — settings CRUD, sync trigger, report config CRUD, connection test |
 | `ExtoleEventController` | LWC backend for Event Configurator — event config CRUD, deploy, test fire, safety check |
 | `ExtoleMetadataService` | Tooling API integration — builds Flow metadata JSON, deploys/deactivates/deletes Flows |
 | `ExtoleSyncJob` | Schedulable + Queueable sync job — fetches report data from Extole, upserts snapshots, purges logs, sends failure emails |

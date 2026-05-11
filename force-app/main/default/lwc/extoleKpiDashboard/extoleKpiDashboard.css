@@ -7,6 +7,29 @@
     padding: 16px;
 }
 
+.section-divider {
+    display: flex;
+    align-items: center;
+    margin: 8px 0 16px;
+    color: #54698d;
+}
+
+.section-divider::before,
+.section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #dddbda;
+}
+
+.section-divider-label {
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
 .kpi-dashboard-header {
     display: flex;
     align-items: center;

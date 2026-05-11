@@ -4,6 +4,7 @@ public class ExtoleProgram {
     public String name          { get; set; }
     public String state         { get; set; }
     public String programLabel  { get; set; }
+    public String campaignType  { get; set; }  // MARKETING, INTEGRATION, CONFIGURATION
 
     public static ExtoleProgram fromMap(Map<String, Object> m) {
         ExtoleProgram p = new ExtoleProgram();
@@ -11,6 +12,7 @@ public class ExtoleProgram {
         p.name         = (String) m.get('name');
         p.state        = (String) m.get('state');
         p.programLabel = (String) m.get('program_label');
+        p.campaignType = (String) m.get('campaign_type');
         return p;
     }
 }
