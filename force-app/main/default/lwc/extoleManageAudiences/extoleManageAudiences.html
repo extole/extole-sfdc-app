@@ -36,7 +36,13 @@
                             <tbody>
                                 <template for:each={configs} for:item="cfg">
                                     <tr key={cfg.Id}>
-                                        <td>{cfg.Extole_Audience_Name__c}</td>
+                                        <td>
+                                            <a href={cfg.extoleAudienceUrl}
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="audience-name-link"
+                                               title="View in Extole">{cfg.Extole_Audience_Name__c}</a>
+                                        </td>
                                         <td>{cfg.Source_Report_Name__c}</td>
                                         <td>{cfg.Identity_Column__c}</td>
                                         <td>{cfg.Sync_Cadence__c}</td>

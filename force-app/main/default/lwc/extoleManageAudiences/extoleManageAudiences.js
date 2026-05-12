@@ -10,6 +10,7 @@ import pollAudienceState from '@salesforce/apex/ExtoleAudienceController.pollAud
 import getAudienceSyncLogs from '@salesforce/apex/ExtoleAudienceController.getAudienceSyncLogs';
 import clearAudienceSyncLogs from '@salesforce/apex/ExtoleAudienceController.clearAudienceSyncLogs';
 import runSchedulerNow from '@salesforce/apex/ExtoleAudienceController.runSchedulerNow';
+import getCurrentUserTimezone from '@salesforce/apex/ExtoleController.getCurrentUserTimezone';
 
 const POLL_INTERVAL_MS = 10000;
 const NON_TERMINAL = new Set(['PREPARING', 'BUILDING', 'VALIDATING']);
@@ -38,10 +39,24 @@ export default class ExtoleManageAudiences extends LightningElement {
 
     tooltipSectionAudiences = 'Push Salesforce report members into an Extole audience. Each row maps a Salesforce report (identifies people by email) to a named audience in Extole. Members are submitted as a REPLACE — the current report becomes the audience.';
 
+    userTimezone = null;
+
     async connectedCallback() {
+        try {
+            this.userTimezone = await getCurrentUserTimezone();
+        } catch (e) {
+            // Fall back to browser tz if the Apex call fails
+        }
         await this.loadConfigs();
         await this.loadSyncLogs();
         this.startPolling();
+    }
+
+    formatTimestamp(value, opts) {
+        if (!value) return '';
+        const merged = { ...opts };
+        if (this.userTimezone) merged.timeZone = this.userTimezone;
+        return new Intl.DateTimeFormat('en-US', merged).format(new Date(value));
     }
 
     disconnectedCallback() {
@@ -138,12 +153,10 @@ export default class ExtoleManageAudiences extends LightningElement {
                     ...log,
                     audienceName,
                     detailTooltip: log.Detail__c ? `${log.Detail__c}\n\n${idTooltip}` : idTooltip,
-                    formattedTimestamp: log.Timestamp__c
-                        ? new Intl.DateTimeFormat('en-US', {
-                            month: 'short', day: 'numeric',
-                            hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
-                          }).format(new Date(log.Timestamp__c))
-                        : '',
+                    formattedTimestamp: this.formatTimestamp(log.Timestamp__c, {
+                        month: 'short', day: 'numeric',
+                        hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+                    }),
                     stateClass: this.getStateBadgeClass(log.State__c)
                 };
             });
@@ -155,16 +168,18 @@ export default class ExtoleManageAudiences extends LightningElement {
     }
 
     decorateConfig(c) {
+        const lastSync = this.formatTimestamp(c.Last_Sync_At__c, {
+            month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+        });
         return {
             ...c,
-            formattedLastSync: c.Last_Sync_At__c
-                ? new Intl.DateTimeFormat('en-US', {
-                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-                  }).format(new Date(c.Last_Sync_At__c))
-                : '—',
+            formattedLastSync: lastSync || '—',
             stateLabel: c.Last_Operation_State__c || 'Draft',
             stateBadgeClass: this.getStateBadgeClass(c.Last_Operation_State__c),
-            syncDisabled: NON_TERMINAL.has(c.Last_Operation_State__c)
+            syncDisabled: NON_TERMINAL.has(c.Last_Operation_State__c),
+            extoleAudienceUrl: c.Extole_Audience_Id__c
+                ? `https://my.extole.com/audiences-overview/my-audiences#/${c.Extole_Audience_Id__c}`
+                : 'https://my.extole.com/audiences-overview/my-audiences#/'
         };
     }
 

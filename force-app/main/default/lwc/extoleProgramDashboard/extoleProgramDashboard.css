@@ -60,6 +60,23 @@
     flex-wrap: wrap;
 }
 
+.dashboard-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: #54698d;
+}
+
+.meta-link {
+    color: var(--extole-green);
+    text-decoration: none;
+}
+
+.meta-link:hover {
+    text-decoration: underline;
+}
+
 .program-selector     { min-width: 240px; }
 .period-selector      { min-width: 160px; }
 .granularity-selector { min-width: 110px; }

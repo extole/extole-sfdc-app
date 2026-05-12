@@ -104,3 +104,11 @@
     align-items: center;
     gap: 8px;
 }
+
+.audience-name-link {
+    color: #1b5297;
+    text-decoration: none;
+}
+.audience-name-link:hover {
+    text-decoration: underline;
+}

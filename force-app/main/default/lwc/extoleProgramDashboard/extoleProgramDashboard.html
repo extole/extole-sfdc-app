@@ -80,6 +80,19 @@
                 </div>
             </div>
 
+            <!-- Meta row: last updated + deeplink -->
+            <template lwc:if={hasDashboardData}>
+                <div class="dashboard-meta">
+                    <span class="meta-updated">{lastUpdatedLabel}</span>
+                    <template lwc:if={hasExtoleProgramUrl}>
+                        <a href={extoleProgramUrl}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="meta-link">View in Extole ↗</a>
+                    </template>
+                </div>
+            </template>
+
             <!-- Dashboard body -->
             <template lwc:if={isLoadingDashboard}>
                 <div class="loading-row">

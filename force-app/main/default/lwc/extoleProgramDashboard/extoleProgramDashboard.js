@@ -7,6 +7,7 @@ import startPromotionsReport from '@salesforce/apex/ExtoleProgramDashboardContro
 import pollPromotionsReport from '@salesforce/apex/ExtoleProgramDashboardController.pollPromotionsReport';
 import startChannelsReport from '@salesforce/apex/ExtoleProgramDashboardController.startChannelsReport';
 import pollChannelsReport from '@salesforce/apex/ExtoleProgramDashboardController.pollChannelsReport';
+import getCurrentUserTimezone from '@salesforce/apex/ExtoleController.getCurrentUserTimezone';
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 60; // 90 seconds total
@@ -74,8 +75,16 @@ export default class ExtoleProgramDashboard extends LightningElement {
     @track palette = DEFAULT_PALETTE;
     @track showPalettePopover = false;
 
+    @track lastUpdatedAt = null;
+    userTimezone = null;
+
     async connectedCallback() {
         this.loadPalette();
+        try {
+            this.userTimezone = await getCurrentUserTimezone();
+        } catch (e) {
+            // Fall back to browser tz if the Apex call fails
+        }
         await this.loadPrograms();
         if (this.selectedProgram) {
             this.fetchDashboard();
@@ -215,6 +224,7 @@ export default class ExtoleProgramDashboard extends LightningElement {
 
         if (!this.isLoadingDashboard && !this.isLoadingPromotions && !this.isLoadingChannels) {
             this.stopPolling();
+            this.lastUpdatedAt = Date.now();
         }
     }
 
@@ -437,6 +447,24 @@ export default class ExtoleProgramDashboard extends LightningElement {
 
     get isRainbow() {
         return this.palette === 'rainbow';
+    }
+
+    get extoleProgramUrl() {
+        return this.selectedProgram
+            ? `https://my.extole.com/program/#/${this.selectedProgram}`
+            : null;
+    }
+
+    get hasExtoleProgramUrl() {
+        return !!this.extoleProgramUrl;
+    }
+
+    get lastUpdatedLabel() {
+        if (!this.lastUpdatedAt) return '';
+        const opts = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+        if (this.userTimezone) opts.timeZone = this.userTimezone;
+        const formatted = new Intl.DateTimeFormat('en-US', opts).format(new Date(this.lastUpdatedAt));
+        return `Updated ${formatted}`;
     }
 
     rainbowColorFor(i) {

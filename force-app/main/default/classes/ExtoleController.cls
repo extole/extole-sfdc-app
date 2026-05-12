@@ -1,6 +1,15 @@
 public with sharing class ExtoleController {
 
     // ─────────────────────────────────────────────────────────────────────────
+    // User context
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @AuraEnabled(cacheable=true)
+    public static String getCurrentUserTimezone() {
+        return UserInfo.getTimeZone().getID();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Snapshots
     // ─────────────────────────────────────────────────────────────────────────
 
