@@ -456,8 +456,6 @@
 
 /* ── SVG stroke/fill helpers (attributes don't read CSS vars) ───────────── */
 
-.chart-line       { stroke: var(--extole-green); }
-.chart-fill       { fill: var(--extole-green-faint); }
 .spark-line       { stroke: var(--extole-green); }
 
 /* ── Palette bug + popover ──────────────────────────────────────────────── */

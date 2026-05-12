@@ -131,15 +131,33 @@
                                           stroke="#ecebea" stroke-width="1"
                                           vector-effect="non-scaling-stroke"></line>
                                 </template>
-                                <!-- Series fill + line -->
-                                <path class="chart-fill" d={chartSeries.fillD} stroke="none"></path>
-                                <path class="chart-line"
-                                      d={chartSeries.pathD}
-                                      fill="none"
-                                      stroke-width="2"
-                                      stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      vector-effect="non-scaling-stroke"></path>
+                                <template lwc:if={isRainbow}>
+                                    <!-- Per-segment fill (each interval = a different rainbow hue) -->
+                                    <template for:each={chartSeries.fillSegments} for:item="seg">
+                                        <path key={seg.key} d={seg.d} fill={seg.fill} fill-opacity="0.18" stroke="none"></path>
+                                    </template>
+                                    <!-- Per-segment line -->
+                                    <template for:each={chartSeries.lineSegments} for:item="seg">
+                                        <path key={seg.key}
+                                              d={seg.d}
+                                              fill="none"
+                                              stroke={seg.stroke}
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              vector-effect="non-scaling-stroke"></path>
+                                    </template>
+                                </template>
+                                <template lwc:else>
+                                    <path d={chartSeries.fillD} fill={chartFillColor} stroke="none"></path>
+                                    <path d={chartSeries.pathD}
+                                          fill="none"
+                                          stroke={chartLineStroke}
+                                          stroke-width="2"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          vector-effect="non-scaling-stroke"></path>
+                                </template>
                             </svg>
                             <!-- X-axis labels in HTML, absolutely positioned by leftPct -->
                             <div class="chart-x-axis">

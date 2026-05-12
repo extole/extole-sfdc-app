@@ -47,6 +47,20 @@ const PALETTE_OPTIONS = [
     { value: 'rainbow', label: 'Rainbow', cssClass: 'palette-swatch palette-swatch-rainbow' }
 ];
 const RAINBOW_COLORS = ['#EF4444', '#F97316', '#EAB308', '#1D9E75', '#2563EB', '#8B5CF6'];
+const PALETTE_PRIMARY = {
+    green:  '#1D9E75',
+    blue:   '#2563EB',
+    purple: '#8B5CF6',
+    orange: '#F97316',
+    pink:   '#E94560'
+};
+const PALETTE_FILL_RGBA = {
+    green:  'rgba(29, 158, 117, 0.12)',
+    blue:   'rgba(37, 99, 235, 0.12)',
+    purple: 'rgba(139, 92, 246, 0.12)',
+    orange: 'rgba(249, 115, 22, 0.12)',
+    pink:   'rgba(233, 69, 96, 0.12)'
+};
 
 export default class ExtoleProgramDashboard extends LightningElement {
     @track programs = [];
@@ -449,6 +463,22 @@ export default class ExtoleProgramDashboard extends LightningElement {
         return this.palette === 'rainbow';
     }
 
+    get chartLineStroke() {
+        return this.isRainbow
+            ? 'url(#chart-rainbow-gradient)'
+            : (PALETTE_PRIMARY[this.palette] || '#1D9E75');
+    }
+
+    get chartFillColor() {
+        return this.isRainbow
+            ? 'url(#chart-rainbow-gradient)'
+            : (PALETTE_FILL_RGBA[this.palette] || 'rgba(29, 158, 117, 0.12)');
+    }
+
+    get chartFillOpacity() {
+        return this.isRainbow ? '0.2' : '1';
+    }
+
     get extoleProgramUrl() {
         return this.selectedProgram
             ? `https://my.extole.com/program/#/${this.selectedProgram}`
@@ -470,6 +500,28 @@ export default class ExtoleProgramDashboard extends LightningElement {
     rainbowColorFor(i) {
         if (!this.isRainbow) return null;
         return RAINBOW_COLORS[i % RAINBOW_COLORS.length];
+    }
+
+    rainbowColorAt(t) {
+        const colors = RAINBOW_COLORS;
+        const scaled = Math.max(0, Math.min(1, t)) * (colors.length - 1);
+        const i = Math.floor(scaled);
+        const f = scaled - i;
+        if (i >= colors.length - 1) return colors[colors.length - 1];
+        return this.interpolateHex(colors[i], colors[i + 1], f);
+    }
+
+    interpolateHex(a, b, t) {
+        const ar = parseInt(a.slice(1, 3), 16);
+        const ag = parseInt(a.slice(3, 5), 16);
+        const ab = parseInt(a.slice(5, 7), 16);
+        const br = parseInt(b.slice(1, 3), 16);
+        const bg = parseInt(b.slice(3, 5), 16);
+        const bb = parseInt(b.slice(5, 7), 16);
+        const r = Math.round(ar + (br - ar) * t);
+        const g = Math.round(ag + (bg - ag) * t);
+        const bl = Math.round(ab + (bb - ab) * t);
+        return `rgb(${r}, ${g}, ${bl})`;
     }
 
     toRgba(hex, alpha) {
@@ -565,6 +617,29 @@ export default class ExtoleProgramDashboard extends LightningElement {
         const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
         const fillD = pathD + ` L${points[points.length-1].x},${PT+innerH} L${points[0].x},${PT+innerH} Z`;
 
+        // Rainbow mode: render N-1 segments for both the line and the fill,
+        // each with a smooth-interpolated rainbow color. Avoids SVG gradients
+        // (which LWC/shadow-DOM-url-refs don't play nice with).
+        const baseY = PT + innerH;
+        const segCount = Math.max(points.length - 1, 1);
+        const lineSegments = [];
+        const fillSegments = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            const a = points[i], b = points[i + 1];
+            const t = segCount > 1 ? i / (segCount - 1) : 0;
+            const color = this.rainbowColorAt(t);
+            lineSegments.push({
+                key: 'line-' + i,
+                d: `M${a.x},${a.y} L${b.x},${b.y}`,
+                stroke: color
+            });
+            fillSegments.push({
+                key: 'fill-' + i,
+                d: `M${a.x},${a.y} L${b.x},${b.y} L${b.x},${baseY} L${a.x},${baseY} Z`,
+                fill: color
+            });
+        }
+
         // Y-axis labels rendered in HTML (top-to-bottom order).
         const yLabels = [
             { label: this.formatNumber(maxV) },
@@ -584,6 +659,8 @@ export default class ExtoleProgramDashboard extends LightningElement {
         return {
             width: W, height: H,
             pathD, fillD,
+            lineSegments,
+            fillSegments,
             yLabels,
             yGridLines,
             xLabels,
