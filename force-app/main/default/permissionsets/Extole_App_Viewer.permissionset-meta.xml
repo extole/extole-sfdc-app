@@ -148,6 +148,10 @@
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
+        <tab>Extole_Program_Analytics</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
         <tab>Extole_KPI_Dashboard</tab>
         <visibility>Visible</visibility>
     </tabSettings>

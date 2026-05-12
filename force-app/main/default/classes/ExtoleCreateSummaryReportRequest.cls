@@ -21,6 +21,7 @@ public class ExtoleCreateSummaryReportRequest {
     private Boolean      includeTotals;
     private String       flowFilter;
     private String       flows;
+    private Decimal      excludeValuesBelowThreshold;
 
     public ExtoleCreateSummaryReportRequest() {
         this.metricTagsToInclude = new List<String>{ 'dashboard-graph', 'dashboard-rate' };
@@ -38,6 +39,7 @@ public class ExtoleCreateSummaryReportRequest {
 
     public ExtoleCreateSummaryReportRequest withFlowFilter(String flowFilter) { this.flowFilter = flowFilter; return this; }
     public ExtoleCreateSummaryReportRequest withFlows(String flows)           { this.flows = flows; return this; }
+    public ExtoleCreateSummaryReportRequest withExcludeValuesBelowThreshold(Decimal t) { this.excludeValuesBelowThreshold = t; return this; }
 
     public ExtoleCreateSummaryReportRequest withProgram(String program)         { this.program = program; return this; }
     public ExtoleCreateSummaryReportRequest withPeriod(String period)           { this.period = period; return this; }
@@ -59,6 +61,10 @@ public class ExtoleCreateSummaryReportRequest {
         if (String.isNotBlank(program))    parameters.put('program', program);
         if (String.isNotBlank(flowFilter)) parameters.put('flow_filter', flowFilter);
         if (String.isNotBlank(flows))      parameters.put('flows', flows);
+        if (excludeValuesBelowThreshold != null) {
+            parameters.put('exclude_values_below_threshold',
+                String.valueOf(excludeValuesBelowThreshold));
+        }
         if (days != null) {
             // Extole's summary report buckets by local-tz day boundaries. Send
             // day-aligned, LA-anchored ISO 8601 with bracket-tz annotation —

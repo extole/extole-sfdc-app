@@ -202,12 +202,17 @@ public with sharing class ExtoleAudienceController {
             }
             update cfg;
 
-            // Only write a log row when state actually changes — polling is otherwise silent
-            if (previousState != newState) {
+            // Log only the terminal transition — intermediate states (PREPARING →
+            // BUILDING → VALIDATING) are noise in the historical record; live status
+            // is already surfaced by the LWC via cfg.Last_Operation_State__c.
+            if (previousState != newState && resp.isTerminal()) {
+                String detail = resp.isSuccess()
+                    ? 'Sync complete'
+                    : 'Sync failed';
                 writeLog(cfg.Config_Key__c, cfg.Extole_Audience_Id__c,
                     cfg.Last_Operation_Id__c, 'REPLACE',
                     newState, cfg.Last_Member_Count__c,
-                    'State: ' + previousState + ' → ' + newState, null);
+                    detail, cfg.Last_Error__c);
             }
         } catch (Exception e) {
             // Non-fatal — return the current config; UI will retry on next poll

@@ -23,6 +23,9 @@ public with sharing class ExtoleProgramDashboardController {
     private static final List<String> PROMOTION_INCLUDE_TAGS = new List<String>{
         'promotion-metric:*', 'promotion-bar:*', 'promotion:*', 'promotion-report*'
     };
+    private static final List<String> CHANNEL_INCLUDE_TAGS = new List<String>{
+        'channel-rate*', 'channel*'
+    };
 
     // ─────────────────────────────────────────────────────────────────────────
     // Programs
@@ -219,6 +222,73 @@ public with sharing class ExtoleProgramDashboardController {
             return out;
         } catch (Exception e) {
             throw new AuraHandledException('Failed to poll promotions report: ' + e.getMessage());
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Share Channels lifecycle (separate /v4/reports run; per-channel totals
+    // + rates. period=NONE means aggregated totals, no time bucketing.)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @AuraEnabled
+    public static Map<String, Object> startChannelsReport(String program, Integer days) {
+        if (String.isBlank(program)) throw new AuraHandledException('program is required');
+        Integer effectiveDays = (days != null && days > 0) ? days : 90;
+
+        ExtoleConfig config = new ExtoleConfig('Extole_API');
+        ExtoleClient client = new ExtoleClient();
+        try {
+            HttpRequest req = new ExtoleCreateSummaryReportRequest()
+                .withProgram(program)
+                .withDays(effectiveDays)
+                .withPeriod('NONE')
+                .withDimensions('PROGRAM,CHANNEL')
+                .withMetricTagsInclude(CHANNEL_INCLUDE_TAGS)
+                .withMetricTagsExclude(DEFAULT_EXCLUDE_TAGS)
+                .withExcludeValuesBelowThreshold(0.001)
+                .build(config);
+            HttpResponse res = client.send(config, req);
+            ExtoleCreateSummaryReportResponse parsed =
+                ExtoleCreateSummaryReportResponse.fromResponse(res);
+            return new Map<String, Object>{
+                'reportId' => parsed.reportInstance.reportId,
+                'status'   => parsed.reportInstance.status
+            };
+        } catch (Exception e) {
+            throw new AuraHandledException('Failed to start channels report: ' + e.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static Map<String, Object> pollChannelsReport(String reportId) {
+        if (String.isBlank(reportId)) throw new AuraHandledException('reportId is required');
+
+        ExtoleConfig config = new ExtoleConfig('Extole_API');
+        ExtoleClient client = new ExtoleClient();
+        try {
+            HttpRequest statusReq = new ExtoleGetReportStatusRequest(reportId).build(config);
+            HttpResponse statusRes = client.send(config, statusReq);
+            ExtoleGetReportStatusResponse statusParsed =
+                ExtoleGetReportStatusResponse.fromResponse(statusRes);
+
+            Map<String, Object> out = new Map<String, Object>{
+                'reportId' => reportId,
+                'status'   => statusParsed.reportInstance.status
+            };
+
+            if (statusParsed.isComplete()) {
+                HttpResponse dlRes = client.send(config,
+                    new ExtoleDownloadReportRequest(reportId).build(config));
+                if (dlRes.getStatusCode() >= 200 && dlRes.getStatusCode() < 300) {
+                    out.put('data', parseChannelsPayload(dlRes.getBody()));
+                } else {
+                    out.put('status', 'FAILED');
+                    out.put('error', 'Download failed: HTTP ' + dlRes.getStatusCode());
+                }
+            }
+            return out;
+        } catch (Exception e) {
+            throw new AuraHandledException('Failed to poll channels report: ' + e.getMessage());
         }
     }
 
@@ -466,6 +536,168 @@ public with sharing class ExtoleProgramDashboardController {
             if (bT == null) bT = 0;
             if (aT > bT) return -1;
             if (aT < bT) return 1;
+            return 0;
+        }
+    }
+
+    /**
+     * Parse the channels report. With dimensions=PROGRAM,CHANNEL and period=NONE
+     * the response is one row per channel (no time bucketing). Each row's steps
+     * carry channel-tagged metrics: `channel:<step_name>` for counts and
+     * `channel-rate:<step_name>` for the rate.
+     *
+     * Output shape:
+     *   {
+     *     "channels": [
+     *       { "channel": "EMAIL",
+     *         "displayName": "Email",
+     *         "shares":            7710,
+     *         "accountOpenings":   276,
+     *         "shareClickThrough": 2.41,
+     *         "conversionRate":    1.49 }, ...
+     *     ]
+     *   }
+     */
+    private static Map<String, Object> parseChannelsPayload(String body) {
+        List<Object> rows = (List<Object>) JSON.deserializeUntyped(body);
+
+        Map<String, Map<String, Object>> channelMap = new Map<String, Map<String, Object>>();
+        List<String> channelOrder = new List<String>();
+
+        // Metric terminology is per-client. Capture the actual names from the
+        // first row that has full data; defaults are neutral.
+        String sharesLabel         = 'Shares';
+        String shareCtrLabel       = 'Share CTR';
+        String conversionLabel     = 'Conversions';
+        String conversionRateLabel = 'Conversion Rate';
+        Boolean labelsCaptured = false;
+
+        for (Object rawRow : rows) {
+            Map<String, Object> row = (Map<String, Object>) rawRow;
+            String channel = (String) row.get('channel');
+            if (String.isBlank(channel)) continue;
+
+            // Find the LAST step with metrics — that's the conversion step.
+            List<Object> steps = (List<Object>) row.get('steps');
+            Integer lastStepWithMetrics = -1;
+            if (steps != null) {
+                for (Integer i = 0; i < steps.size(); i++) {
+                    Map<String, Object> s = (Map<String, Object>) steps[i];
+                    List<Object> metrics = (List<Object>) s.get('metrics');
+                    if (metrics != null && !metrics.isEmpty()) lastStepWithMetrics = i;
+                }
+            }
+
+            Decimal sharesVal = null;
+            Decimal conversionVal = null;
+            Decimal shareCtrVal = null;
+            Decimal conversionRateVal = null;
+            String rowSharesLabel = null;
+            String rowShareCtrLabel = null;
+            String rowConvLabel = null;
+            String rowConvRateLabel = null;
+
+            if (steps != null) {
+                for (Integer i = 0; i < steps.size(); i++) {
+                    Map<String, Object> s = (Map<String, Object>) steps[i];
+                    String stepName = (String) s.get('step_name');
+                    List<Object> metrics = (List<Object>) s.get('metrics');
+                    if (metrics == null) continue;
+                    Boolean isSharedStep       = 'shared'.equalsIgnoreCase(stepName);
+                    Boolean isShareClickedStep = 'share_click'.equalsIgnoreCase(stepName)
+                                              || 'share_clicked'.equalsIgnoreCase(stepName);
+                    Boolean isConversionStep   = (i == lastStepWithMetrics);
+
+                    for (Object rawM : metrics) {
+                        Map<String, Object> m = (Map<String, Object>) rawM;
+                        Object val = m.get('value');
+                        if (val == null) continue;
+                        Decimal dv = toDecimalSafe(val);
+                        String mName = (String) m.get('name');
+                        List<Object> tags = (List<Object>) m.get('tags');
+                        Boolean isCount = false, isRate = false;
+                        if (tags != null) {
+                            for (Object t : tags) {
+                                String ts = String.valueOf(t);
+                                if (ts == 'channel') isCount = true;
+                                if (ts.startsWith('channel-rate')) isRate = true;
+                            }
+                        }
+                        if (isSharedStep && isCount) {
+                            sharesVal = dv;
+                            rowSharesLabel = mName;
+                        }
+                        if (isShareClickedStep && isRate) {
+                            shareCtrVal = dv;
+                            rowShareCtrLabel = mName;
+                        }
+                        if (isConversionStep && isCount) {
+                            conversionVal = dv;
+                            rowConvLabel = mName;
+                        }
+                        if (isConversionStep && isRate) {
+                            conversionRateVal = dv;
+                            rowConvRateLabel = mName;
+                        }
+                    }
+                }
+            }
+
+            if (!labelsCaptured && rowConvLabel != null) {
+                if (rowSharesLabel != null)   sharesLabel = rowSharesLabel;
+                if (rowShareCtrLabel != null) shareCtrLabel = rowShareCtrLabel;
+                conversionLabel = rowConvLabel;
+                if (rowConvRateLabel != null) conversionRateLabel = rowConvRateLabel;
+                labelsCaptured = true;
+            }
+
+            if (!channelMap.containsKey(channel)) {
+                channelMap.put(channel, new Map<String, Object>{
+                    'channel'           => channel,
+                    'displayName'       => prettifyLabel(channel.toLowerCase()),
+                    'shares'            => sharesVal != null ? sharesVal : 0,
+                    'accountOpenings'   => conversionVal != null ? conversionVal : 0,
+                    'shareClickThrough' => shareCtrVal,
+                    'conversionRate'    => conversionRateVal
+                });
+                channelOrder.add(channel);
+            }
+        }
+
+        List<Map<String, Object>> channels = new List<Map<String, Object>>();
+        for (String key : channelOrder) channels.add(channelMap.get(key));
+        channels.sort(new ChannelSharesComparator());
+
+        return new Map<String, Object>{
+            'channels'            => channels,
+            'sharesLabel'         => sharesLabel,
+            'shareCtrLabel'       => shareCtrLabel,
+            'conversionLabel'     => conversionLabel,
+            'conversionRateLabel' => conversionRateLabel
+        };
+    }
+
+    private static Decimal toDecimalSafe(Object v) {
+        if (v == null) return 0;
+        if (v instanceof Decimal) return (Decimal) v;
+        if (v instanceof Integer) return (Integer) v;
+        if (v instanceof Double)  return (Decimal)((Double) v);
+        return 0;
+    }
+
+    public class ChannelSharesComparator implements System.Comparator<Map<String, Object>> {
+        public Integer compare(Map<String, Object> a, Map<String, Object> b) {
+            Decimal va = toDecimalSafe(a.get('shares'));
+            Decimal vb = toDecimalSafe(b.get('shares'));
+            if (va > vb) return -1;
+            if (va < vb) return 1;
+            return 0;
+        }
+        private Decimal toDecimalSafe(Object v) {
+            if (v == null) return 0;
+            if (v instanceof Decimal) return (Decimal) v;
+            if (v instanceof Integer) return (Integer) v;
+            if (v instanceof Double)  return (Decimal)((Double) v);
             return 0;
         }
     }

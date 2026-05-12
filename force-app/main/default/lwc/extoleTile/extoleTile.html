@@ -29,12 +29,12 @@
                         <template lwc:if={isSparkline}>
                             <defs>
                                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.25"></stop>
-                                    <stop offset="100%" stop-color="#1D9E75" stop-opacity="0.02"></stop>
+                                    <stop offset="0%" class="spark-grad-start"></stop>
+                                    <stop offset="100%" class="spark-grad-end"></stop>
                                 </linearGradient>
                             </defs>
                             <path d={sparklineFillPath} fill={gradientFill} stroke="none"></path>
-                            <path d={sparklinePath} fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path class="spark-line" d={sparklinePath} fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                         </template>
                         <template lwc:if={isBar}>
                             <template for:each={barRects} for:item="bar">

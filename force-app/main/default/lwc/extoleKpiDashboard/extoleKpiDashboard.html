@@ -1,13 +1,5 @@
 <template>
-    <div class="kpi-dashboard-container">
-        <!-- Program funnel dashboard (per-program time series + funnel) -->
-        <c-extole-program-dashboard></c-extole-program-dashboard>
-
-        <!-- Section divider: program funnel above, KPI tiles below -->
-        <div class="section-divider">
-            <span class="section-divider-label">KPIs</span>
-        </div>
-
+    <div class="kpi-dashboard-container" data-palette={palette}>
         <!-- Error banner for invalid token -->
         <template lwc:if={hasTokenError}>
             <div class="error-banner" role="alert">
@@ -42,9 +34,31 @@
 
         <!-- Tile grid -->
         <template lwc:else>
+            <div class="palette-row">
+                <div class="palette-bug-wrap">
+                    <button type="button"
+                            class={paletteBugClass}
+                            title="Change palette"
+                            aria-label="Change palette"
+                            onclick={handleTogglePalettePopover}></button>
+                    <template lwc:if={showPalettePopover}>
+                        <div class="palette-popover">
+                            <template for:each={paletteSwatches} for:item="sw">
+                                <button key={sw.value}
+                                        type="button"
+                                        class={sw.cssClass}
+                                        title={sw.label}
+                                        aria-label={sw.label}
+                                        data-palette={sw.value}
+                                        onclick={handleSelectPalette}></button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
             <div class="tile-grid">
                 <template for:each={filteredSnapshots} for:item="snapshot">
-                    <div key={snapshot.Id} class="tile-item">
+                    <div key={snapshot.Id} class="tile-item" style={snapshot.tileStyle}>
                         <c-extole-tile snapshot={snapshot}></c-extole-tile>
                     </div>
                 </template>

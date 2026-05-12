@@ -5,6 +5,8 @@ import startDashboardReport from '@salesforce/apex/ExtoleProgramDashboardControl
 import pollDashboardReport from '@salesforce/apex/ExtoleProgramDashboardController.pollDashboardReport';
 import startPromotionsReport from '@salesforce/apex/ExtoleProgramDashboardController.startPromotionsReport';
 import pollPromotionsReport from '@salesforce/apex/ExtoleProgramDashboardController.pollPromotionsReport';
+import startChannelsReport from '@salesforce/apex/ExtoleProgramDashboardController.startChannelsReport';
+import pollChannelsReport from '@salesforce/apex/ExtoleProgramDashboardController.pollChannelsReport';
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 60; // 90 seconds total
@@ -33,6 +35,18 @@ const GRANULARITIES = [
     { label: 'Monthly', value: 'MONTH' }
 ];
 
+const PALETTE_STORAGE_KEY = 'extole-dashboard-palette';
+const DEFAULT_PALETTE = 'green';
+const PALETTE_OPTIONS = [
+    { value: 'green',   label: 'Green',   cssClass: 'palette-swatch palette-swatch-green'   },
+    { value: 'blue',    label: 'Blue',    cssClass: 'palette-swatch palette-swatch-blue'    },
+    { value: 'purple',  label: 'Purple',  cssClass: 'palette-swatch palette-swatch-purple'  },
+    { value: 'orange',  label: 'Orange',  cssClass: 'palette-swatch palette-swatch-orange'  },
+    { value: 'pink',    label: 'Pink',    cssClass: 'palette-swatch palette-swatch-pink'    },
+    { value: 'rainbow', label: 'Rainbow', cssClass: 'palette-swatch palette-swatch-rainbow' }
+];
+const RAINBOW_COLORS = ['#EF4444', '#F97316', '#EAB308', '#1D9E75', '#2563EB', '#8B5CF6'];
+
 export default class ExtoleProgramDashboard extends LightningElement {
     @track programs = [];
     @track selectedProgram = null;
@@ -44,6 +58,9 @@ export default class ExtoleProgramDashboard extends LightningElement {
     @track promotions = null;
     @track isLoadingPromotions = false;
 
+    @track channels = null;
+    @track isLoadingChannels = false;
+
     @track isLoadingPrograms = false;
     @track isLoadingDashboard = false;
     @track errorMessage = null;
@@ -52,8 +69,13 @@ export default class ExtoleProgramDashboard extends LightningElement {
     pollAttempts = 0;
     currentReportId = null;
     promotionsReportId = null;
+    channelsReportId = null;
+
+    @track palette = DEFAULT_PALETTE;
+    @track showPalettePopover = false;
 
     async connectedCallback() {
+        this.loadPalette();
         await this.loadPrograms();
         if (this.selectedProgram) {
             this.fetchDashboard();
@@ -89,15 +111,17 @@ export default class ExtoleProgramDashboard extends LightningElement {
         this.stopPolling();
         this.isLoadingDashboard = true;
         this.isLoadingPromotions = true;
+        this.isLoadingChannels = true;
         this.errorMessage = null;
         this.dashboard = null;
         this.promotions = null;
+        this.channels = null;
         this.pollAttempts = 0;
 
         const preset = PRESETS.find(p => p.value === this.selectedPreset) || PRESETS[2];
         try {
-            // Kick off both reports in parallel — they share the poll loop
-            const [dash, promo] = await Promise.all([
+            // Kick off all three reports in parallel — they share the poll loop
+            const [dash, promo, chan] = await Promise.all([
                 startDashboardReport({
                     program: this.selectedProgram,
                     days: preset.days,
@@ -107,14 +131,20 @@ export default class ExtoleProgramDashboard extends LightningElement {
                     program: this.selectedProgram,
                     days: preset.days,
                     period: this.selectedGranularity
+                }),
+                startChannelsReport({
+                    program: this.selectedProgram,
+                    days: preset.days
                 })
             ]);
-            this.currentReportId   = dash.reportId;
+            this.currentReportId    = dash.reportId;
             this.promotionsReportId = promo.reportId;
+            this.channelsReportId   = chan.reportId;
             this.startPolling();
         } catch (error) {
             this.isLoadingDashboard = false;
             this.isLoadingPromotions = false;
+            this.isLoadingChannels = false;
             this.errorMessage = this.errMessage(error, 'Failed to start dashboard reports.');
         }
     }
@@ -170,7 +200,20 @@ export default class ExtoleProgramDashboard extends LightningElement {
             } catch (e) { /* transient — retry */ }
         }
 
-        if (!this.isLoadingDashboard && !this.isLoadingPromotions) {
+        // Channels poll (independent of dashboard)
+        if (this.channelsReportId && this.isLoadingChannels) {
+            try {
+                const r = await pollChannelsReport({ reportId: this.channelsReportId });
+                if (r.status === 'DONE' || r.status === 'COMPLETED') {
+                    this.isLoadingChannels = false;
+                    this.channels = r.data;
+                } else if (r.status === 'FAILED' || r.status === 'CANCELLED') {
+                    this.isLoadingChannels = false;
+                }
+            } catch (e) { /* transient — retry */ }
+        }
+
+        if (!this.isLoadingDashboard && !this.isLoadingPromotions && !this.isLoadingChannels) {
             this.stopPolling();
         }
     }
@@ -231,9 +274,14 @@ export default class ExtoleProgramDashboard extends LightningElement {
         const maxTotal = Math.max(...active.map(p => p.total || 0));
         return active
             .slice(0, 8)
-            .map(p => {
+            .map((p, i) => {
                 const values = (p.sparklineValues || []).map(v => typeof v === 'number' ? v : 0);
                 const widthPct = maxTotal > 0 ? Math.max(2, Math.round((p.total / maxTotal) * 100)) : 0;
+                const rowColor = this.rainbowColorFor(i);
+                const barStyle = rowColor
+                    ? `width: ${widthPct}%; background: ${this.toRgba(rowColor, 0.20)}; border-left-color: ${rowColor};`
+                    : `width: ${widthPct}%;`;
+                const sparkStyle = rowColor ? `stroke: ${rowColor};` : '';
                 return {
                     key:         (p.sourceType || '') + ':' + (p.source || ''),
                     displayName: p.displayName || p.source || p.sourceType,
@@ -241,25 +289,26 @@ export default class ExtoleProgramDashboard extends LightningElement {
                     total:       this.formatNumber(p.total || 0),
                     shareRate:   this.formatPromoRate(p.shareRate),
                     sparkPath:   this.buildSparkPath(values),
-                    barStyle:    `width: ${widthPct}%;`
+                    barStyle,
+                    sparkStyle
                 };
             });
     }
 
     buildSparkPath(values) {
-        if (!values || values.length === 0) return '';
-        // Same dimensions as the KPI tile sparkline (extoleTile.js) so the
-        // visual treatment is identical.
+        if (!values || values.length < 2) return '';
         const W = 200, H = 48;
-        const maxV = Math.max(1, ...values);
-        const stepX = values.length > 1 ? W / (values.length - 1) : 0;
-        return values
-            .map((v, i) => {
-                const x = i * stepX;
-                const y = H - (v / maxV) * H;
-                return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-            })
-            .join(' ');
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = (max - min) || 1;
+        const pad = H * 0.1;
+        const innerH = H - pad * 2;
+        const pts = values.map((v, i) => {
+            const x = (i / (values.length - 1)) * W;
+            const y = pad + innerH - ((v - min) / range) * innerH;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
+        });
+        return 'M ' + pts.join(' L ');
     }
 
     formatPromoRate(v) {
@@ -267,8 +316,140 @@ export default class ExtoleProgramDashboard extends LightningElement {
         return v.toFixed(1) + '%';
     }
 
+    // ── Channels section ─────────────────────────────────────────────────────
+
+    get hasChannels() {
+        return this.channels && this.channels.channels && this.channels.channels.length > 0;
+    }
+
+    get sharesLabel() {
+        return (this.channels && this.channels.sharesLabel) || 'Shares';
+    }
+
+    get shareCtrLabel() {
+        return (this.channels && this.channels.shareCtrLabel) || 'Share CTR';
+    }
+
+    get conversionLabel() {
+        return (this.channels && this.channels.conversionLabel) || 'Conversions';
+    }
+
+    get conversionRateLabel() {
+        return (this.channels && this.channels.conversionRateLabel) || 'Conversion Rate';
+    }
+
+    get channelRows() {
+        if (!this.hasChannels) return [];
+        const active = this.channels.channels
+            .filter(c => (Number(c.shares) || 0) > 0 || (Number(c.accountOpenings) || 0) > 0)
+            .slice(0, 8);
+        if (active.length === 0) return [];
+        const maxValue = Math.max(
+            ...active.map(c => Number(c.shares) || 0),
+            ...active.map(c => Number(c.accountOpenings) || 0),
+            1
+        );
+        return active.map((c, i) => {
+            const sharesV = Number(c.shares) || 0;
+            const opensV  = Number(c.accountOpenings) || 0;
+            const sharePct = Math.max(2, Math.round((sharesV / maxValue) * 100));
+            const openPct  = Math.max(2, Math.round((opensV  / maxValue) * 100));
+            const rowColor = this.rainbowColorFor(i);
+            const shareBarStyle = rowColor
+                ? `width: ${sharePct}%; background: ${rowColor};`
+                : `width: ${sharePct}%;`;
+            const openBarStyle  = rowColor
+                ? `width: ${openPct}%; background: ${this.toRgba(rowColor, 0.45)};`
+                : `width: ${openPct}%;`;
+            const ctr = this.splitRate(c.shareClickThrough, 'x');
+            const rate = this.splitRate(c.conversionRate, '%');
+            return {
+                key:                  c.channel,
+                displayName:          c.displayName || c.channel,
+                shares:               this.formatNumber(sharesV),
+                accountOpenings:      this.formatNumber(opensV),
+                shareCtrValue:        ctr.value,
+                shareCtrSuffix:       ctr.suffix,
+                conversionRateValue:  rate.value,
+                conversionRateSuffix: rate.suffix,
+                shareBarStyle,
+                openBarStyle
+            };
+        });
+    }
+
+    splitRate(v, suffix) {
+        if (v == null || typeof v !== 'number') return { value: '—', suffix: '' };
+        return { value: v.toFixed(2), suffix };
+    }
+
+    formatChannelRate(v, suffix) {
+        if (v == null || typeof v !== 'number') return '—';
+        if (suffix === 'X') return v.toFixed(2) + 'X';
+        return v.toFixed(2) + '%';
+    }
+
     handleRefresh() {
         this.fetchDashboard();
+    }
+
+    // ── Palette ─────────────────────────────────────────────────────────────
+
+    loadPalette() {
+        try {
+            const saved = window.localStorage.getItem(PALETTE_STORAGE_KEY);
+            if (saved && PALETTE_OPTIONS.some(o => o.value === saved)) {
+                this.palette = saved;
+            }
+        } catch (e) {
+            // localStorage may be unavailable; fall back to default
+        }
+    }
+
+    handleTogglePalettePopover(event) {
+        event.stopPropagation();
+        this.showPalettePopover = !this.showPalettePopover;
+    }
+
+    handleSelectPalette(event) {
+        const value = event.currentTarget.dataset.palette;
+        if (!value) return;
+        this.palette = value;
+        this.showPalettePopover = false;
+        try {
+            window.localStorage.setItem(PALETTE_STORAGE_KEY, value);
+        } catch (e) {
+            // Non-fatal; preference just won't persist
+        }
+    }
+
+    get paletteSwatches() {
+        return PALETTE_OPTIONS.map(o => ({
+            ...o,
+            cssClass: o.cssClass + (o.value === this.palette ? ' palette-swatch-selected' : '')
+        }));
+    }
+
+    get paletteBugClass() {
+        const base = 'palette-bug';
+        return this.palette === 'rainbow' ? `${base} palette-bug-rainbow` : base;
+    }
+
+    get isRainbow() {
+        return this.palette === 'rainbow';
+    }
+
+    rainbowColorFor(i) {
+        if (!this.isRainbow) return null;
+        return RAINBOW_COLORS[i % RAINBOW_COLORS.length];
+    }
+
+    toRgba(hex, alpha) {
+        const h = hex.replace('#', '');
+        const r = parseInt(h.substring(0, 2), 16);
+        const g = parseInt(h.substring(2, 4), 16);
+        const b = parseInt(h.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     // ── Computed view state ─────────────────────────────────────────────────
@@ -309,11 +490,13 @@ export default class ExtoleProgramDashboard extends LightningElement {
             const totalCount = graphValues.reduce((acc, v) =>
                 acc + (typeof v === 'number' ? v : 0), 0);
             const lastRate = rateValues.length > 0 ? rateValues[rateValues.length - 1] : null;
+            const split = this.splitFunnelRate(lastRate, step.rateMetric);
             return {
                 stepName:    step.stepName,
                 displayName: step.displayName || step.stepName,
                 totalCount:  this.formatNumber(totalCount),
-                rateLabel:   this.formatRate(lastRate, step.rateMetric),
+                rateValue:   split.value,
+                rateSuffix:  split.suffix,
                 isSelected:  step.stepName === this.selectedStepName,
                 stageClass:  step.stepName === this.selectedStepName
                     ? 'funnel-stage funnel-stage-selected'
@@ -437,6 +620,13 @@ export default class ExtoleProgramDashboard extends LightningElement {
         if (metric && metric.unit === '%')   return v.toFixed(1) + '%';
         if (metric && metric.unit === 'X')   return v.toFixed(2) + '×';
         return v.toFixed(1);
+    }
+
+    splitFunnelRate(v, metric) {
+        if (v == null || typeof v !== 'number') return { value: '—', suffix: '' };
+        if (metric && metric.unit === '%') return { value: v.toFixed(1), suffix: '%' };
+        if (metric && metric.unit === 'X') return { value: v.toFixed(2), suffix: '×' };
+        return { value: v.toFixed(1), suffix: '' };
     }
 
     formatPeriodLabel(period) {

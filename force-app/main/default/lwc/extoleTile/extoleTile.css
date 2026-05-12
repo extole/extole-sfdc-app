@@ -1,9 +1,12 @@
 :host {
-    --extole-green: #1D9E75;
     display: flex;
     flex-direction: column;
     flex: 1;
 }
+
+.spark-grad-start { stop-color: var(--extole-green, #1D9E75); stop-opacity: 0.25; }
+.spark-grad-end   { stop-color: var(--extole-green, #1D9E75); stop-opacity: 0.02; }
+.spark-line       { stroke: var(--extole-green, #1D9E75); }
 
 .extole-tile {
     background: #ffffff;
@@ -58,7 +61,7 @@
 }
 
 .trend-up {
-    color: var(--extole-green);
+    color: var(--extole-green, #1D9E75);
 }
 
 .trend-down {
@@ -128,7 +131,7 @@
 }
 
 .footer-link {
-    color: var(--extole-green);
+    color: var(--extole-green, #1D9E75);
     text-decoration: none;
     font-size: 11px;
     white-space: nowrap;

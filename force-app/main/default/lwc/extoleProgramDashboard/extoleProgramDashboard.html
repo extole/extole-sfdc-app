@@ -1,5 +1,5 @@
 <template>
-    <div class="program-dashboard">
+    <div class="program-dashboard" data-palette={palette}>
 
         <!-- Loading programs -->
         <template lwc:if={isLoadingPrograms}>
@@ -57,6 +57,27 @@
                     onclick={handleRefresh}
                     disabled={isLoadingDashboard}
                 ></lightning-button-icon>
+
+                <div class="palette-bug-wrap">
+                    <button type="button"
+                            class={paletteBugClass}
+                            title="Change palette"
+                            aria-label="Change palette"
+                            onclick={handleTogglePalettePopover}></button>
+                    <template lwc:if={showPalettePopover}>
+                        <div class="palette-popover">
+                            <template for:each={paletteSwatches} for:item="sw">
+                                <button key={sw.value}
+                                        type="button"
+                                        class={sw.cssClass}
+                                        title={sw.label}
+                                        aria-label={sw.label}
+                                        data-palette={sw.value}
+                                        onclick={handleSelectPalette}></button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
             </div>
 
             <!-- Dashboard body -->
@@ -98,10 +119,10 @@
                                           vector-effect="non-scaling-stroke"></line>
                                 </template>
                                 <!-- Series fill + line -->
-                                <path d={chartSeries.fillD} fill="rgba(29,158,117,0.12)" stroke="none"></path>
-                                <path d={chartSeries.pathD}
+                                <path class="chart-fill" d={chartSeries.fillD} stroke="none"></path>
+                                <path class="chart-line"
+                                      d={chartSeries.pathD}
                                       fill="none"
-                                      stroke="#1D9E75"
                                       stroke-width="2"
                                       stroke-linecap="round"
                                       stroke-linejoin="round"
@@ -130,7 +151,7 @@
                              data-step={stage.stepName}
                              onclick={handleStepClick}>
                             <div class="funnel-count">{stage.totalCount}</div>
-                            <div class="funnel-rate">{stage.rateLabel}</div>
+                            <div class="funnel-rate">{stage.rateValue}<span class="rate-suffix">{stage.rateSuffix}</span></div>
                             <div class="funnel-label">{stage.displayName}</div>
                         </div>
                     </template>
@@ -154,17 +175,65 @@
                                         <span class="promotion-total">{p.total}</span>
                                     </div>
                                     <svg class="promotion-spark"
-                                         width="200" height="48"
+                                         width="100%" height="48"
                                          viewBox="0 0 200 48"
                                          preserveAspectRatio="none">
-                                        <path d={p.sparkPath}
+                                        <path class="spark-line"
+                                              d={p.sparkPath}
                                               fill="none"
-                                              stroke="#1D9E75"
                                               stroke-width="1.5"
                                               stroke-linecap="round"
-                                              stroke-linejoin="round"></path>
+                                              stroke-linejoin="round"
+                                              style={p.sparkStyle}></path>
                                     </svg>
                                     <div class="promotion-rate">{p.shareRate}</div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Channels section -->
+                <template lwc:if={isLoadingChannels}>
+                    <div class="promotions-loading">
+                        <lightning-spinner size="small" alternative-text="Loading channels..."></lightning-spinner>
+                    </div>
+                </template>
+                <template lwc:elseif={hasChannels}>
+                    <div class="channels-section">
+                        <div class="promotions-header">Share Channels</div>
+                        <!-- Column headers -->
+                        <div class="channel-row channel-header">
+                            <div class="channel-name-col">Channel</div>
+                            <div class="channel-bars-col">
+                                <div class="channel-bar-legend">
+                                    <span class="legend-pill legend-pill-shares"></span> {sharesLabel}
+                                    <span class="legend-pill legend-pill-opens"></span> {conversionLabel}
+                                </div>
+                            </div>
+                            <div class="channel-stat-col"><span class="legend-pill legend-pill-shares"></span>{sharesLabel}</div>
+                            <div class="channel-stat-col"><span class="legend-pill legend-pill-shares"></span>{shareCtrLabel}</div>
+                            <div class="channel-stat-col"><span class="legend-pill legend-pill-opens"></span>{conversionLabel}</div>
+                            <div class="channel-stat-col"><span class="legend-pill legend-pill-opens"></span>{conversionRateLabel}</div>
+                        </div>
+                        <div class="channels-list">
+                            <template for:each={channelRows} for:item="c">
+                                <div key={c.key} class="channel-row">
+                                    <div class="channel-name-col">
+                                        <span class="channel-name-text">{c.displayName}</span>
+                                    </div>
+                                    <div class="channel-bars-col">
+                                        <div class="channel-bar-track">
+                                            <div class="channel-bar-fill channel-bar-shares" style={c.shareBarStyle}></div>
+                                        </div>
+                                        <div class="channel-bar-track">
+                                            <div class="channel-bar-fill channel-bar-opens" style={c.openBarStyle}></div>
+                                        </div>
+                                    </div>
+                                    <div class="channel-stat-col channel-stat-value">{c.shares}</div>
+                                    <div class="channel-stat-col">{c.shareCtrValue}<span class="rate-suffix">{c.shareCtrSuffix}</span></div>
+                                    <div class="channel-stat-col channel-stat-value">{c.accountOpenings}</div>
+                                    <div class="channel-stat-col">{c.conversionRateValue}<span class="rate-suffix">{c.conversionRateSuffix}</span></div>
                                 </div>
                             </template>
                         </div>
