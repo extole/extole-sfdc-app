@@ -1,54 +1,66 @@
 /**
  * ExtolePersonCardController
  *
- * Drives the per-person LWC on Lead and Contact record pages. Composes a
- * single payload from multiple Extole endpoints + SFDC cross-record lookup:
+ * Drives the per-person LWC on Lead and Contact record pages. Split into
+ * three @AuraEnabled methods so the LWC can parallelize the expensive
+ * per-friend fan-out:
  *
- *   1. Resolve email → person ID                 (ExtoleGetPersonRequest.byEmail)
- *   2. /v5/persons/{id}/shareables               share links
- *   3. /v5/persons/{id}/relationships            outgoing friends + incoming referrer
- *   4. /v5/persons/{id}/rewards                  rewards (state machine source of truth)
- *   5. For each friend (capped):                 resolve friend identity for display
- *   6. SOQL Lead + Contact by email              cross-link friends back to SFDC records
+ *   1. getCardSkeleton(email)        — fast base payload: advocate identity,
+ *                                      share links, rewards, referred-by,
+ *                                      friend stubs with default-pending
+ *                                      milestones, plus the per-campaign
+ *                                      milestone allowlist (the heavy
+ *                                      /v1/components fetch).
+ *   2. getFriendDetail(personId, …)  — one friend's full record: identity
+ *                                      (/persons/{id} + /data) + step
+ *                                      progress (/steps) filtered through
+ *                                      the allowlist + reward attribution.
+ *                                      Fired in parallel from the LWC.
+ *   3. attachSfdcLinks(emails)       — bulk SOQL cross-link by email. Fired
+ *                                      once after all friend details resolve.
  *
- * Card self-hides when hasAnyData is false — no empty-state card on records
- * with no Extole activity.
+ * All three are cacheable=true so repeat visits to the same record are
+ * served from LWC platform cache.
  */
 public with sharing class ExtolePersonCardController {
 
     private static final Integer MAX_FRIENDS = 10;
 
+    // ──────────────────────────────────────────────────────────────────────
+    // Phase 1: Skeleton
+    // ──────────────────────────────────────────────────────────────────────
+
     @AuraEnabled(cacheable=true)
-    public static ExtolePersonCard getCardForEmail(String email) {
-        ExtolePersonCard card = new ExtolePersonCard();
-        card.email = email;
-        if (String.isBlank(email)) return card;
+    public static ExtolePersonCard.Skeleton getCardSkeleton(String email) {
+        ExtolePersonCard.Skeleton sk = new ExtolePersonCard.Skeleton();
+        sk.email = email;
+        if (String.isBlank(email)) return sk;
 
         try {
             ExtoleConfig config = new ExtoleConfig('Extole_API');
             ExtoleClient client = new ExtoleClient();
 
-            // 1. Resolve identity
+            // 1. Resolve advocate identity
             ExtolePerson advocate = resolvePerson(client, config, email);
             if (advocate == null) {
-                return card; // hasAnyData stays false → card self-hides
+                return sk; // hasAnyData stays false → card self-hides
             }
-            card.personId    = advocate.id;
-            card.displayName = composeDisplayName(advocate);
+            sk.personId    = advocate.id;
+            sk.displayName = composeDisplayName(advocate);
 
             // 2-4. Fan-out: shareables, relationships, rewards
-            List<ExtolePersonCard.ShareLink> shareLinks   = fetchShareLinks(client, config, advocate.id);
-            Map<String, Object> relSplit                  = fetchRelationships(client, config, advocate.id);
+            List<ExtolePersonCard.ShareLink> shareLinks  = fetchShareLinks(client, config, advocate.id);
+            Map<String, Object> relSplit                 = fetchRelationships(client, config, advocate.id);
             Map<String, List<Map<String, Object>>> outgoingByFriend =
                 (Map<String, List<Map<String, Object>>>) relSplit.get('outgoingByFriend');
-            List<Map<String, Object>> incomingRaw         = (List<Map<String, Object>>) relSplit.get('incoming');
-            List<ExtolePersonCard.RewardSummary> rewards  = fetchRewards(client, config, advocate.id);
+            List<Map<String, Object>> incomingRaw        = (List<Map<String, Object>>) relSplit.get('incoming');
+            List<ExtolePersonCard.RewardSummary> rewards = fetchRewards(client, config, advocate.id);
 
-            card.shareLinks = shareLinks;
-            card.rewards    = rewards;
+            sk.shareLinks = shareLinks;
+            sk.rewards    = rewards;
 
-            // Collect unique campaign IDs across all engagements to fetch each
-            // campaign's business-event allowlist once.
+            // 5. Per-campaign milestone allowlists (the heavy fetch — done once
+            //    here so all per-friend calls can reuse it).
             Set<String> campaignIds = new Set<String>();
             for (List<Map<String, Object>> rels : outgoingByFriend.values()) {
                 for (Map<String, Object> rel : rels) {
@@ -58,40 +70,165 @@ public with sharing class ExtolePersonCardController {
             }
             Map<String, Map<String, String>> milestonesByCampaign =
                 fetchMilestoneAllowlists(client, config, campaignIds);
+            String milestonesJson = JSON.serialize(milestonesByCampaign);
+            String rewardsJson    = JSON.serialize(rewards);
 
-            // Build one Friend per unique identity, with all their engagements.
-            // Cap at MAX_FRIENDS to keep request volume bounded.
-            List<ExtolePersonCard.Friend> friends = new List<ExtolePersonCard.Friend>();
+            // 6. Build friend stubs: structure-only, milestones default pending.
+            //    The LWC renders these immediately while it fans out detail calls.
             Integer count = 0;
-            for (String friendId : outgoingByFriend.keySet()) {
+            for (String friendPersonId : outgoingByFriend.keySet()) {
                 if (count >= MAX_FRIENDS) break;
-                friends.add(buildFriendWithEngagements(
-                    client, config, friendId, outgoingByFriend.get(friendId),
-                    rewards, milestonesByCampaign));
+                List<Map<String, Object>> friendRels = outgoingByFriend.get(friendPersonId);
+
+                ExtolePersonCard.Friend f = new ExtolePersonCard.Friend();
+                f.friendPersonId = friendPersonId;
+                f.displayName    = '';   // resolved in phase 2
+                f.email          = null;
+                for (Map<String, Object> rel : friendRels) {
+                    ExtolePersonCard.CampaignEngagement eng = new ExtolePersonCard.CampaignEngagement();
+                    eng.program       = (String) rel.get('program');
+                    eng.campaignId    = (String) rel.get('campaign_id');
+                    eng.createdDate   = (String) rel.get('created_date');
+                    eng.shareableCode = pullNamedValue(rel, 'shareable_code');
+                    Map<String, String> allowed = milestonesByCampaign.get(eng.campaignId);
+                    eng.milestones    = defaultPendingMilestones(allowed);
+                    f.engagements.add(eng);
+                }
+                sk.friends.add(f);
+
+                ExtolePersonCard.FriendDetailRequest req = new ExtolePersonCard.FriendDetailRequest();
+                req.friendPersonId = friendPersonId;
+                req.relsJson       = JSON.serialize(friendRels);
+                req.milestonesJson = milestonesJson;
+                req.rewardsJson    = rewardsJson;
+                sk.friendRequests.add(req);
+
                 count++;
             }
-            card.friends = friends;
 
-            // Incoming: this person was referred by someone (Lead-friendly mode)
+            // 7. Referred-by (incoming): cheap, one /persons call. Stays in skeleton.
             if (incomingRaw != null && !incomingRaw.isEmpty()) {
-                card.referredBy = buildIncomingReferral(client, config, incomingRaw[0]);
+                sk.referredBy = buildIncomingReferral(client, config, incomingRaw[0]);
             }
 
-            // 6. SFDC cross-record lookup
-            attachSfdcRecordIds(card);
-
-            // Aggregate totals + flag for self-hide
-            card.totalEarnedLabel = summarizeRewards(rewards);
-            card.hasAnyData = !shareLinks.isEmpty()
-                || !friends.isEmpty()
+            sk.totalEarnedLabel = summarizeRewards(rewards);
+            sk.hasAnyData = !shareLinks.isEmpty()
+                || !sk.friends.isEmpty()
                 || !rewards.isEmpty()
-                || card.referredBy != null;
+                || sk.referredBy != null;
         } catch (Exception e) {
-            // Non-fatal — card returns with hasAnyData=false so it just hides.
-            // Log for diagnostics.
-            System.debug('ExtolePersonCardController.getCardForEmail ERROR: ' + e.getMessage());
+            System.debug('ExtolePersonCardController.getCardSkeleton ERROR: ' + e.getMessage());
         }
-        return card;
+        return sk;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Phase 2: Per-friend detail (parallelizable)
+    // ──────────────────────────────────────────────────────────────────────
+
+    @AuraEnabled(cacheable=true)
+    public static ExtolePersonCard.Friend getFriendDetail(
+            String friendPersonId, String relsJson, String milestonesJson, String rewardsJson) {
+
+        ExtolePersonCard.Friend f = new ExtolePersonCard.Friend();
+        f.friendPersonId = friendPersonId;
+        if (String.isBlank(friendPersonId)) return f;
+
+        try {
+            ExtoleConfig config = new ExtoleConfig('Extole_API');
+            ExtoleClient client = new ExtoleClient();
+
+            // Resolve identity
+            try {
+                HttpRequest req = simpleGet(config, ExtoleConstants.PEOPLE_PATH + '/' + friendPersonId);
+                HttpResponse res = client.send(config, req);
+                if (res.getStatusCode() >= 200 && res.getStatusCode() < 300) {
+                    Map<String, Object> m = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                    f.email = (String) m.get('identity_key_value');
+                }
+                HttpRequest dataReq = simpleGet(config, ExtoleConstants.PEOPLE_PATH + '/' + friendPersonId + '/data');
+                HttpResponse dataRes = client.send(config, dataReq);
+                if (dataRes.getStatusCode() >= 200 && dataRes.getStatusCode() < 300) {
+                    Map<String, Object> dataMap = (Map<String, Object>) JSON.deserializeUntyped(dataRes.getBody());
+                    String first = nestedValue(dataMap, 'first_name');
+                    String last  = nestedValue(dataMap, 'last_name');
+                    if (String.isNotBlank(first) || String.isNotBlank(last)) {
+                        f.displayName = ((first == null ? '' : first) + ' ' + (last == null ? '' : last)).trim();
+                    }
+                }
+            } catch (Exception ignored) { }
+            if (String.isBlank(f.displayName)) f.displayName = f.email != null ? f.email : friendPersonId;
+
+            // Parse skeleton context
+            List<Map<String, Object>> friendRels = parseRelList(relsJson);
+            Map<String, Map<String, String>> milestonesByCampaign = parseMilestonesMap(milestonesJson);
+            List<ExtolePersonCard.RewardSummary> advocateRewards = parseRewardsList(rewardsJson);
+
+            // Fetch step progress (one /steps call regardless of how many engagements)
+            List<Map<String, Object>> allSteps = fetchAllSteps(client, config, friendPersonId);
+
+            // Build one engagement per relationship record
+            for (Map<String, Object> rel : friendRels) {
+                ExtolePersonCard.CampaignEngagement eng = new ExtolePersonCard.CampaignEngagement();
+                eng.program        = (String) rel.get('program');
+                eng.campaignId     = (String) rel.get('campaign_id');
+                eng.createdDate    = (String) rel.get('created_date');
+                eng.shareableCode  = pullNamedValue(rel, 'shareable_code');
+
+                Map<String, String> allowed = milestonesByCampaign.get(eng.campaignId);
+                eng.milestones = filterStepsToMilestones(allSteps, eng.campaignId, allowed);
+
+                String causeEventId = (String) rel.get('cause_event_id');
+                for (ExtolePersonCard.RewardSummary r : advocateRewards) {
+                    if (r.causeEventId != null && causeEventId != null && r.causeEventId.equals(causeEventId)) {
+                        eng.reward = r;
+                        break;
+                    }
+                }
+                f.engagements.add(eng);
+            }
+        } catch (Exception e) {
+            System.debug('ExtolePersonCardController.getFriendDetail ERROR: ' + e.getMessage());
+        }
+        return f;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Phase 3: SFDC cross-link (one bulk SOQL after all friends resolve)
+    // ──────────────────────────────────────────────────────────────────────
+
+    @AuraEnabled(cacheable=true)
+    public static List<ExtolePersonCard.SfdcLink> attachSfdcLinks(List<String> emails) {
+        List<ExtolePersonCard.SfdcLink> out = new List<ExtolePersonCard.SfdcLink>();
+        if (emails == null || emails.isEmpty()) return out;
+
+        Set<String> emailSet = new Set<String>();
+        for (String e : emails) {
+            if (String.isNotBlank(e)) emailSet.add(e.toLowerCase());
+        }
+        if (emailSet.isEmpty()) return out;
+
+        // Contact wins over Lead on conflict (Contacts are converted, more authoritative).
+        Map<String, Map<String, String>> match = new Map<String, Map<String, String>>();
+        for (Lead l : [SELECT Id, Email FROM Lead WHERE Email IN :emailSet WITH SECURITY_ENFORCED LIMIT 200]) {
+            if (l.Email == null) continue;
+            String key = l.Email.toLowerCase();
+            if (!match.containsKey(key)) {
+                match.put(key, new Map<String, String>{ 'id' => l.Id, 'type' => 'Lead' });
+            }
+        }
+        for (Contact c : [SELECT Id, Email FROM Contact WHERE Email IN :emailSet WITH SECURITY_ENFORCED LIMIT 200]) {
+            if (c.Email == null) continue;
+            match.put(c.Email.toLowerCase(), new Map<String, String>{ 'id' => c.Id, 'type' => 'Contact' });
+        }
+        for (String k : match.keySet()) {
+            ExtolePersonCard.SfdcLink link = new ExtolePersonCard.SfdcLink();
+            link.email      = k;
+            link.recordId   = match.get(k).get('id');
+            link.objectType = match.get(k).get('type');
+            out.add(link);
+        }
+        return out;
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -104,7 +241,6 @@ public with sharing class ExtolePersonCardController {
         ExtoleGetPersonResponse resp = ExtoleGetPersonResponse.fromResponse(res);
         if (resp.person == null || String.isBlank(resp.person.id)) return null;
 
-        // Fetch /data for first_name/last_name
         HttpRequest dataReq = simpleGet(config, ExtoleConstants.PEOPLE_PATH + '/' + resp.person.id + '/data');
         try {
             HttpResponse dataRes = client.send(config, dataReq);
@@ -126,8 +262,6 @@ public with sharing class ExtolePersonCardController {
         for (Object o : items) {
             Map<String, Object> m = (Map<String, Object>) o;
             ExtolePersonCard.ShareLink sl = new ExtolePersonCard.ShareLink();
-            // Some accounts return `key` populated; others use `label`. Prefer
-            // whichever is non-empty so the program tag always renders.
             String key = (String) m.get('key');
             String label = (String) m.get('label');
             sl.program     = String.isNotBlank(key) ? key : label;
@@ -139,16 +273,6 @@ public with sharing class ExtolePersonCardController {
         return out;
     }
 
-    /**
-     * Returns { 'outgoingByFriend': Map<friendId, List<rel>>, 'incoming': List<rel> }.
-     *
-     * Outgoing relationships are grouped by friend identity — one friend can
-     * have multiple relationship records (one per campaign they've engaged
-     * with), and we want to render that hierarchy faithfully: friend identity
-     * on the outside, per-campaign engagement nested inside.
-     *
-     * Filters out non-production containers (bot, test) so the card stays clean.
-     */
     private static Map<String, Object> fetchRelationships(
             ExtoleClient client, ExtoleConfig config, String personId) {
         Map<String, List<Map<String, Object>>> outgoingByFriend =
@@ -201,20 +325,9 @@ public with sharing class ExtolePersonCardController {
     }
 
     /**
-     * For each campaign ID, fetch the FRIEND-journey business-event milestones.
-     * Returns Map<campaignId, Map<eventName, displayDescription>>.
-     *
-     * A campaign's business-event-v10.0 components declare which events count
-     * as "official milestones" AND which journey they belong to (FRIEND,
-     * ADVOCATE, EVERYONE, EMPLOYEE_MARKETING, etc.). For a friend's milestone
-     * strip on the advocate card, we want ONLY FRIEND-journey events — events
-     * like `member_invited` (EVERYONE) aren't part of the friend's actual
-     * journey; they're shared markers that would clutter the display.
-     *
-     * Streaming parse to avoid the 6MB Apex heap blow-out — each campaign's
-     * /v1/components response is 5MB+ of nested config text. We pluck only
-     * the top-level `name`, `type`, `description` and walk into the `variables`
-     * array to find the journeyName variable's default value.
+     * Fetch the FRIEND-journey business-event milestone allowlist for each
+     * campaign. Streaming parse keeps each /v1/components response (often
+     * 5MB+) within Apex heap limits.
      */
     private static Map<String, Map<String, String>> fetchMilestoneAllowlists(
             ExtoleClient client, ExtoleConfig config, Set<String> campaignIds) {
@@ -233,10 +346,6 @@ public with sharing class ExtolePersonCardController {
         return out;
     }
 
-    /**
-     * Streaming parser. Returns Map<eventName, description> for components
-     * where type=business-event-v10.0 AND variables[journeyName].default=FRIEND.
-     */
     @TestVisible
     private static Map<String, String> parseFriendBusinessEvents(String body) {
         Map<String, String> out = new Map<String, String>();
@@ -287,14 +396,9 @@ public with sharing class ExtolePersonCardController {
         return out;
     }
 
-    /**
-     * Called when parser is positioned at the FIELD_NAME "variables". Walks
-     * into the variables array, finds the journeyName variable, returns its
-     * values.default string. Leaves parser positioned at the END_ARRAY.
-     */
     private static String extractJourneyFromVariables(JSONParser p) {
         String journey = null;
-        p.nextToken(); // START_ARRAY
+        p.nextToken();
         if (p.getCurrentToken() != JSONToken.START_ARRAY) return null;
         while (p.nextToken() != JSONToken.END_ARRAY) {
             if (p.getCurrentToken() != JSONToken.START_OBJECT) continue;
@@ -327,67 +431,9 @@ public with sharing class ExtolePersonCardController {
             }
             if ('journeyName'.equals(varName) && String.isNotBlank(varDefault)) {
                 journey = varDefault;
-                // keep consuming the rest of the array so the parser ends positioned correctly
             }
         }
         return journey;
-    }
-
-    private static ExtolePersonCard.Friend buildFriendWithEngagements(
-            ExtoleClient client, ExtoleConfig config, String friendId,
-            List<Map<String, Object>> friendRels,
-            List<ExtolePersonCard.RewardSummary> advocateRewards,
-            Map<String, Map<String, String>> milestonesByCampaign) {
-        ExtolePersonCard.Friend f = new ExtolePersonCard.Friend();
-        f.friendPersonId = friendId;
-
-        // Identity: fetched once per friend regardless of how many engagements.
-        try {
-            HttpRequest req = simpleGet(config, ExtoleConstants.PEOPLE_PATH + '/' + friendId);
-            HttpResponse res = client.send(config, req);
-            if (res.getStatusCode() >= 200 && res.getStatusCode() < 300) {
-                Map<String, Object> m = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-                f.email = (String) m.get('identity_key_value');
-                HttpRequest dataReq = simpleGet(config, ExtoleConstants.PEOPLE_PATH + '/' + friendId + '/data');
-                HttpResponse dataRes = client.send(config, dataReq);
-                if (dataRes.getStatusCode() >= 200 && dataRes.getStatusCode() < 300) {
-                    Map<String, Object> dataMap = (Map<String, Object>) JSON.deserializeUntyped(dataRes.getBody());
-                    String first = nestedValue(dataMap, 'first_name');
-                    String last  = nestedValue(dataMap, 'last_name');
-                    if (String.isNotBlank(first) || String.isNotBlank(last)) {
-                        f.displayName = ((first == null ? '' : first) + ' ' + (last == null ? '' : last)).trim();
-                    }
-                }
-            }
-        } catch (Exception ignored) { }
-        if (String.isBlank(f.displayName)) f.displayName = f.email != null ? f.email : friendId;
-
-        // Steps: fetched once per friend, filtered per-engagement by campaign.
-        List<Map<String, Object>> allSteps = fetchAllSteps(client, config, friendId);
-
-        // Build one engagement per relationship record, ordered by created_date.
-        // Each engagement shows the friend's progress in that specific campaign.
-        for (Map<String, Object> rel : friendRels) {
-            ExtolePersonCard.CampaignEngagement eng = new ExtolePersonCard.CampaignEngagement();
-            eng.program        = (String) rel.get('program');
-            eng.campaignId     = (String) rel.get('campaign_id');
-            eng.createdDate    = (String) rel.get('created_date');
-            eng.shareableCode  = pullNamedValue(rel, 'shareable_code');
-
-            Map<String, String> allowed = milestonesByCampaign.get(eng.campaignId);
-            eng.milestones = filterStepsToMilestones(allSteps, eng.campaignId, allowed);
-
-            // Reward attribution: match by cause_event_id (V2: chain-walk for transitive causes)
-            String causeEventId = (String) rel.get('cause_event_id');
-            for (ExtolePersonCard.RewardSummary r : advocateRewards) {
-                if (r.causeEventId != null && causeEventId != null && r.causeEventId.equals(causeEventId)) {
-                    eng.reward = r;
-                    break;
-                }
-            }
-            f.engagements.add(eng);
-        }
-        return f;
     }
 
     private static List<Map<String, Object>> fetchAllSteps(
@@ -404,13 +450,23 @@ public with sharing class ExtolePersonCardController {
         return out;
     }
 
-    /**
-     * Returns the full milestone set the campaign defines for FRIEND-journey
-     * events, with completed first (in fire order) then pending (alpha). The
-     * `allowed` map is {eventName → description} from business-event components
-     * pre-filtered to journey=FRIEND. Description (when present) is the
-     * preferred display label since Extole authors write it human-readable.
-     */
+    /** All allowed milestones rendered as pending — used for skeleton stubs
+     *  before the friend's actual step progress is fetched. */
+    private static List<ExtolePersonCard.Milestone> defaultPendingMilestones(Map<String, String> allowed) {
+        List<ExtolePersonCard.Milestone> out = new List<ExtolePersonCard.Milestone>();
+        if (allowed == null || allowed.isEmpty()) return out;
+        List<String> names = new List<String>(allowed.keySet());
+        names.sort();
+        for (String n : names) {
+            ExtolePersonCard.Milestone ms = new ExtolePersonCard.Milestone();
+            ms.name        = n;
+            ms.displayName = displayLabelFor(n, allowed.get(n));
+            ms.completed   = false;
+            out.add(ms);
+        }
+        return out;
+    }
+
     private static List<ExtolePersonCard.Milestone> filterStepsToMilestones(
             List<Map<String, Object>> allSteps, String campaignId, Map<String, String> allowed) {
         List<ExtolePersonCard.Milestone> out = new List<ExtolePersonCard.Milestone>();
@@ -449,13 +505,10 @@ public with sharing class ExtolePersonCardController {
         return out;
     }
 
-    /** Humanize snake_case → Title Case for the primary label. Description
-     *  (when present) is surfaced as a tooltip on the LWC, not the label. */
     private static String displayLabelFor(String name, String description) {
         return humanizeEventName(name);
     }
 
-    /** Turns snake_case event names into Title Case display labels. */
     private static String humanizeEventName(String name) {
         if (String.isBlank(name)) return '';
         List<String> parts = name.split('_');
@@ -474,62 +527,63 @@ public with sharing class ExtolePersonCardController {
         ir.program          = (String) rel.get('program');
         ir.createdDate      = (String) rel.get('created_date');
         ir.shareableCode    = pullNamedValue(rel, 'shareable_code');
-        // Resolve advocate identity (best-effort)
         try {
             HttpRequest req = simpleGet(config, ExtoleConstants.PEOPLE_PATH + '/' + ir.advocatePersonId);
             HttpResponse res = client.send(config, req);
             if (res.getStatusCode() >= 200 && res.getStatusCode() < 300) {
                 Map<String, Object> m = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 ir.email = (String) m.get('identity_key_value');
-                ir.displayName = ir.email; // best-effort; data call can be added later
+                ir.displayName = ir.email;
             }
         } catch (Exception ignored) { }
         return ir;
     }
 
-    /**
-     * One bulk SOQL each for Lead + Contact by email. Sets sfdcRecordId/sfdcObjectType
-     * on every Friend and the IncomingReferral when an email matches an SFDC record.
-     * Contact wins over Lead if both exist (Contacts are converted; more authoritative).
-     */
-    private static void attachSfdcRecordIds(ExtolePersonCard card) {
-        Set<String> emails = new Set<String>();
-        for (ExtolePersonCard.Friend f : card.friends) {
-            if (String.isNotBlank(f.email)) emails.add(f.email.toLowerCase());
-        }
-        if (card.referredBy != null && String.isNotBlank(card.referredBy.email)) {
-            emails.add(card.referredBy.email.toLowerCase());
-        }
-        if (emails.isEmpty()) return;
+    // ──────────────────────────────────────────────────────────────────────
+    // JSON deserialization helpers (typed)
+    // ──────────────────────────────────────────────────────────────────────
 
-        Map<String, Map<String, String>> match = new Map<String, Map<String, String>>();
-        for (Lead l : [SELECT Id, Email FROM Lead WHERE Email IN :emails WITH SECURITY_ENFORCED LIMIT 200]) {
-            if (l.Email == null) continue;
-            String key = l.Email.toLowerCase();
-            if (!match.containsKey(key)) {
-                match.put(key, new Map<String, String>{ 'id' => l.Id, 'type' => 'Lead' });
+    @SuppressWarnings('PMD.ApexUnusedLocalVariable')
+    private static List<Map<String, Object>> parseRelList(String relsJson) {
+        List<Map<String, Object>> out = new List<Map<String, Object>>();
+        if (String.isBlank(relsJson)) return out;
+        Object parsed = JSON.deserializeUntyped(relsJson);
+        if (parsed instanceof List<Object>) {
+            for (Object o : (List<Object>) parsed) {
+                if (o instanceof Map<String, Object>) out.add((Map<String, Object>) o);
             }
         }
-        for (Contact c : [SELECT Id, Email FROM Contact WHERE Email IN :emails WITH SECURITY_ENFORCED LIMIT 200]) {
-            if (c.Email == null) continue;
-            // Contact beats Lead on conflict
-            match.put(c.Email.toLowerCase(), new Map<String, String>{ 'id' => c.Id, 'type' => 'Contact' });
-        }
+        return out;
+    }
 
-        for (ExtolePersonCard.Friend f : card.friends) {
-            if (String.isBlank(f.email)) continue;
-            Map<String, String> m = match.get(f.email.toLowerCase());
-            if (m != null) {
-                f.sfdcRecordId    = m.get('id');
-                f.sfdcObjectType  = m.get('type');
+    private static Map<String, Map<String, String>> parseMilestonesMap(String milestonesJson) {
+        Map<String, Map<String, String>> out = new Map<String, Map<String, String>>();
+        if (String.isBlank(milestonesJson)) return out;
+        Object parsed = JSON.deserializeUntyped(milestonesJson);
+        if (!(parsed instanceof Map<String, Object>)) return out;
+        Map<String, Object> top = (Map<String, Object>) parsed;
+        for (String cid : top.keySet()) {
+            Object nested = top.get(cid);
+            Map<String, String> allowed = new Map<String, String>();
+            if (nested instanceof Map<String, Object>) {
+                Map<String, Object> innerMap = (Map<String, Object>) nested;
+                for (String eventName : innerMap.keySet()) {
+                    Object v = innerMap.get(eventName);
+                    allowed.put(eventName, v == null ? null : String.valueOf(v));
+                }
             }
+            out.put(cid, allowed);
         }
-        if (card.referredBy != null && String.isNotBlank(card.referredBy.email)) {
-            Map<String, String> m = match.get(card.referredBy.email.toLowerCase());
-            if (m != null) {
-                card.referredBy.sfdcRecordId   = m.get('id');
-                card.referredBy.sfdcObjectType = m.get('type');
-            }
+        return out;
+    }
+
+    private static List<ExtolePersonCard.RewardSummary> parseRewardsList(String rewardsJson) {
+        if (String.isBlank(rewardsJson)) return new List<ExtolePersonCard.RewardSummary>();
+        try {
+            return (List<ExtolePersonCard.RewardSummary>)
+                JSON.deserialize(rewardsJson, List<ExtolePersonCard.RewardSummary>.class);
+        } catch (Exception e) {
+            return new List<ExtolePersonCard.RewardSummary>();
         }
     }
 
@@ -554,12 +608,10 @@ public with sharing class ExtolePersonCardController {
         return String.isNotBlank(name) ? name : p.email;
     }
 
-    /** Extracts {"name":"key","value":"X","scope":...} → "X" from a relationship/data map. */
     private static String pullNamedValue(Map<String, Object> parent, String key) {
         Object dataObj = parent.get('data');
         if (dataObj instanceof Map<String, Object>) {
-            Map<String, Object> dataMap = (Map<String, Object>) dataObj;
-            return nestedValue(dataMap, key);
+            return nestedValue((Map<String, Object>) dataObj, key);
         }
         return null;
     }
@@ -573,7 +625,6 @@ public with sharing class ExtolePersonCardController {
     }
 
     private static String formatRewardAmount(Map<String, Object> rewardMap) {
-        // Reward amount shape varies — try face_value, then face_value_amount, then partner-side fields.
         Object faceValue = rewardMap.get('face_value');
         if (faceValue instanceof Map<String, Object>) {
             Map<String, Object> fv = (Map<String, Object>) faceValue;

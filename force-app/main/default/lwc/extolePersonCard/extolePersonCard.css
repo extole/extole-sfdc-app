@@ -1,21 +1,26 @@
 :host {
     --extole-green:       #1D9E75;
-    --extole-green-light: rgba(29, 158, 117, 0.45);
-    --extole-green-mid:   rgba(29, 158, 117, 0.20);
     --extole-green-faint: rgba(29, 158, 117, 0.12);
+    --extole-green-mid:   rgba(29, 158, 117, 0.20);
+    --border-soft:        #ecebea;
+    --text-primary:       #181818;
+    --text-secondary:     #6b7280;
+    --text-tertiary:      #9ca3af;
+    --surface-muted:      #f7f7f7;
     display: block;
 }
 
 .person-card {
     background: #ffffff;
-    border: 1px solid #dddbda;
-    border-radius: 6px;
-    padding: 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 14px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    border-top: 3px solid var(--extole-green);
+    overflow: hidden;
+    font-size: 13px;
+    color: var(--text-primary);
 }
 
 .loading-row {
@@ -36,36 +41,86 @@
 
 .card-header {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #ecebea;
-    gap: 12px;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 18px 16px;
 }
 
-.brand-block {
+.header-text {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.brand {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.10em;
+.header-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.header-role {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+/* ── Avatars ──────────────────────────────────────────────────────────────── */
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    user-select: none;
+}
+
+.avatar-lg {
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+    background: var(--extole-green-faint);
     color: var(--extole-green);
 }
 
-.brand-subtitle {
-    font-size: 13px;
-    font-weight: 600;
-    color: #080707;
+.avatar-neutral {
+    width: 36px;
+    height: 36px;
+    font-size: 11px;
+    background: #ececec;
+    color: #4a4a4a;
 }
 
-.totals {
-    font-size: 12px;
-    color: #54698d;
-    font-weight: 500;
+.avatar-success {
+    width: 36px;
+    height: 36px;
+    background: var(--extole-green);
+    color: #ffffff;
+}
+
+.avatar-success lightning-icon {
+    --sds-c-icon-color-foreground-default: #ffffff;
+}
+
+.avatar-loading {
+    width: 36px;
+    height: 36px;
+    font-size: 11px;
+    background: #ececec;
+    color: #b0adab;
+    animation: avatar-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes avatar-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1.0;  }
+}
+
+.avatar-initials {
+    line-height: 1;
 }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
@@ -73,44 +128,82 @@
 .section {
     display: flex;
     flex-direction: column;
+    border-top: 1px solid var(--border-soft);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
     gap: 6px;
+    padding: 12px 18px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.section-header:hover {
+    background: #fafafa;
+}
+
+.section-chevron {
+    --sds-c-icon-color-foreground-default: var(--text-tertiary);
+    flex: 0 0 auto;
 }
 
 .section-label {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #54698d;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 2px 18px 14px;
+}
+
+.friends-body {
+    gap: 12px;
+}
+
+/* ── Program pill ─────────────────────────────────────────────────────────── */
+
+.program-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    width: fit-content;
 }
 
 /* ── Referred by ──────────────────────────────────────────────────────────── */
 
-.referred-by-section {
+.referred-by-row {
     display: flex;
-    flex-direction: row;
-    align-items: baseline;
+    align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-}
-
-.referred-by-section .section-label {
-    margin: 0;
 }
 
 /* ── Share links ──────────────────────────────────────────────────────────── */
 
 .share-link-row {
     display: grid;
-    grid-template-columns: 140px 1fr 28px;
+    grid-template-columns: max-content 1fr 28px;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 2px 0;
 }
 
 .share-link-url {
-    font-size: 12px;
-    color: #080707;
+    font-size: 12.5px;
+    color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -120,12 +213,12 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 2px;
+    padding: 4px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 3px;
-    color: #54698d;
+    border-radius: 4px;
+    color: var(--text-secondary);
 }
 
 .copy-btn:hover {
@@ -133,79 +226,101 @@
     color: var(--extole-green);
 }
 
-/* ── Friends ──────────────────────────────────────────────────────────────── */
+/* ── Friends grouped by program ───────────────────────────────────────────── */
 
-.friend-block {
-    padding: 8px 0;
-    border-bottom: 1px solid #f3f3f3;
-}
-
-.friend-block:last-child {
-    border-bottom: none;
-}
-
-.friend-row {
+.program-group {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.program-group + .program-group {
+    border-top: 1px solid var(--border-soft);
+    padding-top: 12px;
+}
+
+.engagement-card {
+    background: var(--surface-muted);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.engagement-header {
+    display: grid;
+    grid-template-columns: 14px 36px 1fr auto;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
 }
 
-.milestone-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    margin-top: 6px;
-    padding-left: 0;
+.engagement-header-clickable {
+    cursor: pointer;
 }
 
-.engagement-row {
+.engagement-card:has(.engagement-header-clickable:hover) {
+    background: #f1f1f1;
+}
+
+.engagement-chevron-slot {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 4px;
-    flex-wrap: wrap;
+    justify-content: center;
 }
 
-.milestone {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
+.engagement-chevron {
+    --sds-c-icon-color-foreground-default: var(--text-tertiary);
 }
 
-.milestone-completed {
-    color: #080707;
+.engagement-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
-.milestone-pending {
-    color: #b0adab;
+.engagement-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.milestone-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    display: inline-block;
+a.engagement-name {
+    color: var(--extole-green);
+    text-decoration: none;
 }
 
-.milestone-completed .milestone-dot {
-    background: var(--extole-green);
+a.engagement-name:hover {
+    text-decoration: underline;
 }
 
-.milestone-pending .milestone-dot {
-    background: transparent;
-    border: 1.5px solid #c9c7c5;
+.engagement-status {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.2;
 }
 
-.milestone-name {
-    line-height: 1;
+.reward-pending {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+
+.reward-amount-earned {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--extole-green);
+    white-space: nowrap;
 }
 
 .record-link {
     color: var(--extole-green);
     text-decoration: none;
-    font-size: 13px;
 }
 
 .record-link:hover {
@@ -213,65 +328,59 @@
 }
 
 .plain-email {
-    color: #080707;
+    color: var(--text-primary);
     font-size: 13px;
 }
 
-.program-tag {
-    font-size: 11px;
-    color: #54698d;
-    text-transform: lowercase;
-    letter-spacing: 0.02em;
-}
+/* ── Milestone list ───────────────────────────────────────────────────────── */
 
-.reward-chip {
-    margin-left: auto;
-    font-size: 11px;
-    font-weight: 600;
-    background: var(--extole-green-faint);
-    color: var(--extole-green);
-    padding: 2px 8px;
-    border-radius: 10px;
-}
-
-/* ── Rewards ──────────────────────────────────────────────────────────────── */
-
-.reward-row {
+.milestone-list {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 4px 2px 4px;
+}
+
+.milestone-row {
+    display: grid;
+    grid-template-columns: 16px 1fr auto;
     align-items: center;
-    gap: 10px;
-    padding: 4px 0;
-    font-size: 13px;
+    gap: 8px;
+    font-size: 12.5px;
+    line-height: 1.4;
 }
 
-.reward-amount {
-    font-weight: 600;
-    color: #080707;
+.milestone-bullet {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    justify-self: center;
 }
 
-.PAID, .EARNED {
-    font-size: 11px;
-    font-weight: 600;
-    background: var(--extole-green-faint);
-    color: var(--extole-green);
-    padding: 2px 8px;
-    border-radius: 10px;
+.milestone-row-completed .milestone-bullet {
+    background: var(--extole-green);
 }
 
-.PENDING {
-    font-size: 11px;
+.milestone-row-completed .milestone-label {
+    color: var(--text-primary);
     font-weight: 600;
-    background: #fff4cc;
-    color: #946100;
-    padding: 2px 8px;
-    border-radius: 10px;
 }
 
-.CANCELED, .FAILED {
-    font-size: 11px;
-    font-weight: 600;
-    background: #ecebea;
-    color: #54698d;
-    padding: 2px 8px;
-    border-radius: 10px;
+.milestone-row-pending .milestone-bullet {
+    background: transparent;
+    border: 1.5px solid #cbcfd4;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+}
+
+.milestone-row-pending .milestone-label {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.milestone-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
 }
