@@ -1,0 +1,277 @@
+:host {
+    --extole-green:       #1D9E75;
+    --extole-green-light: rgba(29, 158, 117, 0.45);
+    --extole-green-mid:   rgba(29, 158, 117, 0.20);
+    --extole-green-faint: rgba(29, 158, 117, 0.12);
+    display: block;
+}
+
+.person-card {
+    background: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-top: 3px solid var(--extole-green);
+}
+
+.loading-row {
+    display: flex;
+    justify-content: center;
+    padding: 16px 0;
+}
+
+.error-banner {
+    background: #fdecea;
+    color: #c23934;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ecebea;
+    gap: 12px;
+}
+
+.brand-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.brand {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    color: var(--extole-green);
+}
+
+.brand-subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: #080707;
+}
+
+.totals {
+    font-size: 12px;
+    color: #54698d;
+    font-weight: 500;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #54698d;
+}
+
+/* ── Referred by ──────────────────────────────────────────────────────────── */
+
+.referred-by-section {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.referred-by-section .section-label {
+    margin: 0;
+}
+
+/* ── Share links ──────────────────────────────────────────────────────────── */
+
+.share-link-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 0;
+}
+
+.share-link-url {
+    font-size: 12px;
+    color: #080707;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.copy-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    color: #54698d;
+}
+
+.copy-btn:hover {
+    background: #f3f3f3;
+    color: var(--extole-green);
+}
+
+/* ── Friends ──────────────────────────────────────────────────────────────── */
+
+.friend-block {
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.friend-block:last-child {
+    border-bottom: none;
+}
+
+.friend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.milestone-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 6px;
+    padding-left: 0;
+}
+
+.engagement-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.milestone {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.milestone-completed {
+    color: #080707;
+}
+
+.milestone-pending {
+    color: #b0adab;
+}
+
+.milestone-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.milestone-completed .milestone-dot {
+    background: var(--extole-green);
+}
+
+.milestone-pending .milestone-dot {
+    background: transparent;
+    border: 1.5px solid #c9c7c5;
+}
+
+.milestone-name {
+    line-height: 1;
+}
+
+.record-link {
+    color: var(--extole-green);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.record-link:hover {
+    text-decoration: underline;
+}
+
+.plain-email {
+    color: #080707;
+    font-size: 13px;
+}
+
+.program-tag {
+    font-size: 11px;
+    color: #54698d;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+}
+
+.reward-chip {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--extole-green-faint);
+    color: var(--extole-green);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* ── Rewards ──────────────────────────────────────────────────────────────── */
+
+.reward-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.reward-amount {
+    font-weight: 600;
+    color: #080707;
+}
+
+.PAID, .EARNED {
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--extole-green-faint);
+    color: var(--extole-green);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.PENDING {
+    font-size: 11px;
+    font-weight: 600;
+    background: #fff4cc;
+    color: #946100;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.CANCELED, .FAILED {
+    font-size: 11px;
+    font-weight: 600;
+    background: #ecebea;
+    color: #54698d;
+    padding: 2px 8px;
+    border-radius: 10px;
+}

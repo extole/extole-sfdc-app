@@ -1,0 +1,114 @@
+<template>
+    <template lwc:if={isLoading}>
+        <div class="loading-row">
+            <lightning-spinner size="small" alternative-text="Loading"></lightning-spinner>
+        </div>
+    </template>
+
+    <template lwc:elseif={shouldRender}>
+        <div class="person-card">
+
+            <!-- Header -->
+            <div class="card-header">
+                <div class="brand-block">
+                    <span class="brand">EXTOLE</span>
+                    <span class="brand-subtitle">{headerSubtitle}</span>
+                </div>
+                <template lwc:if={card.totalEarnedLabel}>
+                    <span class="totals">{card.totalEarnedLabel}</span>
+                </template>
+            </div>
+
+            <!-- Referred-by (friend mode) -->
+            <template lwc:if={hasReferredBy}>
+                <div class="section referred-by-section">
+                    <span class="section-label">Referred by</span>
+                    <template lwc:if={referredByDecorated.isLinked}>
+                        <a href={referredByDecorated.sfdcUrl} class="record-link">{referredByDecorated.displayName}</a>
+                    </template>
+                    <template lwc:else>
+                        <span class="plain-email">{referredByDecorated.displayName}</span>
+                    </template>
+                    <span class="program-tag">· {referredByDecorated.program}</span>
+                </div>
+            </template>
+
+            <!-- Share links -->
+            <template lwc:if={hasShareLinks}>
+                <div class="section share-links-section">
+                    <div class="section-label">Share links</div>
+                    <template for:each={card.shareLinks} for:item="sl">
+                        <div key={sl.code} class="share-link-row">
+                            <template lwc:if={sl.program}>
+                                <span class="program-tag">{sl.program}</span>
+                            </template>
+                            <template lwc:else>
+                                <span class="program-tag-placeholder"></span>
+                            </template>
+                            <span class="share-link-url">{sl.link}</span>
+                            <button class="copy-btn" data-link={sl.link} onclick={handleCopyLink} title="Copy link">
+                                <lightning-icon icon-name="utility:copy" size="x-small"></lightning-icon>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Friends -->
+            <template lwc:if={hasFriends}>
+                <div class="section friends-section">
+                    <div class="section-label">{friendsLabel}</div>
+                    <template for:each={decoratedFriends} for:item="f">
+                        <div key={f.friendPersonId} class="friend-block">
+                            <div class="friend-row">
+                                <template lwc:if={f.isLinked}>
+                                    <a href={f.sfdcUrl} class="record-link">{f.displayName}</a>
+                                </template>
+                                <template lwc:else>
+                                    <span class="plain-email">{f.displayName}</span>
+                                </template>
+                            </div>
+                            <template for:each={f.engagements} for:item="eng">
+                                <div key={eng.campaignId} class="engagement-row">
+                                    <span class="program-tag">{eng.program}</span>
+                                    <template lwc:if={eng.reward}>
+                                        <span class="reward-chip">{eng.reward.amountLabel} · {eng.reward.state}</span>
+                                    </template>
+                                    <template lwc:if={eng.hasMilestones}>
+                                        <div class="milestone-strip">
+                                            <template for:each={eng.milestones} for:item="m">
+                                                <span key={m.name} class={m.cssClass} title={m.tooltip}>
+                                                    <span class="milestone-dot"></span>
+                                                    <span class="milestone-name">{m.displayName}</span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Rewards (only if there are rewards not already attributed inline to a friend) -->
+            <template lwc:if={hasRewards}>
+                <div class="section rewards-section">
+                    <div class="section-label">Rewards ({card.rewards.length})</div>
+                    <template for:each={card.rewards} for:item="r">
+                        <div key={r.causeEventId} class="reward-row">
+                            <span class="reward-amount">{r.amountLabel}</span>
+                            <span class={r.state}>{r.state}</span>
+                            <span class="program-tag">{r.program}</span>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+        </div>
+    </template>
+
+    <template lwc:if={loadError}>
+        <div class="error-banner">{loadError}</div>
+    </template>
+</template>

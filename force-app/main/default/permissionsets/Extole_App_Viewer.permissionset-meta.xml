@@ -128,6 +128,10 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>ExtolePersonCardController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ExtoleAudienceScheduler</apexClass>
         <enabled>true</enabled>
     </classAccesses>

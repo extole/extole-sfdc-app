@@ -293,7 +293,7 @@ export default class ExtoleBackfill extends LightningElement {
             l.Error_Count__c != null ? l.Error_Count__c : '',
             l.errorDetail || ''
         ]);
-        this._copyToClipboard(this._buildMarkdownTable(`Share Link Backfill Log — ${now}`, headers, rows));
+        this._copyToClipboard(this._buildMarkdownTable(`Share Link Log — ${now}`, headers, rows));
     }
 
     handleClearLogs()          { this.confirmClearLogs = true; }

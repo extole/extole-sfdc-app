@@ -41,6 +41,25 @@ private class ExtoleClientTest {
     }
 
     @IsTest
+    static void withAppType_appendsQueryParam() {
+        // No existing query string — should append with '?'
+        System.assertEquals(
+            'https://api.extole.io/v5/persons?app_type=extole-sfdc-app',
+            ExtoleClient.withAppType('https://api.extole.io/v5/persons')
+        );
+        // Existing query string — should append with '&'
+        System.assertEquals(
+            'https://api.extole.io/v5/persons?identity_key_value=a%40b.com&app_type=extole-sfdc-app',
+            ExtoleClient.withAppType('https://api.extole.io/v5/persons?identity_key_value=a%40b.com')
+        );
+        // Already has app_type — should not double up
+        System.assertEquals(
+            'https://api.extole.io/v5/persons?app_type=other',
+            ExtoleClient.withAppType('https://api.extole.io/v5/persons?app_type=other')
+        );
+    }
+
+    @IsTest
     static void fromResponse_401_throwsApiException() {
         ExtoleConfigurableMock mock = new ExtoleConfigurableMock()
             .withDefault(401, '{"error":"unauthorized"}');

@@ -5,7 +5,7 @@
         <div class="settings-card">
             <div class="card-title-row">
                 <div class="settings-card-title">Object</div>
-                <lightning-helptext content="Choose whether to backfill Contacts or Leads. This selection also determines which fields are available below."></lightning-helptext>
+                <lightning-helptext content="Choose whether to create share links for Contacts or Leads. This selection also determines which fields are available below."></lightning-helptext>
             </div>
             <div class="slds-form-element__control radio-group-spaced">
                 <span class="slds-radio radio-with-desc">
@@ -140,7 +140,7 @@
         <div class="settings-card action-card">
             <div class="action-row">
                 <lightning-button
-                    label="Run Backfill"
+                    label="Create Share Links"
                     variant="brand"
                     icon-name="utility:upload"
                     onclick={handleRunClick}
@@ -152,12 +152,12 @@
             </div>
         </div>
 
-        <!-- Share Link Backfill Log -->
+        <!-- Share Link Log -->
         <div class="settings-card">
             <div class="section-header-row diag-header-row">
                 <div class="diag-subsection-label">
-                    <div class="settings-card-title">Share Link Backfill Log</div>
-                    <lightning-helptext content="Each row is one backfill run. Details shows a summary of any errors."></lightning-helptext>
+                    <div class="settings-card-title">Share Link Log</div>
+                    <lightning-helptext content="Each row is one Create Share Links run. Details shows a summary of any errors."></lightning-helptext>
                 </div>
                 <div class="diag-header-actions">
                     <template lwc:if={confirmClearLogs}>
@@ -217,7 +217,7 @@
                 </div>
             </template>
             <template lwc:else>
-                <p class="empty-text">No backfill runs yet.</p>
+                <p class="empty-text">No share link creation runs yet.</p>
             </template>
         </div>
 
@@ -228,7 +228,7 @@
         <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
                 <div class="slds-modal__header">
-                    <h2 class="slds-modal__title">Confirm Backfill</h2>
+                    <h2 class="slds-modal__title">Confirm Share Link Creation</h2>
                     <button class="slds-button slds-button_icon slds-modal__close" onclick={handleCancel}>
                         <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
                     </button>

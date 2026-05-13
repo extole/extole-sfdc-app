@@ -1111,7 +1111,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>app_type auto-injection note</shortDescription>
-        <value>app_type: salesforce_crm is automatically injected into every event payload.</value>
+        <value>app_type: extole-sfdc-app is automatically injected into every event payload.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_NullNote</fullName>

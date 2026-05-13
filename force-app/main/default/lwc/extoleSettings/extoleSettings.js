@@ -574,7 +574,7 @@ export default class ExtoleSettings extends LightningElement {
             l.Error_Count__c != null ? l.Error_Count__c : '',
             l.errorDetail || ''
         ]);
-        this.copyToClipboard(this.buildMarkdownTable(`Share Link Backfill Log — ${now}`, headers, rows), 'Backfill log copied to clipboard.');
+        this.copyToClipboard(this.buildMarkdownTable(`Share Link Log — ${now}`, headers, rows), 'Share link log copied to clipboard.');
     }
 
     copyToClipboard(text, successMessage) {

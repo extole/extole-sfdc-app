@@ -456,7 +456,7 @@ export default class ExtoleEventModal extends LightningElement {
             param: p.paramName || '(unnamed)',
             value: p.useStatic ? `"${p.staticVal}" (static)` : (p.field || '(unmapped)')
         }));
-        rows.push({ param: 'app_type', value: 'salesforce_crm (auto)' });
+        rows.push({ param: 'app_type', value: 'extole-sfdc-app (auto)' });
         return rows;
     }
 
@@ -717,7 +717,7 @@ export default class ExtoleEventModal extends LightningElement {
 
         const oldMap = {};
         oldMappings.forEach(m => { oldMap[m.extole_param] = m.sfdc_field || m.static_value; });
-        oldMap['app_type'] = 'salesforce_crm';
+        oldMap['app_type'] = 'extole-sfdc-app';
         if (this.config.Event_Name__c) oldMap['__event_name'] = this.config.Event_Name__c;
 
         const newMap = {};
@@ -726,7 +726,7 @@ export default class ExtoleEventModal extends LightningElement {
                 newMap[p.paramName] = p.useStatic ? p.staticVal : p.field;
             }
         });
-        newMap['app_type'] = 'salesforce_crm';
+        newMap['app_type'] = 'extole-sfdc-app';
         newMap['__event_name'] = this.eventName;
 
         const rows = [];
