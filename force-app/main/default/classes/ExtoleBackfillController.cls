@@ -5,6 +5,21 @@ public with sharing class ExtoleBackfillController {
     // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
+    public static String getShareLinkFieldSetting(String objectType) {
+        Extole_App_Settings__c s = Extole_App_Settings__c.getOrgDefaults();
+        String saved = objectType == 'Lead' ? s.Lead_Share_Link_Field__c : s.Contact_Share_Link_Field__c;
+        String candidate = String.isNotBlank(saved) ? saved : 'Extole_Share_Link__c';
+        return fieldExists(objectType, candidate) ? candidate : null;
+    }
+
+    private static Boolean fieldExists(String objectType, String fieldName) {
+        if (String.isBlank(objectType) || String.isBlank(fieldName)) return false;
+        Schema.SObjectType sot = Schema.getGlobalDescribe().get(objectType);
+        if (sot == null) return false;
+        return sot.getDescribe().fields.getMap().containsKey(fieldName.toLowerCase());
+    }
+
+    @AuraEnabled(cacheable=false)
     public static List<Map<String, String>> getWritebackFields(String objectType) {
         List<Map<String, String>> fields = new List<Map<String, String>>();
         Schema.SObjectType sot = Schema.getGlobalDescribe().get(objectType);
@@ -125,6 +140,8 @@ public with sharing class ExtoleBackfillController {
 
     @AuraEnabled(cacheable=false)
     public static Id startBackfill(String objectType, String audienceType, String selectedDate, String reportId, String targetField, String programLabel, String programName) {
+        persistShareLinkFieldSetting(objectType, targetField);
+
         String audienceTypeLabel;
         String audienceCriteria;
         if (audienceType == 'report') {
@@ -157,6 +174,15 @@ public with sharing class ExtoleBackfillController {
         update log;
 
         return log.Id;
+    }
+
+    private static void persistShareLinkFieldSetting(String objectType, String fieldName) {
+        if (String.isBlank(fieldName)) return;
+        Extole_App_Settings__c s = Extole_App_Settings__c.getOrgDefaults();
+        if (s.Id == null) s = new Extole_App_Settings__c(SetupOwnerId = UserInfo.getOrganizationId());
+        if (objectType == 'Lead') s.Lead_Share_Link_Field__c = fieldName;
+        else                      s.Contact_Share_Link_Field__c = fieldName;
+        upsert s;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

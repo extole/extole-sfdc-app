@@ -1,6 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getWritebackFields  from '@salesforce/apex/ExtoleBackfillController.getWritebackFields';
+import getShareLinkFieldSetting from '@salesforce/apex/ExtoleBackfillController.getShareLinkFieldSetting';
 import getExtoleCampaigns  from '@salesforce/apex/ExtoleBackfillController.getExtoleCampaigns';
 import getReports          from '@salesforce/apex/ExtoleBackfillController.getReports';
 import previewCount        from '@salesforce/apex/ExtoleBackfillController.previewCount';
@@ -99,11 +100,15 @@ export default class ExtoleBackfill extends LightningElement {
     async loadFields() {
         this.isLoadingFields = true;
         try {
-            const result = await getWritebackFields({ objectType: this.selectedObject });
+            const [result, saved] = await Promise.all([
+                getWritebackFields({ objectType: this.selectedObject }),
+                getShareLinkFieldSetting({ objectType: this.selectedObject })
+            ]);
             this.fieldOptions  = result || [];
-            this.selectedField = null;
+            this.selectedField = saved && this.fieldOptions.some(o => o.value === saved) ? saved : null;
         } catch (e) {
             this.fieldOptions = [];
+            this.selectedField = null;
         } finally {
             this.isLoadingFields = false;
         }

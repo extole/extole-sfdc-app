@@ -55,8 +55,18 @@
                         <div class="section-body">
                             <template for:each={decoratedShareLinks} for:item="sl">
                                 <div key={sl.code} class="share-link-row">
-                                    <span class="program-pill" style={sl.programStyle}>program: {sl.program}</span>
-                                    <span class="share-link-url">{sl.link}</span>
+                                    <template lwc:if={sl.program}>
+                                        <span class="program-pill" style={sl.programStyle}>program: {sl.program}</span>
+                                    </template>
+                                    <template lwc:else>
+                                        <span></span>
+                                    </template>
+                                    <span class="share-link-url">
+                                        {sl.link}
+                                        <template lwc:if={sl.isSavedOnRecord}>
+                                            <span class="saved-marker" title="This link is saved on the record">saved on record</span>
+                                        </template>
+                                    </span>
                                     <button class="copy-btn" data-link={sl.link} onclick={handleCopyLink} title="Copy link">
                                         <lightning-icon icon-name="utility:copy" size="x-small"></lightning-icon>
                                     </button>

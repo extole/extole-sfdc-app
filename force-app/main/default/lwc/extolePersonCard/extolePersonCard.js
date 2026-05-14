@@ -3,6 +3,7 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import getCardSkeleton from '@salesforce/apex/ExtolePersonCardController.getCardSkeleton';
 import getFriendDetail from '@salesforce/apex/ExtolePersonCardController.getFriendDetail';
 import attachSfdcLinks from '@salesforce/apex/ExtolePersonCardController.attachSfdcLinks';
+import getShareLinkFieldSetting from '@salesforce/apex/ExtoleBackfillController.getShareLinkFieldSetting';
 
 import LEAD_EMAIL from '@salesforce/schema/Lead.Email';
 import LEAD_NAME from '@salesforce/schema/Lead.Name';
@@ -61,7 +62,9 @@ export default class ExtolePersonCard extends LightningElement {
 
     email = null;
     sfdcName = null;
+    sfdcShareLink = null;
     friendsDetailRequested = false;
+    @track configuredShareLinkField = null;
 
     get emailField() {
         return this.objectApiName === 'Lead' ? LEAD_EMAIL : CONTACT_EMAIL;
@@ -71,11 +74,26 @@ export default class ExtolePersonCard extends LightningElement {
         return this.objectApiName === 'Lead' ? LEAD_NAME : CONTACT_NAME;
     }
 
+    get shareLinkFieldRef() {
+        if (!this.configuredShareLinkField) return null;
+        return `${this.objectApiName}.${this.configuredShareLinkField}`;
+    }
+
+    async connectedCallback() {
+        try {
+            this.configuredShareLinkField = await getShareLinkFieldSetting({ objectType: this.objectApiName });
+        } catch (e) {
+            this.configuredShareLinkField = null;
+        }
+    }
+
     @wire(getRecord, { recordId: '$recordId', fields: '$fieldsToFetch' })
     wiredRecord({ data, error }) {
         if (data) {
             this.email    = getFieldValue(data, this.emailField);
             this.sfdcName = getFieldValue(data, this.nameField);
+            const fname = this.configuredShareLinkField;
+            this.sfdcShareLink = (fname && data.fields && data.fields[fname]) ? data.fields[fname].value : null;
             if (this.email) {
                 this.loadCard();
             }
@@ -85,9 +103,11 @@ export default class ExtolePersonCard extends LightningElement {
     }
 
     get fieldsToFetch() {
-        return this.objectApiName === 'Lead'
+        const base = this.objectApiName === 'Lead'
             ? [LEAD_EMAIL, LEAD_NAME]
             : [CONTACT_EMAIL, CONTACT_NAME];
+        const ref = this.shareLinkFieldRef;
+        return ref ? [...base, ref] : base;
     }
 
     /**
@@ -232,11 +252,14 @@ export default class ExtolePersonCard extends LightningElement {
 
     get decoratedShareLinks() {
         if (!this.hasShareLinks) return [];
+        const saved = (this.sfdcShareLink || '').trim();
         return this.card.shareLinks.map(sl => {
             const c = programColors(sl.program);
+            const isSavedOnRecord = !!(saved && sl.link && sl.link.trim() === saved);
             return {
                 ...sl,
-                programStyle: `background:${c.fill};color:${c.primary};`
+                programStyle: `background:${c.fill};color:${c.primary};`,
+                isSavedOnRecord
             };
         });
     }
