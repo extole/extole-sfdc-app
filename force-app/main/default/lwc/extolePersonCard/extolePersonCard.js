@@ -221,12 +221,30 @@ export default class ExtolePersonCard extends LightningElement {
         return this.card && this.card.hasAnyData;
     }
 
+    get shouldShowEmpty() {
+        return this.card !== null && !this.card.hasAnyData && !this.loadError;
+    }
+
     get hasShareLinks() {
         return this.card && this.card.shareLinks && this.card.shareLinks.length > 0;
     }
 
     get hasFriends() {
         return this.card && this.card.friends && this.card.friends.length > 0;
+    }
+
+    get hasMoreFriends() {
+        if (!this.card || !this.card.friends) return false;
+        return (this.card.totalFriendCount || 0) > this.card.friends.length;
+    }
+
+    get moreFriendsCount() {
+        if (!this.hasMoreFriends) return 0;
+        return this.card.totalFriendCount - this.card.friends.length;
+    }
+
+    get moreFriendsHref() {
+        return 'https://my.extole.com/reports';
     }
 
     get hasReferredBy() {

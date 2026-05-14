@@ -29,6 +29,39 @@
     padding: 16px 0;
 }
 
+.empty-state {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 14px;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    --sds-c-icon-color-foreground-default: var(--text-tertiary);
+    flex: 0 0 auto;
+}
+
+.empty-text {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.more-friends-row {
+    padding: 8px 12px 4px;
+    text-align: center;
+}
+
+.more-friends-link {
+    font-size: 12px;
+    color: var(--extole-green);
+    text-decoration: none;
+}
+
+.more-friends-link:hover {
+    text-decoration: underline;
+}
+
 .error-banner {
     background: #fdecea;
     color: #c23934;

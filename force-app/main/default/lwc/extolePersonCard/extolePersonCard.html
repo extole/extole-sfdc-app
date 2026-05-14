@@ -5,6 +5,15 @@
         </div>
     </template>
 
+    <template lwc:elseif={shouldShowEmpty}>
+        <div class="person-card empty-card">
+            <div class="empty-state">
+                <lightning-icon icon-name="utility:user" size="small" class="empty-icon"></lightning-icon>
+                <div class="empty-text">No Extole activity for this person yet.</div>
+            </div>
+        </div>
+    </template>
+
     <template lwc:elseif={shouldRender}>
         <div class="person-card">
 
@@ -133,6 +142,11 @@
                                             </template>
                                         </div>
                                     </template>
+                                </div>
+                            </template>
+                            <template lwc:if={hasMoreFriends}>
+                                <div class="more-friends-row">
+                                    <a href={moreFriendsHref} target="_blank" rel="noopener" class="more-friends-link">+{moreFriendsCount} more — view in Extole</a>
                                 </div>
                             </template>
                         </div>

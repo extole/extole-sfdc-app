@@ -82,6 +82,7 @@ public with sharing class ExtolePersonCard {
         @AuraEnabled public List<FriendDetailRequest> friendRequests = new List<FriendDetailRequest>();
         @AuraEnabled public Boolean hasAnyData = false;
         @AuraEnabled public String totalEarnedLabel;
+        @AuraEnabled public Integer totalFriendCount = 0;
     }
 
     /** Opaque-ish blob the LWC passes back when invoking getFriendDetail.

@@ -24,7 +24,7 @@
  */
 public with sharing class ExtolePersonCardController {
 
-    private static final Integer MAX_FRIENDS = 10;
+    private static final Integer MAX_FRIENDS = 25;
 
     // ──────────────────────────────────────────────────────────────────────
     // Phase 1: Skeleton
@@ -72,6 +72,8 @@ public with sharing class ExtolePersonCardController {
                 fetchMilestoneAllowlists(client, config, campaignIds);
             String milestonesJson = JSON.serialize(milestonesByCampaign);
             String rewardsJson    = JSON.serialize(rewards);
+
+            sk.totalFriendCount = outgoingByFriend.size();
 
             // 6. Build friend stubs: structure-only, milestones default pending.
             //    The LWC renders these immediately while it fans out detail calls.
