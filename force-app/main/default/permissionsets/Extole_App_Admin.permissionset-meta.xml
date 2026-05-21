@@ -232,6 +232,10 @@
         <tab>Extole_Manage_List_View</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <tabSettings>
+        <tab>Extole_Receive_Events</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <userPermissions>
         <enabled>true</enabled>
         <name>ViewRoles</name>

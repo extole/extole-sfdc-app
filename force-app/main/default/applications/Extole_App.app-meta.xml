@@ -14,6 +14,7 @@
     <tabs>Extole_Configure_KPIs</tabs>
     <tabs>Extole_Manage_Audiences</tabs>
     <tabs>Extole_Manage_List_View</tabs>
+    <tabs>Extole_Receive_Events</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <formFactors>Small</formFactors>

@@ -150,6 +150,10 @@
     <fieldPermissions><editable>false</editable><field>Extole_Writeback_Log__c.Salesforce_Id__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>false</editable><field>Extole_Writeback_Log__c.Status__c</field><readable>true</readable></fieldPermissions>
     <classAccesses>
+        <apexClass>ExtoleWritebackController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ExtoleAudienceController</apexClass>
         <enabled>true</enabled>
     </classAccesses>
