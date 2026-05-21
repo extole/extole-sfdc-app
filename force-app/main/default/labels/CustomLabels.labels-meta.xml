@@ -901,7 +901,7 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Event configurator modal step 3 title</shortDescription>
-        <value>Review &amp; Deploy</value>
+        <value>Review &amp; Activate</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Modal_EditTitle</fullName>
@@ -1271,29 +1271,29 @@
         <fullName>Extole_EC_Review_DeployButton</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Deploy button label</shortDescription>
-        <value>Deploy</value>
+        <shortDescription>Activate button label</shortDescription>
+        <value>Activate</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_Deploying</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Deploying spinner message</shortDescription>
-        <value>Deploying… This may take up to 30 seconds.</value>
+        <shortDescription>Activating spinner message</shortDescription>
+        <value>Activating… This may take up to 30 seconds.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_DeploySuccess</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Deploy success message</shortDescription>
-        <value>Event flow deployed and activated successfully.</value>
+        <shortDescription>Activate success message</shortDescription>
+        <value>Event flow activated successfully.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_DeployFailed</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Deploy failed message prefix</shortDescription>
-        <value>Deployment failed.</value>
+        <shortDescription>Activate failed message prefix</shortDescription>
+        <value>Activation failed.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_DiffSection</fullName>

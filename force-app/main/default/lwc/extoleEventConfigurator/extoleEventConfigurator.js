@@ -111,6 +111,7 @@ export default class ExtoleEventConfigurator extends LightningElement {
         const dateOpts = { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
         return {
             ...c,
+            isActive: c.Status__c === 'ACTIVE',
             triggerLabel: this.buildTriggerLabel(c),
             statusLabel: this.getStatusLabel(c.Status__c),
             statusCellClass: this.getStatusCellClass(c.Status__c),
@@ -196,6 +197,8 @@ export default class ExtoleEventConfigurator extends LightningElement {
         if (action === 'edit') {
             this.editingConfig = config;
             this.isModalOpen = true;
+        } else if (action === 'deactivate') {
+            this.handleDirectDeactivate(config);
         } else if (action === 'delete') {
             this.openDeleteModal(config);
         }
@@ -236,6 +239,16 @@ export default class ExtoleEventConfigurator extends LightningElement {
         this.isModalOpen = false;
         this.editingConfig = null;
         this.loadConfigs();
+    }
+
+    async handleDirectDeactivate(config) {
+        try {
+            await deactivateEventConfig({ configKey: config.Config_Key__c });
+            this.showSuccess(LABEL_DEACTIVATE_SUCCESS);
+            await this.loadConfigs();
+        } catch (error) {
+            this.showError(LABEL_ERROR_DELETE, error);
+        }
     }
 
     // ── Modal: Delete ──────────────────────────────────────────────────────

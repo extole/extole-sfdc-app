@@ -56,6 +56,7 @@
                                         onselect={handleRowMenuSelect}
                                     >
                                         <lightning-menu-item value="edit" label="Edit"></lightning-menu-item>
+                                        <lightning-menu-item lwc:if={config.isActive} value="deactivate" label={labelDeactivate}></lightning-menu-item>
                                         <lightning-menu-item value="delete" label="Delete"></lightning-menu-item>
                                     </lightning-button-menu>
                                 </td>

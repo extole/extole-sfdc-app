@@ -89,7 +89,7 @@ export default class ExtoleManageAudiences extends LightningElement {
             }
         }
         // Always reload logs while a sync is active so submission + transition rows surface
-        await this.loadSyncLogs();
+        await this.loadSyncLogs(true);
     }
 
     async loadConfigs() {
@@ -138,8 +138,8 @@ export default class ExtoleManageAudiences extends LightningElement {
     get sortIconState()    { return this.getSortIcon('Last_Operation_State__c'); }
     get sortIconLastSync() { return this.getSortIcon('Last_Sync_At__c'); }
 
-    async loadSyncLogs() {
-        this.isLoadingLogs = true;
+    async loadSyncLogs(silent = false) {
+        if (!silent) this.isLoadingLogs = true;
         try {
             const result = await getAudienceSyncLogs();
             const nameMap = new Map();
@@ -341,7 +341,7 @@ export default class ExtoleManageAudiences extends LightningElement {
             // The Queueable writes the submission log row a moment after enqueue.
             // Reload logs once it's had time to land so the first row doesn't lag
             // until the next 10s poll tick.
-            setTimeout(() => this.loadSyncLogs(), 2000);
+            setTimeout(() => this.loadSyncLogs(true), 2000);
         } catch (error) {
             this.showError('Failed to start sync.', error);
         }
