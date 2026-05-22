@@ -30,7 +30,7 @@
                 </div>
             </div>
 
-            <!-- Referred-by (friend mode) -->
+            <!-- Referred-by -->
             <template lwc:if={hasReferredBy}>
                 <div class="section">
                     <div class="section-header" data-section="referredBy" onclick={toggleSection}>
@@ -98,55 +98,32 @@
                             <template for:each={programGroups} for:item="g">
                                 <div key={g.program} class="program-group">
                                     <span class="program-pill" style={g.programStyle}>program: {g.program}</span>
-                                    <template for:each={g.engagements} for:item="eng">
-                                        <div key={eng.key} class="engagement-card">
-                                            <div class={eng.headerClass} data-key={eng.key} onclick={toggleEngagement}>
-                                                <div class="engagement-chevron-slot">
-                                                    <template lwc:if={eng.toggleable}>
-                                                        <lightning-icon icon-name={eng.chevronName} size="xx-small" class="engagement-chevron"></lightning-icon>
-                                                    </template>
-                                                </div>
-                                                <div class={eng.avatarClass}>
-                                                    <template lwc:if={eng.avatarIsEarned}>
+                                    <template for:each={g.friends} for:item="f">
+                                        <div key={f.key} class="engagement-card">
+                                            <div class="engagement-header">
+                                                <div class={f.avatarClass}>
+                                                    <template lwc:if={f.avatarIsEarned}>
                                                         <lightning-icon icon-name="utility:check" size="x-small" variant="inverse"></lightning-icon>
                                                     </template>
                                                     <template lwc:else>
-                                                        <span class="avatar-initials">{eng.avatarInitials}</span>
+                                                        <span class="avatar-initials">{f.avatarInitials}</span>
                                                     </template>
                                                 </div>
                                                 <div class="engagement-identity">
-                                                    <template lwc:if={eng.isLinked}>
-                                                        <a href={eng.sfdcUrl} class="engagement-name record-link">{eng.displayName}</a>
+                                                    <template lwc:if={f.isLinked}>
+                                                        <a href={f.sfdcUrl} class="engagement-name record-link">{f.displayName}</a>
                                                     </template>
                                                     <template lwc:else>
-                                                        <span class="engagement-name">{eng.displayName}</span>
+                                                        <span class="engagement-name">{f.displayName}</span>
                                                     </template>
-                                                    <template lwc:if={eng.statusText}>
-                                                        <div class="engagement-status">{eng.statusText}</div>
+                                                    <template lwc:if={f.statusText}>
+                                                        <div class="engagement-status">{f.statusText}</div>
                                                     </template>
                                                 </div>
-                                                <span class={eng.rewardStateClass}>{eng.rewardStateText}</span>
+                                                <span class={f.rewardStateClass}>{f.rewardStateText}</span>
                                             </div>
-                                            <template lwc:if={eng.showMilestones}>
-                                                <div class="milestone-list">
-                                                    <template for:each={eng.milestones} for:item="m">
-                                                        <div key={m.name} class={m.rowClass}>
-                                                            <span class="milestone-bullet"></span>
-                                                            <span class="milestone-label">{m.displayName}</span>
-                                                            <template lwc:if={m.dateStr}>
-                                                                <span class="milestone-date">{m.dateStr}</span>
-                                                            </template>
-                                                        </div>
-                                                    </template>
-                                                </div>
-                                            </template>
                                         </div>
                                     </template>
-                                </div>
-                            </template>
-                            <template lwc:if={hasMoreFriends}>
-                                <div class="more-friends-row">
-                                    <a href={moreFriendsHref} target="_blank" rel="noopener" class="more-friends-link">+{moreFriendsCount} more — view in Extole</a>
                                 </div>
                             </template>
                         </div>
