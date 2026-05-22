@@ -40,7 +40,7 @@
                     <template lwc:if={referredByExpanded}>
                         <div class="section-body">
                             <div class="referred-by-row">
-                                <span class="program-pill" style={referredByDecorated.programStyle}>program: {referredByDecorated.program}</span>
+                                <span class="program-pill" style={referredByDecorated.programStyle}>{referredByDecorated.program}</span>
                                 <template lwc:if={referredByDecorated.isLinked}>
                                     <a href={referredByDecorated.sfdcUrl} class="record-link">{referredByDecorated.displayName}</a>
                                 </template>
@@ -65,7 +65,7 @@
                             <template for:each={decoratedShareLinks} for:item="sl">
                                 <div key={sl.code} class="share-link-row">
                                     <template lwc:if={sl.program}>
-                                        <span class="program-pill" style={sl.programStyle}>program: {sl.program}</span>
+                                        <span class="program-pill" style={sl.programStyle}>{sl.program}</span>
                                     </template>
                                     <template lwc:else>
                                         <span></span>
@@ -97,7 +97,7 @@
                         <div class="section-body friends-body">
                             <template for:each={programGroups} for:item="g">
                                 <div key={g.program} class="program-group">
-                                    <span class="program-pill" style={g.programStyle}>program: {g.program}</span>
+                                    <span class="program-pill" style={g.programStyle}>{g.program}</span>
                                     <template for:each={g.friends} for:item="f">
                                         <div key={f.key} class="engagement-card">
                                             <div class="engagement-header">
@@ -116,12 +116,26 @@
                                                     <template lwc:else>
                                                         <span class="engagement-name">{f.displayName}</span>
                                                     </template>
-                                                    <template lwc:if={f.statusText}>
-                                                        <div class="engagement-status">{f.statusText}</div>
-                                                    </template>
+                                                    <div class="engagement-status">{f.statusText}</div>
                                                 </div>
                                                 <span class={f.rewardStateClass}>{f.rewardStateText}</span>
                                             </div>
+                                            <template lwc:if={f.hasMilestones}>
+                                                <div class="milestone-list">
+                                                    <template for:each={f.milestones} for:item="m">
+                                                        <div key={m.key} class={m.rowClass}>
+                                                            <div class="milestone-bullet"></div>
+                                                            <span class="milestone-label">{m.label}</span>
+                                                            <template lwc:if={m.date}>
+                                                                <span class="milestone-date">{m.date}</span>
+                                                            </template>
+                                                            <template lwc:else>
+                                                                <span></span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
                                         </div>
                                     </template>
                                 </div>

@@ -299,7 +299,7 @@
 
 .engagement-header {
     display: grid;
-    grid-template-columns: 14px 36px 1fr auto;
+    grid-template-columns: 36px 1fr auto;
     align-items: center;
     gap: 10px;
 }

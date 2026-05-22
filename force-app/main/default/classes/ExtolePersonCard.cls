@@ -17,6 +17,12 @@ public with sharing class ExtolePersonCard {
         @AuraEnabled public String  campaignId;
     }
 
+    public class JourneyStep {
+        @AuraEnabled public String name;
+        @AuraEnabled public String label;
+        @AuraEnabled public String dateCompleted;
+    }
+
     public class Friend {
         @AuraEnabled public String personId;
         @AuraEnabled public String email;
@@ -25,6 +31,7 @@ public with sharing class ExtolePersonCard {
         @AuraEnabled public Reward reward;
         @AuraEnabled public String sfdcRecordId;
         @AuraEnabled public String sfdcObjectType;
+        @AuraEnabled public List<JourneyStep> steps = new List<JourneyStep>();
     }
 
     public class ReferredBy {

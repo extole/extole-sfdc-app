@@ -190,7 +190,13 @@ export default class ExtolePersonCard extends LightningElement {
             const sfdcUrl = f.sfdcRecordId
                 ? `/lightning/r/${f.sfdcObjectType}/${f.sfdcRecordId}/view`
                 : null;
-            const displayName = f.displayName || f.email || f.personId;
+            const displayName = f.displayName || f.email || 'Anonymous';
+            const milestones = (f.steps || []).map(s => ({
+                key:      s.name,
+                label:    s.label,
+                date:     s.dateCompleted ? formatShortDate(s.dateCompleted) : null,
+                rowClass: s.dateCompleted ? 'milestone-row milestone-row-completed' : 'milestone-row milestone-row-pending'
+            }));
             byProgram.get(program).push({
                 key:             f.personId,
                 displayName,
@@ -201,7 +207,9 @@ export default class ExtolePersonCard extends LightningElement {
                 avatarIsEarned:  earned,
                 statusText,
                 rewardStateText,
-                rewardStateClass
+                rewardStateClass,
+                milestones,
+                hasMilestones:   milestones.length > 0
             });
         }
         const groups = [];
@@ -220,12 +228,14 @@ export default class ExtolePersonCard extends LightningElement {
         if (!this.hasReferredBy) return null;
         const r = this.card.referredBy;
         const c = programColors(r.program);
+        const displayName = r.displayName || r.email || 'Anonymous';
         return {
             ...r,
+            displayName,
             sfdcUrl:        r.sfdcRecordId ? `/lightning/r/${r.sfdcObjectType}/${r.sfdcRecordId}/view` : null,
             isLinked:       !!r.sfdcRecordId,
             programStyle:   `background:${c.fill};color:${c.primary};`,
-            avatarInitials: computeInitials(r.displayName || r.email)
+            avatarInitials: computeInitials(displayName)
         };
     }
 
