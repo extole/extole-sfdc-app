@@ -201,4 +201,8 @@
         <tab>Extole_Manage_Audiences</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <applicationVisibilities>
+        <application>Extole_App</application>
+        <visible>true</visible>
+    </applicationVisibilities>
 </PermissionSet>

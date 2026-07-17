@@ -1,5 +1,6 @@
 import { LightningElement, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import LightningConfirm from 'lightning/confirm';
 import getAudienceConfigs from '@salesforce/apex/ExtoleAudienceController.getAudienceConfigs';
 import saveAudienceConfig from '@salesforce/apex/ExtoleAudienceController.saveAudienceConfig';
 import deleteAudienceConfig from '@salesforce/apex/ExtoleAudienceController.deleteAudienceConfig';
@@ -44,7 +45,7 @@ export default class ExtoleManageAudiences extends LightningElement {
     async connectedCallback() {
         try {
             this.userTimezone = await getCurrentUserTimezone();
-        } catch (e) {
+        } catch {
             // Fall back to browser tz if the Apex call fails
         }
         await this.loadConfigs();
@@ -65,6 +66,7 @@ export default class ExtoleManageAudiences extends LightningElement {
 
     startPolling() {
         if (this.pollTimer) return;
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
         this.pollTimer = setInterval(() => this.pollIfNeeded(), POLL_INTERVAL_MS);
     }
 
@@ -78,16 +80,16 @@ export default class ExtoleManageAudiences extends LightningElement {
     async pollIfNeeded() {
         const active = (this.configs || []).filter(c => NON_TERMINAL.has(c.Last_Operation_State__c));
         if (active.length === 0) return;
-        for (const cfg of active) {
+        await Promise.all(active.map(async (cfg) => {
             try {
                 const fresh = await pollAudienceState({ configKey: cfg.Config_Key__c });
-                this.configs = this.configs.map(c =>
-                    c.Config_Key__c === cfg.Config_Key__c ? this.decorateConfig(fresh) : c
-                );
-            } catch (e) {
+                this.configs = this.configs.map((c) => {
+                    return c.Config_Key__c === cfg.Config_Key__c ? this.decorateConfig(fresh) : c;
+                });
+            } catch {
                 // Non-fatal — try again next tick
             }
-        }
+        }));
         // Always reload logs while a sync is active so submission + transition rows surface
         await this.loadSyncLogs(true);
     }
@@ -252,7 +254,7 @@ export default class ExtoleManageAudiences extends LightningElement {
         this.isLoadingColumns = true;
         try {
             this.reportColumns = await getReportColumns({ reportId });
-        } catch (error) {
+        } catch {
             this.reportColumns = [];
             this.modalError = 'Could not read columns from the selected report.';
         } finally {
@@ -341,6 +343,7 @@ export default class ExtoleManageAudiences extends LightningElement {
             // The Queueable writes the submission log row a moment after enqueue.
             // Reload logs once it's had time to land so the first row doesn't lag
             // until the next 10s poll tick.
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
             setTimeout(() => this.loadSyncLogs(true), 2000);
         } catch (error) {
             this.showError('Failed to start sync.', error);
@@ -350,7 +353,11 @@ export default class ExtoleManageAudiences extends LightningElement {
     async handleDelete(configKey) {
         const cfg = this.configs.find(c => c.Config_Key__c === configKey);
         if (!cfg) return;
-        if (!confirm(`Delete audience config "${cfg.Extole_Audience_Name__c}"? This does not delete the audience in Extole.`)) {
+        const confirmed = await LightningConfirm.open({
+            message: `Delete audience config "${cfg.Extole_Audience_Name__c}"? This does not delete the audience in Extole.`,
+            label: 'Delete Audience Config'
+        });
+        if (!confirmed) {
             return;
         }
         try {
@@ -369,8 +376,8 @@ export default class ExtoleManageAudiences extends LightningElement {
 
     async handleRunSchedulerNow() {
         try {
-            const checked = await runSchedulerNow();
-            this.showSuccess(`Scheduler triggered — evaluated ${checked} scheduled audience(s). Watch for state transitions.`);
+            await runSchedulerNow();
+            this.showSuccess('Scheduler triggered — watch for state transitions in the audience list.');
             await this.loadConfigs();
         } catch (error) {
             this.showError('Failed to run scheduler.', error);

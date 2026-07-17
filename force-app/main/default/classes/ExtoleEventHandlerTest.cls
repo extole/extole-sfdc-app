@@ -580,7 +580,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testScanCampaigns_found_topLevelEventNames() {
-        String body = '[{"id":"camp1","name":"Spring Promo","state":"PUBLISHED",'
+        String body = '[{"id":"camp1","name":"Spring Promo","state":"LIVE",'
             + '"event_names":["lead_created","lead_converted"]}]';
         Test.startTest();
         Map<String, Object> result = ExtoleSafetyCheckService.scanCampaigns(body, 'lead_created');
@@ -591,7 +591,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testScanCampaigns_notFound() {
-        String body = '[{"id":"camp1","name":"Spring Promo","state":"PUBLISHED",'
+        String body = '[{"id":"camp1","name":"Spring Promo","state":"LIVE",'
             + '"event_names":["some_other_event"]}]';
         Test.startTest();
         Map<String, Object> result = ExtoleSafetyCheckService.scanCampaigns(body, 'lead_created');
@@ -611,7 +611,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testScanCampaigns_triggersShape() {
-        String body = '[{"id":"camp2","name":"Referral","state":"ACTIVE","triggers":['
+        String body = '[{"id":"camp2","name":"Referral","state":"LIVE","triggers":['
             + '{"event_name":"lead_created"}]}]';
         Test.startTest();
         Map<String, Object> result = ExtoleSafetyCheckService.scanCampaigns(body, 'lead_created');
@@ -621,7 +621,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testScanCampaigns_buildsShape() {
-        String body = '[{"id":"camp3","name":"Nested","state":"PUBLISHED","builds":['
+        String body = '[{"id":"camp3","name":"Nested","state":"LIVE","builds":['
             + '{"triggers":[{"event_names":["lead_created","opp_won"]}]}]}]';
         Test.startTest();
         Map<String, Object> result = ExtoleSafetyCheckService.scanCampaigns(body, 'lead_created');
@@ -631,7 +631,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testScanCampaigns_wrapperShape() {
-        String body = '{"campaigns":[{"id":"camp4","name":"Wrapped","state":"ACTIVE",'
+        String body = '{"campaigns":[{"id":"camp4","name":"Wrapped","state":"LIVE",'
             + '"event_names":["lead_created"]}]}';
         Test.startTest();
         Map<String, Object> result = ExtoleSafetyCheckService.scanCampaigns(body, 'lead_created');
@@ -641,7 +641,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testScanCampaigns_caseInsensitive() {
-        String body = '[{"id":"camp5","name":"Case Test","state":"PUBLISHED",'
+        String body = '[{"id":"camp5","name":"Case Test","state":"LIVE",'
             + '"event_names":["Lead_Created"]}]';
         Test.startTest();
         Map<String, Object> result = ExtoleSafetyCheckService.scanCampaigns(body, 'lead_created');
@@ -659,7 +659,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testCheckEventUsage_httpSuccess_found() {
-        String campaignBody = '[{"id":"c1","name":"Active Campaign","state":"PUBLISHED",'
+        String campaignBody = '[{"id":"c1","name":"Active Campaign","state":"LIVE",'
             + '"event_names":["lead_converted"]}]';
         Test.setMock(HttpCalloutMock.class, new SuccessMock(200, campaignBody));
         Test.startTest();
@@ -896,7 +896,7 @@ private class ExtoleEventHandlerTest {
 
     @isTest
     static void testCheckEventUsage_controller_found() {
-        String campaignBody = '[{"id":"cx1","name":"Promo","state":"PUBLISHED",'
+        String campaignBody = '[{"id":"cx1","name":"Promo","state":"LIVE",'
             + '"event_names":["lead_created"]}]';
         Test.setMock(HttpCalloutMock.class, new SuccessMock(200, campaignBody));
 

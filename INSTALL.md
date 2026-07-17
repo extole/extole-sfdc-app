@@ -4,11 +4,11 @@
 
 Installation takes about 20–30 minutes and has two distinct phases.
 
-**Phase 1 (Steps 1–3)** deploys the app and configures the Extole API connection. This covers the Analytics — after Step 3 you can sync report data and see metrics in Salesforce.
+**Phase 1 (Steps 1–3)** deploys the app and configures the Extole API connection. This covers Program Analytics and the KPI Dashboard — after Step 3 you can sync report data and see metrics in Salesforce.
 
 **Phase 2 (Steps 4–6)** sets up the Tooling API OAuth connection required by the Event Configurator. Salesforce requires a Connected App and a one-time OAuth authorization to allow the app to generate and deploy Flows on your behalf. This is the most involved part of the setup but only needs to be done once per org.
 
-Steps 7–8 assign permissions and launch the app.
+Steps 7–8 assign permissions and launch the app. Steps 9–11 cover optional features (Share Link Backfill, Receive Events, and the Person Card) — set up only the ones you plan to use.
 
 ---
 
@@ -30,7 +30,7 @@ Steps 7–8 assign permissions and launch the app.
 **In your terminal:**
 
 ```bash
-git clone git@github.com:cduskin-cpu/extole-sfdc-app.git
+git clone git@github.com:extole/extole-sfdc-app.git
 cd extole-sfdc-app
 ```
 
@@ -179,13 +179,13 @@ This is a one-time step. After authorization, the Event Configurator can deploy 
 
 **In your terminal:**
 
-Assign `Extole_App_Admin` to yourself and any other admins who will configure the Analytics or the events sent to Extole:
+Assign `Extole_App_Admin` to yourself and any other admins who will configure Program Analytics, the KPI Dashboard, or the events sent to Extole:
 
 ```bash
 sf org assign permset --name Extole_App_Admin --target-org <alias>
 ```
 
-Assign `Extole_App_Viewer` to any user who needs read access to the Analytics and List View:
+Assign `Extole_App_Viewer` to any user who needs read access to Program Analytics, the KPI Dashboard, and List View:
 
 ```bash
 sf org assign permset --name Extole_App_Viewer --target-org <alias>
@@ -195,11 +195,7 @@ To assign to another user, add `--on-behalf-of <username>` to either command.
 
 > **Recommended for production orgs:** Create a dedicated Integration User (a non-human Salesforce user with a full license) and assign it `Extole_App_Admin`. Perform the Tooling API OAuth authorization in Step 6 while logged in as that user. This ensures the Event Configurator remains functional even if the original admin's account is deactivated or their session expires.
 
-**Also in Salesforce Setup UI** — make the Extole app visible in the App Launcher:
-
-1. Setup → **App Manager** → find **Extole** → click the row action → **Edit**
-2. Click **User Profiles** in the left menu → add the profiles that need access (e.g. System Administrator)
-3. Save
+Both permission sets grant visibility into the **Extole** app itself, so assigning either one is sufficient to make it appear in the App Launcher — no separate App Manager step is needed. (See Troubleshooting below if the app still doesn't appear for a user.)
 
 ---
 
@@ -210,7 +206,7 @@ To assign to another user, add `--on-behalf-of <username>` to either command.
 3. Open the **Configure Events** tab → click **Test Connection** — verify it shows "Connected"
 4. Open the **Configure KPIs** tab → click **Add Report** and configure your first KPI
    - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
-5. Trigger a manual sync from the Configure KPIs tab — your Analytics will populate once the first sync completes
+5. Trigger a manual sync from the Configure KPIs tab — your KPI Dashboard will populate once the first sync completes
 
 > **If you have the Extole CLI:** run `extole events stream` and then trigger a Salesforce record change (e.g. create a Lead). You should see the event arrive in Extole in real time.
 
@@ -247,6 +243,41 @@ The **Manage Share Links** tab generates Extole share links for existing Contact
 
 ---
 
+## Step 10 — Set up Receive Events (optional)
+
+The **Receive Events** tab lets Extole send events (e.g. a reward being earned) into Salesforce, where they get written to a matching Contact or Lead. This direction is the reverse of everything above — Extole calls into Salesforce, so the auth setup lives on the Salesforce side, in the form of a Connected App.
+
+**In Salesforce Setup UI:**
+
+1. Setup → **App Manager** → **New Connected App**
+2. Enable **OAuth Settings**, then add these two scopes:
+   - **Perform requests at any time (refresh_token, offline_access)**
+   - **Access and manage your data (api)**
+3. Under **OAuth Settings**, check **Enable Client Credentials Flow**
+4. Save, then open the app's detail page to find the **Consumer Key** and **Consumer Secret**
+
+**In the Receive Events tab:**
+
+5. Copy the **Webhook Endpoint** URL shown at the top of the tab (`.../services/apexrest/extole/events`)
+6. In the Extole component's configuration, set the Connected App's Consumer Key and Secret as the `CLIENT_KEY` setting, and set the endpoint URL from step 5 as the webhook target
+7. Click **Add Rule** under **Writeback Rules** to map incoming event fields to Contact or Lead fields
+8. Trigger a test event from Extole and confirm it appears in the **Event Log** on the same tab
+
+> Requires `Extole_App_Admin` — the underlying `ExtoleWebhookController`/`ExtoleWritebackController` classes and the `Extole_Writeback_Cfg__c`/`Extole_Writeback_Log__c` objects are only accessible to that permission set.
+
+---
+
+## Step 11 — Add the Person Card to Lead/Contact pages (optional)
+
+The Person Card is a Lightning component (not a tab) that surfaces a person's Extole share links, referred friends, rewards, and referrer attribution directly on the record page.
+
+1. Open a **Lead** or **Contact** record → click the gear icon → **Edit Page**
+2. Drag the **Extole Person Card** component onto the page from the component palette
+3. Save, then **Activate** the page for the org/profiles that need it (if not already activated)
+4. Repeat for the other object (Lead and Contact are configured independently)
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
@@ -257,5 +288,9 @@ The **Manage Share Links** tab generates Extole share links for existing Contact
 | Scheduled sync not running | Go to **Configure KPIs**, change Sync Cadence and save to re-register the job. |
 | Permission errors on objects | User missing `Extole_App_Admin` or `Extole_App_Viewer` permission set. |
 | Share Link field not visible on Contact/Lead | Field is deployed but not on the page layout — see Step 9. |
+| Extole app doesn't appear in App Launcher for a user | Confirm they're assigned `Extole_App_Admin` or `Extole_App_Viewer` (Setup → Permission Sets → the set → Manage Assignments). If assigned and still missing, redeploy the permission set — its `applicationVisibilities` grant may not have deployed. |
+| "You do not have access to the Apex class named '...'" error on any tab | The user's assigned permission set doesn't grant that class. Check Setup → Permission Sets → the set → Apex Class Access. |
+| A tab renders but shows no data (e.g. "No live Extole programs found") with no explicit error | The LWC may be silently swallowing a permission exception rather than surfacing it. Check the user's actual Apex debug log (Setup → Debug Logs, add a trace flag on their user) for the real error before assuming it's a data issue — this exact symptom was caused by a missing **read** permission on the standard `UserExternalCredential` object, not by the Extole API or the data itself. |
+| Receive Events shows no incoming events | Confirm the Connected App's Client Credentials flow is enabled and its Consumer Key/Secret match the Extole component's `CLIENT_KEY` setting (see Step 10). Check the Event Log on the tab for delivery attempts and errors. |
 
 For detailed diagnostics, enable **Debug Logging** on the **Configure Events** tab and check the KPI Data Import Log on the **Configure KPIs** tab.
