@@ -62,17 +62,8 @@ public with sharing class ExtoleAudienceController {
      * cadences without waiting for the next hourly tick.
      */
     @AuraEnabled
-    public static Integer runSchedulerNow() {
-        DateTime now = DateTime.now();
-        Integer enqueued = 0;
-        List<Extole_Audience_Cfg__c> all = [
-            SELECT Id, Config_Key__c, Sync_Cadence__c, Active__c,
-                   Last_Sync_At__c, Last_Operation_State__c
-            FROM Extole_Audience_Cfg__c
-            WHERE Active__c = true AND Sync_Cadence__c != null AND Sync_Cadence__c != 'Manual'
-        ];
+    public static void runSchedulerNow() {
         new ExtoleAudienceScheduler().execute(null);
-        return all.size();
     }
 
     @AuraEnabled
@@ -137,6 +128,7 @@ public with sharing class ExtoleAudienceController {
             FROM Extole_Audience_Cfg__c
             WHERE Config_Key__c = :configKey
             LIMIT 1
+            FOR UPDATE
         ];
         if (configs.isEmpty()) {
             throw new AuraHandledException('Audience config not found: ' + configKey);

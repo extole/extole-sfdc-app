@@ -122,8 +122,17 @@ public with sharing class ExtoleAudienceSyncQueueable implements Queueable, Data
             throw new IllegalArgumentException('Column ' + columnName + ' not found in report');
         }
 
+        List<Reports.ReportDetailRow> rows = facts.getRows();
+        // Salesforce caps synchronous report execution at 2,000 rows.
+        // Hitting the cap means the audience list is silently incomplete — fail loudly.
+        if (rows.size() >= 2000) {
+            throw new IllegalArgumentException(
+                'Report returned 2,000 rows and may be truncated (Salesforce synchronous report limit). ' +
+                'Narrow the report filters to fewer than 2,000 rows.'
+            );
+        }
         Set<String> seen = new Set<String>();
-        for (Reports.ReportDetailRow row : facts.getRows()) {
+        for (Reports.ReportDetailRow row : rows) {
             List<Reports.ReportDataCell> cells = row.getDataCells();
             if (idx >= cells.size()) continue;
             Object raw = cells.get(idx).getValue();

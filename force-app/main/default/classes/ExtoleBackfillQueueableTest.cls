@@ -34,7 +34,7 @@ private class ExtoleBackfillQueueableTest {
             if (ep.contains('identity_key_value') && mth == 'GET') {
                 res.setStatusCode(200);
                 res.setBody('[]');
-            } else if (ep.endsWith('/v5/persons') && mth == 'POST') {
+            } else if (ep.contains('/v5/persons') && !ep.contains('/shareables') && mth == 'POST') {
                 res.setStatusCode(201);
                 res.setBody('{"id":"person-new","email":"new@extole-test.com"}');
             } else if (ep.contains('/v5/persons/') && ep.endsWith('/shareables') && mth == 'POST') {

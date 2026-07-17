@@ -94,13 +94,37 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
             return;
         }
 
-        // 3. Build SOQL field set (always include Id; add any sfdc_field paths)
+        // 3. Build SOQL field set — validate object and field names against Schema
+        //    to prevent injection via admin-controlled Field_Mappings_JSON__c /
+        //    Trigger_Object__c values.
+        Schema.SObjectType objType = Schema.getGlobalDescribe().get(cfg.Trigger_Object__c);
+        if (objType == null) {
+            System.debug('ExtoleUniversalHandler.execute: unknown object – ' + cfg.Trigger_Object__c);
+            return;
+        }
+        Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
+
         Set<String> fieldSet = new Set<String>{ 'Id' };
         for (Object rawM : mappings) {
             Map<String, Object> m = (Map<String, Object>) rawM;
             String sfdcField = (String) m.get('sfdc_field');
-            if (!String.isBlank(sfdcField)) {
-                fieldSet.add(sfdcField); // SOQL handles dot-notation natively
+            if (String.isBlank(sfdcField)) continue;
+            if (sfdcField.contains('.')) {
+                // Relationship field (e.g. "Account.Name") — validate format only;
+                // full Schema traversal for arbitrary relationships is complex and
+                // the format check blocks injection chars (parens, commas, spaces).
+                String[] parts = sfdcField.split('\\.', 2);
+                if (isValidApiName(parts[0]) && isValidApiName(parts[1])) {
+                    fieldSet.add(sfdcField);
+                } else {
+                    System.debug('ExtoleUniversalHandler.execute: invalid field name – ' + sfdcField);
+                }
+            } else {
+                if (fieldMap.containsKey(sfdcField.toLowerCase())) {
+                    fieldSet.add(sfdcField);
+                } else {
+                    System.debug('ExtoleUniversalHandler.execute: field not found – ' + sfdcField + ' on ' + cfg.Trigger_Object__c);
+                }
             }
         }
         String soql = 'SELECT ' + String.join(new List<String>(fieldSet), ', ')
@@ -274,5 +298,10 @@ public with sharing class ExtoleUniversalHandler implements Queueable, Database.
         } catch (Exception e) {
             System.debug('ExtoleUniversalHandler.updateTelemetry ERROR: ' + e.getMessage());
         }
+    }
+
+    /** Rejects names containing characters not valid in SFDC API names (parentheses, spaces, commas). */
+    private static Boolean isValidApiName(String name) {
+        return String.isNotBlank(name) && Pattern.matches('^[a-zA-Z][a-zA-Z0-9_]*$', name);
     }
 }
