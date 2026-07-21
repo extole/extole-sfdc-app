@@ -38,7 +38,6 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | `Extole_Event_Log__c` | Audit trail of event configuration lifecycle actions (deploys, activations, failures) |
 | `Extole_Event_Fire_Log__c` | Runtime log of every Extole event fired by configured triggers |
 | `Extole_Backfill_Log__c` | Audit log of share link backfill jobs |
-| `Extole_Person_Snapshot__c` | Cached Extole person data for Contacts and Leads |
 | `Extole_Debug_Log__c` | Optional detailed debug logs for troubleshooting |
 | `Extole_Audience_Cfg__c` | Admin-defined Salesforce report → Extole audience sync configurations |
 | `Extole_Audience_Sync_Log__c` | Audit log of every audience sync attempt |
