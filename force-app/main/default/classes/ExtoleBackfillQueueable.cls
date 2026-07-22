@@ -19,19 +19,18 @@
  *   'report'  — IDs loaded via Analytics REST API; capped at 2,000 rows
  */
 public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallouts {
-
     private static final Integer CHUNK_SIZE = 25;
 
-    private Id     logId;
-    private String objectType;   // 'Contact' or 'Lead'
+    private Id logId;
+    private String objectType; // 'Contact' or 'Lead'
     private String audienceType; // 'default', 'date', or 'report'
     private String selectedDate; // YYYY-MM-DD, used when audienceType == 'date'
     private String reportId;
     private String targetField;
     private String programLabel;
-    private Id     cursor;       // last processed Id for cursor-based pagination
+    private Id cursor; // last processed Id for cursor-based pagination
     private List<Id> reportIds;
-    private Integer  reportOffset;
+    private Integer reportOffset;
 
     public ExtoleBackfillQueueable(
         Id logId,
@@ -43,14 +42,14 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         String programLabel,
         Id cursor
     ) {
-        this.logId        = logId;
-        this.objectType   = objectType;
+        this.logId = logId;
+        this.objectType = objectType;
         this.audienceType = audienceType;
         this.selectedDate = selectedDate;
-        this.reportId     = reportId;
-        this.targetField  = targetField;
+        this.reportId = reportId;
+        this.targetField = targetField;
         this.programLabel = programLabel;
-        this.cursor       = cursor;
+        this.cursor = cursor;
         this.reportOffset = 0;
     }
 
@@ -62,30 +61,40 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         List<Id> reportIds,
         Integer reportOffset
     ) {
-        this.logId         = logId;
-        this.objectType    = objectType;
-        this.audienceType  = 'report';
-        this.targetField   = targetField;
-        this.programLabel  = programLabel;
-        this.reportIds     = reportIds;
-        this.reportOffset  = reportOffset;
+        this.logId = logId;
+        this.objectType = objectType;
+        this.audienceType = 'report';
+        this.targetField = targetField;
+        this.programLabel = programLabel;
+        this.reportIds = reportIds;
+        this.reportOffset = reportOffset;
     }
 
     public void execute(QueueableContext ctx) {
         List<SObject> chunk;
 
         if (audienceType == 'report') {
-            if (reportIds == null) {
-                reportIds    = loadReportIds(reportId);
+            Boolean isFirstLoad = reportIds == null;
+            if (isFirstLoad) {
+                reportIds = loadReportIds(reportId);
                 reportOffset = 0;
             }
-            if (reportIds == null || reportIds.isEmpty()) {
+            if (isFirstLoad && reportIds == null) {
+                // loadReportIds() already marked the log FAILED — finalize() would
+                // overwrite that with a false 'COMPLETED', so skip it entirely.
+                return;
+            }
+            if (reportIds.isEmpty()) {
                 finalize();
                 return;
             }
-            Integer endIdx = Math.min(reportOffset + CHUNK_SIZE, reportIds.size());
+            Integer endIdx = Math.min(
+                reportOffset + CHUNK_SIZE,
+                reportIds.size()
+            );
             List<Id> page = new List<Id>();
-            for (Integer i = reportOffset; i < endIdx; i++) page.add(reportIds[i]);
+            for (Integer i = reportOffset; i < endIdx; i++)
+                page.add(reportIds[i]);
             chunk = queryRecords(page);
         } else {
             chunk = queryNextCursorChunk();
@@ -97,7 +106,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         }
 
         Integer successCount = 0;
-        Integer errorCount   = 0;
+        Integer errorCount = 0;
         List<Map<String, String>> errors = new List<Map<String, String>>();
         List<SObject> toUpdate = new List<SObject>();
 
@@ -105,18 +114,26 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
             String email = (String) r.get('Email');
             if (String.isBlank(email)) {
                 errorCount++;
-                errors.add(new Map<String, String>{
-                    'id' => (String) r.get('Id'), 'name' => (String) r.get('Name'), 'error' => 'No email address'
-                });
+                errors.add(
+                    new Map<String, String>{
+                        'id' => (String) r.get('Id'),
+                        'name' => (String) r.get('Name'),
+                        'error' => 'No email address'
+                    }
+                );
                 continue;
             }
 
             String shareLink = resolveShareLink(email);
             if (shareLink == null) {
                 errorCount++;
-                errors.add(new Map<String, String>{
-                    'id' => (String) r.get('Id'), 'name' => (String) r.get('Name'), 'error' => 'Could not obtain share link from Extole'
-                });
+                errors.add(
+                    new Map<String, String>{
+                        'id' => (String) r.get('Id'),
+                        'name' => (String) r.get('Name'),
+                        'error' => 'Could not obtain share link from Extole'
+                    }
+                );
                 continue;
             }
 
@@ -133,8 +150,11 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
             try {
                 update toUpdate;
             } catch (Exception e) {
-                System.debug('ExtoleBackfillQueueable: bulk update failed – ' + e.getMessage());
-                errorCount   += toUpdate.size();
+                System.debug(
+                    'ExtoleBackfillQueueable: bulk update failed – ' +
+                    e.getMessage()
+                );
+                errorCount += toUpdate.size();
                 successCount -= toUpdate.size();
             }
         }
@@ -144,18 +164,34 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         if (audienceType == 'report') {
             Integer nextOffset = reportOffset + CHUNK_SIZE;
             if (nextOffset < reportIds.size()) {
-                System.enqueueJob(new ExtoleBackfillQueueable(
-                    logId, objectType, targetField, programLabel, reportIds, nextOffset
-                ));
+                System.enqueueJob(
+                    new ExtoleBackfillQueueable(
+                        logId,
+                        objectType,
+                        targetField,
+                        programLabel,
+                        reportIds,
+                        nextOffset
+                    )
+                );
             } else {
                 finalize();
             }
         } else {
             if (chunk.size() == CHUNK_SIZE) {
                 Id newCursor = (Id) chunk[chunk.size() - 1].get('Id');
-                System.enqueueJob(new ExtoleBackfillQueueable(
-                    logId, objectType, audienceType, selectedDate, reportId, targetField, programLabel, newCursor
-                ));
+                System.enqueueJob(
+                    new ExtoleBackfillQueueable(
+                        logId,
+                        objectType,
+                        audienceType,
+                        selectedDate,
+                        reportId,
+                        targetField,
+                        programLabel,
+                        newCursor
+                    )
+                );
             } else {
                 finalize();
             }
@@ -175,38 +211,61 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
      */
     private String resolveShareLink(String email) {
         String personId = lookupOrCreatePerson(email);
-        if (personId == null) return null;
+        if (personId == null)
+            return null;
         return createOrGetShareable(personId);
     }
 
-    private static final ExtoleConfig EXTOLE_CONFIG = new ExtoleConfig('Extole_API');
+    private static final ExtoleConfig EXTOLE_CONFIG = new ExtoleConfig(
+        'Extole_API'
+    );
     private static final ExtoleClient EXTOLE_CLIENT = new ExtoleClient();
 
     private String lookupOrCreatePerson(String email) {
         try {
-            HttpResponse res = EXTOLE_CLIENT.send(EXTOLE_CONFIG,
-                ExtoleGetPersonRequest.byEmail(email).build(EXTOLE_CONFIG));
-            ExtoleGetPersonResponse lookup = ExtoleGetPersonResponse.fromResponse(res);
-            if (lookup.person != null) return lookup.person.id;
+            HttpResponse res = EXTOLE_CLIENT.send(
+                EXTOLE_CONFIG,
+                ExtoleGetPersonRequest.byEmail(email).build(EXTOLE_CONFIG)
+            );
+            ExtoleGetPersonResponse lookup = ExtoleGetPersonResponse.fromResponse(
+                res
+            );
+            if (lookup.person != null)
+                return lookup.person.id;
 
             // Person not found — create
             HttpRequest createReq = new HttpRequest();
-            createReq.setEndpoint('callout:Extole_API' + ExtoleConstants.PEOPLE_PATH);
+            createReq.setEndpoint(
+                'callout:Extole_API' + ExtoleConstants.PEOPLE_PATH
+            );
             createReq.setMethod('POST');
             createReq.setHeader('Content-Type', 'application/json');
-            createReq.setBody(JSON.serialize(new Map<String, Object>{
-                'identity_key_value' => email
-            }));
+            createReq.setBody(
+                JSON.serialize(
+                    new Map<String, Object>{ 'identity_key_value' => email }
+                )
+            );
             createReq.setTimeout(30000);
-            HttpResponse createRes = EXTOLE_CLIENT.send(EXTOLE_CONFIG, createReq);
+            HttpResponse createRes = EXTOLE_CLIENT.send(
+                EXTOLE_CONFIG,
+                createReq
+            );
 
-            if (createRes.getStatusCode() >= 200 && createRes.getStatusCode() < 300) {
-                Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(createRes.getBody());
+            if (
+                createRes.getStatusCode() >= 200 &&
+                createRes.getStatusCode() < 300
+            ) {
+                Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
+                    createRes.getBody()
+                );
                 return (String) body.get('id');
             }
             return null;
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.lookupOrCreatePerson: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.lookupOrCreatePerson: ' +
+                e.getMessage()
+            );
             return null;
         }
     }
@@ -214,29 +273,44 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
     private String createOrGetShareable(String personId) {
         try {
             HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:Extole_API/v5/persons/' + personId + '/shareables');
+            req.setEndpoint(
+                'callout:Extole_API/v5/persons/' + personId + '/shareables'
+            );
             req.setMethod('POST');
             req.setHeader('Content-Type', 'application/json');
-            req.setBody(JSON.serialize(new Map<String, Object>{
-                'label' => String.isNotBlank(programLabel) ? programLabel : 'extole-sfdc-app'
-            }));
+            req.setBody(
+                JSON.serialize(
+                    new Map<String, Object>{
+                        'label' => String.isNotBlank(programLabel)
+                            ? programLabel
+                            : 'extole-sfdc-app'
+                    }
+                )
+            );
             req.setTimeout(30000);
             HttpResponse res = new Http().send(req);
 
             if (res.getStatusCode() >= 200 && res.getStatusCode() < 300) {
-                Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
+                    res.getBody()
+                );
                 return (String) body.get('link');
             }
 
             // Shareable label already exists — fetch and return the existing one
-            Map<String, Object> errBody = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            Map<String, Object> errBody = (Map<String, Object>) JSON.deserializeUntyped(
+                res.getBody()
+            );
             String code = (String) errBody.get('code');
             if (code == 'shareable_key_taken') {
                 return fetchExistingShareable(personId);
             }
             return null;
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.createOrGetShareable: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.createOrGetShareable: ' +
+                e.getMessage()
+            );
             return null;
         }
     }
@@ -244,26 +318,38 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
     private String fetchExistingShareable(String personId) {
         try {
             HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:Extole_API/v5/persons/' + personId + '/shareables');
+            req.setEndpoint(
+                'callout:Extole_API/v5/persons/' + personId + '/shareables'
+            );
             req.setMethod('GET');
             req.setTimeout(30000);
             HttpResponse res = new Http().send(req);
 
-            if (res.getStatusCode() != 200) return null;
+            if (res.getStatusCode() != 200)
+                return null;
 
-            List<Object> shareables = (List<Object>) JSON.deserializeUntyped(res.getBody());
-            String label = String.isNotBlank(programLabel) ? programLabel : 'extole-sfdc-app';
+            List<Object> shareables = (List<Object>) JSON.deserializeUntyped(
+                res.getBody()
+            );
+            String label = String.isNotBlank(programLabel)
+                ? programLabel
+                : 'extole-sfdc-app';
             for (Object raw : shareables) {
                 Map<String, Object> s = (Map<String, Object>) raw;
-                if (label == (String) s.get('label')) return (String) s.get('link');
+                if (label == (String) s.get('label'))
+                    return (String) s.get('link');
             }
             // Return first available if label not matched
             if (!shareables.isEmpty()) {
-                return (String) ((Map<String, Object>) shareables[0]).get('link');
+                return (String) ((Map<String, Object>) shareables[0])
+                    .get('link');
             }
             return null;
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.fetchExistingShareable: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.fetchExistingShareable: ' +
+                e.getMessage()
+            );
             return null;
         }
     }
@@ -276,29 +362,42 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         try {
             if (audienceType == 'date' && String.isNotBlank(selectedDate)) {
                 Date dateFilter = Date.valueOf(selectedDate);
-                String soql = 'SELECT Id, Name, Email FROM ' + objectType
-                    + ' WHERE Email != null AND CreatedDate >= :dateFilter'
-                    + (objectType == 'Lead' ? ' AND IsConverted = false' : '')
-                    + (cursor != null ? ' AND Id > \'' + cursor + '\'' : '')
-                    + ' ORDER BY Id ASC LIMIT ' + CHUNK_SIZE;
+                String soql =
+                    'SELECT Id, Name, Email FROM ' +
+                    objectType +
+                    ' WHERE Email != null AND CreatedDate >= :dateFilter' +
+                    (objectType == 'Lead' ? ' AND IsConverted = false' : '') +
+                    (cursor != null ? ' AND Id > \'' + cursor + '\'' : '') +
+                    ' ORDER BY Id ASC LIMIT ' +
+                    CHUNK_SIZE;
                 return Database.query(soql);
             }
 
             // Default filter
             List<String> filters = new List<String>{ 'Email != null' };
             if (objectType == 'Contact') {
-                filters.add('Id IN (SELECT ContactId FROM Opportunity WHERE StageName = \'Closed Won\' AND ContactId != null)');
+                filters.add(
+                    'Id IN (SELECT ContactId FROM Opportunity WHERE StageName = \'Closed Won\' AND ContactId != null)'
+                );
             } else {
                 filters.add('IsConverted = false');
             }
-            if (cursor != null) filters.add('Id > \'' + cursor + '\'');
+            if (cursor != null)
+                filters.add('Id > \'' + cursor + '\'');
 
-            String soql = 'SELECT Id, Name, Email FROM ' + objectType
-                + ' WHERE ' + String.join(filters, ' AND ')
-                + ' ORDER BY Id ASC LIMIT ' + CHUNK_SIZE;
+            String soql =
+                'SELECT Id, Name, Email FROM ' +
+                objectType +
+                ' WHERE ' +
+                String.join(filters, ' AND ') +
+                ' ORDER BY Id ASC LIMIT ' +
+                CHUNK_SIZE;
             return Database.query(soql);
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.queryNextCursorChunk: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.queryNextCursorChunk: ' +
+                e.getMessage()
+            );
             return new List<SObject>();
         }
     }
@@ -306,10 +405,14 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
     private List<SObject> queryRecords(List<Id> ids) {
         try {
             return Database.query(
-                'SELECT Id, Name, Email FROM ' + objectType + ' WHERE Id IN :ids ORDER BY Id ASC'
+                'SELECT Id, Name, Email FROM ' +
+                    objectType +
+                    ' WHERE Id IN :ids ORDER BY Id ASC'
             );
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.queryRecords: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.queryRecords: ' + e.getMessage()
+            );
             return new List<SObject>();
         }
     }
@@ -317,13 +420,21 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
     /**
      * Fetch report rows via the Analytics REST API rather than the Reports Apex namespace,
      * which avoids Reports.ReportDataRow type availability issues across org configurations.
+     *
+     * Returns null (as opposed to an empty list) specifically when the fetch itself
+     * failed — the caller uses that distinction to avoid finalize() overwriting the
+     * FAILED status markFailed() already set here with a false 'COMPLETED'.
      */
     private List<Id> loadReportIds(String rptId) {
         List<Id> ids = new List<Id>();
         try {
             HttpRequest req = new HttpRequest();
-            req.setEndpoint(URL.getOrgDomainUrl().toExternalForm()
-                + '/services/data/v59.0/analytics/reports/' + rptId + '?includeDetails=true');
+            req.setEndpoint(
+                URL.getOrgDomainUrl().toExternalForm() +
+                    '/services/data/v59.0/analytics/reports/' +
+                    rptId +
+                    '?includeDetails=true'
+            );
             req.setMethod('GET');
             req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionId());
             req.setTimeout(30000);
@@ -331,30 +442,46 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
 
             if (res.getStatusCode() != 200) {
                 markFailed('Analytics API error: HTTP ' + res.getStatusCode());
-                return ids;
+                return null;
             }
 
-            Map<String, Object> body     = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-            Map<String, Object> factMap  = (Map<String, Object>) body.get('factMap');
-            if (factMap == null) return ids;
-            Map<String, Object> allRows  = (Map<String, Object>) factMap.get('T!T');
-            if (allRows == null) return ids;
+            Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
+                res.getBody()
+            );
+            Map<String, Object> factMap = (Map<String, Object>) body.get(
+                'factMap'
+            );
+            if (factMap == null)
+                return ids;
+            Map<String, Object> allRows = (Map<String, Object>) factMap.get(
+                'T!T'
+            );
+            if (allRows == null)
+                return ids;
             List<Object> rows = (List<Object>) allRows.get('rows');
-            if (rows == null) return ids;
+            if (rows == null)
+                return ids;
 
             for (Object rowObj : rows) {
-                Map<String, Object> row       = (Map<String, Object>) rowObj;
-                List<Object>        dataCells = (List<Object>) row.get('dataCells');
-                if (dataCells == null || dataCells.isEmpty()) continue;
+                Map<String, Object> row = (Map<String, Object>) rowObj;
+                List<Object> dataCells = (List<Object>) row.get('dataCells');
+                if (dataCells == null || dataCells.isEmpty())
+                    continue;
                 Map<String, Object> firstCell = (Map<String, Object>) dataCells[0];
                 Object val = firstCell.get('value');
                 if (val != null) {
-                    try { ids.add((Id) String.valueOf(val)); } catch (Exception ignore) {}
+                    try {
+                        ids.add((Id) String.valueOf(val));
+                    } catch (Exception ignore) {
+                    }
                 }
             }
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.loadReportIds: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.loadReportIds: ' + e.getMessage()
+            );
             markFailed('Report load failed: ' + e.getMessage());
+            return null;
         }
         return ids;
     }
@@ -363,19 +490,36 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
     // Log helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    private void updateLogProgress(Integer successes, Integer errors, List<Map<String, String>> errorDetails) {
+    private void updateLogProgress(
+        Integer successes,
+        Integer errors,
+        List<Map<String, String>> errorDetails
+    ) {
         try {
             Extole_Backfill_Log__c log = [
                 SELECT Id, Success_Count__c, Error_Count__c, Error_Detail__c
-                FROM Extole_Backfill_Log__c WHERE Id = :logId LIMIT 1
+                FROM Extole_Backfill_Log__c
+                WHERE Id = :logId
+                LIMIT 1
             ];
-            log.Success_Count__c = (log.Success_Count__c != null ? (Integer) log.Success_Count__c : 0) + successes;
-            log.Error_Count__c   = (log.Error_Count__c   != null ? (Integer) log.Error_Count__c   : 0) + errors;
+            log.Success_Count__c =
+                (log.Success_Count__c != null
+                    ? (Integer) log.Success_Count__c
+                    : 0) + successes;
+            log.Error_Count__c =
+                (log.Error_Count__c != null
+                    ? (Integer) log.Error_Count__c
+                    : 0) + errors;
 
             if (!errorDetails.isEmpty()) {
-                String existing = log.Error_Detail__c != null ? log.Error_Detail__c : '[]';
-                List<Object> existingErrors = (List<Object>) JSON.deserializeUntyped(existing);
-                for (Map<String, String> e : errorDetails) existingErrors.add(e);
+                String existing = log.Error_Detail__c != null
+                    ? log.Error_Detail__c
+                    : '[]';
+                List<Object> existingErrors = (List<Object>) JSON.deserializeUntyped(
+                    existing
+                );
+                for (Map<String, String> e : errorDetails)
+                    existingErrors.add(e);
                 String serialized = JSON.serialize(existingErrors);
                 log.Error_Detail__c = serialized.length() > 30000
                     ? serialized.substring(0, 30000) + '...'
@@ -383,7 +527,9 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
             }
             update log;
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.updateLogProgress: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.updateLogProgress: ' + e.getMessage()
+            );
         }
     }
 
@@ -391,15 +537,21 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         try {
             Extole_Backfill_Log__c log = [
                 SELECT Id, Success_Count__c, Error_Count__c
-                FROM Extole_Backfill_Log__c WHERE Id = :logId LIMIT 1
+                FROM Extole_Backfill_Log__c
+                WHERE Id = :logId
+                LIMIT 1
             ];
-            Integer totalSuccess = log.Success_Count__c != null ? (Integer) log.Success_Count__c : 0;
-            Integer totalErrors  = log.Error_Count__c   != null ? (Integer) log.Error_Count__c   : 0;
+            Integer totalSuccess = log.Success_Count__c != null
+                ? (Integer) log.Success_Count__c
+                : 0;
+            Integer totalErrors = log.Error_Count__c != null
+                ? (Integer) log.Error_Count__c
+                : 0;
             log.Success_Count__c = totalSuccess;
-            log.Error_Count__c   = totalErrors;
-            log.Total_Count__c   = totalSuccess + totalErrors;
-            log.Completed_At__c  = DateTime.now();
-            log.Status__c        = totalErrors > 0
+            log.Error_Count__c = totalErrors;
+            log.Total_Count__c = totalSuccess + totalErrors;
+            log.Completed_At__c = DateTime.now();
+            log.Status__c = totalErrors > 0
                 ? (totalSuccess > 0 ? 'COMPLETED_WITH_ERRORS' : 'FAILED')
                 : 'COMPLETED';
             update log;
@@ -411,15 +563,19 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
     private void markFailed(String reason) {
         try {
             update new Extole_Backfill_Log__c(
-                Id              = logId,
-                Status__c       = 'FAILED',
+                Id = logId,
+                Status__c = 'FAILED',
                 Completed_At__c = DateTime.now(),
-                Error_Detail__c = JSON.serialize(new List<Object>{
-                    new Map<String, String>{ 'error' => reason }
-                })
+                Error_Detail__c = JSON.serialize(
+                    new List<Object>{
+                        new Map<String, String>{ 'error' => reason }
+                    }
+                )
             );
         } catch (Exception e) {
-            System.debug('ExtoleBackfillQueueable.markFailed: ' + e.getMessage());
+            System.debug(
+                'ExtoleBackfillQueueable.markFailed: ' + e.getMessage()
+            );
         }
     }
 }

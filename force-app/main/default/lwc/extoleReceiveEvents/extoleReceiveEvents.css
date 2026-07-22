@@ -1,5 +1,5 @@
 :host {
-    --extole-green: #1D9E75;
+    --extole-green: #1d9e75;
     display: block;
 }
 
@@ -14,7 +14,7 @@
     background: #ffffff;
     border: 1px solid #dddbda;
     border-radius: 4px;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -88,7 +88,14 @@
 
 /* Tables */
 .table-wrapper {
-    overflow: auto;
+    overflow-x: auto;
+}
+
+/* Rules table has a per-row action menu that must never be clipped —
+   no horizontal-scroll container here (overflow-x auto forces overflow-y
+   to auto too per the CSS overflow spec, which would clip the dropdown). */
+.rules-table-wrapper {
+    overflow: visible;
 }
 
 .event-name-cell {
@@ -118,13 +125,17 @@
     font-size: 12px;
 }
 
-.error-cell {
+.reason-cell {
     font-size: 12px;
-    color: #c23934;
+    color: #444;
     max-width: 240px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.reason-cell-failed {
+    color: #c23934;
 }
 
 /* Status badges */
@@ -135,10 +146,22 @@
     font-size: 12px;
     font-weight: 600;
 }
-.status-active   { background: #e1f5e8; color: #027e46; }
-.status-inactive { background: #ecebea; color: #54698d; }
-.status-failed   { background: #fdecea; color: #c23934; }
-.status-skipped  { background: #fdf6e3; color: #78611b; }
+.status-active {
+    background: #e1f5e8;
+    color: #027e46;
+}
+.status-inactive {
+    background: #ecebea;
+    color: #54698d;
+}
+.status-failed {
+    background: #fdecea;
+    color: #c23934;
+}
+.status-skipped {
+    background: #fdf6e3;
+    color: #78611b;
+}
 
 /* Empty state */
 .empty-text {

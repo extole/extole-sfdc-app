@@ -28,29 +28,29 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 **Custom Objects**
 
-| Object | Purpose |
-|---|---|
-| `Extole_App_Settings__c` | Org-wide configuration (sync cadence, notifications, feature toggles) |
-| `Extole_Report_Config__c` | Admin-defined list of Extole reports to sync |
-| `Extole_Report_Snapshot__c` | Latest synced values from each report |
-| `Extole_Sync_Log__c` | Audit log of every KPI report sync attempt |
-| `Extole_Event_Cfg__c` | Event trigger configurations created in the Event Configurator |
-| `Extole_Event_Log__c` | Audit trail of event configuration lifecycle actions (deploys, activations, failures) |
-| `Extole_Event_Fire_Log__c` | Runtime log of every Extole event fired by configured triggers |
-| `Extole_Backfill_Log__c` | Audit log of share link backfill jobs |
-| `Extole_Debug_Log__c` | Optional detailed debug logs for troubleshooting |
-| `Extole_Audience_Cfg__c` | Admin-defined Salesforce report → Extole audience sync configurations |
-| `Extole_Audience_Sync_Log__c` | Audit log of every audience sync attempt |
-| `Extole_Writeback_Cfg__c` | Field-mapping rules for writing inbound Extole webhook events back to Contact/Lead fields |
-| `Extole_Writeback_Log__c` | Log of every inbound Extole webhook event received and its write-back outcome |
+| Object                        | Purpose                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| `Extole_App_Settings__c`      | Org-wide configuration (sync cadence, notifications, feature toggles)                     |
+| `Extole_Report_Config__c`     | Admin-defined list of Extole reports to sync                                              |
+| `Extole_Report_Snapshot__c`   | Latest synced values from each report                                                     |
+| `Extole_Sync_Log__c`          | Audit log of every KPI report sync attempt                                                |
+| `Extole_Event_Cfg__c`         | Event trigger configurations created in the Event Configurator                            |
+| `Extole_Event_Log__c`         | Audit trail of event configuration lifecycle actions (deploys, activations, failures)     |
+| `Extole_Event_Fire_Log__c`    | Runtime log of every Extole event fired by configured triggers                            |
+| `Extole_Backfill_Log__c`      | Audit log of share link backfill jobs                                                     |
+| `Extole_Debug_Log__c`         | Optional detailed debug logs for troubleshooting                                          |
+| `Extole_Audience_Cfg__c`      | Admin-defined Salesforce report → Extole audience sync configurations                     |
+| `Extole_Audience_Sync_Log__c` | Audit log of every audience sync attempt                                                  |
+| `Extole_Writeback_Cfg__c`     | Field-mapping rules for writing inbound Extole webhook events back to Contact/Lead fields |
+| `Extole_Writeback_Log__c`     | Log of every inbound Extole webhook event received and its write-back outcome             |
 
 **Permission Sets**
 
-| Permission Set | Assign to |
-|---|---|
-| `Extole_App_Admin` | Admins configuring the integration (reports, audiences, events, writeback rules, credentials) |
-| `Extole_App_Viewer` | Users who need read access to Program Analytics, KPI Dashboard, and List View |
-| `Extole_API_Access` | System/integration users — grants access to the Extole API credential only |
+| Permission Set      | Assign to                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `Extole_App_Admin`  | Admins configuring the integration (reports, audiences, events, writeback rules, credentials) |
+| `Extole_App_Viewer` | Users who need read access to Program Analytics, KPI Dashboard, and List View                 |
+| `Extole_API_Access` | System/integration users — grants access to the Extole API credential only                    |
 
 **App and Tabs** — A Lightning app with nine tabs: Program Analytics, KPI Dashboard, List View, Manage Share Links, Configure Events, Configure KPIs, Manage Audiences, Manage List View, and Receive Events.
 
@@ -64,11 +64,11 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 The app uses two Named Credentials for all external callouts — no tokens are stored in Apex code or custom fields.
 
-**Extole API** (`Extole_API`) — Custom External Credential using a long-lived bearer token generated from the Extole Security Center. Used by the sync job and event handlers to call `https://my.extole.com/security-center`.
+**Extole API** (`Extole_API`) — Custom External Credential using a long-lived bearer token generated from the Extole Security Center. Used by the sync job and event handlers to call `https://api.extole.io`.
 
 **Salesforce Tooling API** (`Extole_Tooling`) — OAuth External Credential backed by a Connected App. Used by the Event Configurator to deploy generated Flows into the org. Requires a one-time admin OAuth authorization after setup.
 
-**Inbound webhooks (Receive Events)** — Reversed direction: Extole calls *into* Salesforce at a `@RestResource` endpoint (`/services/apexrest/extole/events`), authenticated via a Connected App using OAuth 2.0 Client Credentials. Its Consumer Key/Secret live on the Extole side (as the webhook's `CLIENT_KEY` setting), not in this package.
+**Inbound webhooks (Receive Events)** — Reversed direction: Extole calls _into_ Salesforce at a `@RestResource` endpoint (`/services/apexrest/extole/events`), authenticated via a Connected App using OAuth 2.0 Client Credentials. Its Consumer Key/Secret live on the Extole side (as the webhook's `CLIENT_KEY` setting), not in this package.
 
 ---
 
@@ -83,7 +83,7 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 - **List View setup** — Manage List View. Choose the object, filter field/value, columns, and start date for the List View tab.
 - **Audience sync** — Manage Audiences. Pick a Salesforce report and sync cadence; the sync log on the same tab records each run's outcome.
 - **Receive Events / writeback rules** — Receive Events. Map incoming webhook event fields to Contact or Lead fields; the event log on the same tab records every inbound webhook and its outcome.
-- **Log retention** — Sync logs, event logs, audience sync logs, writeback logs, and debug logs are automatically purged after 30 days on each sync run.
+- **Log retention** — Sync logs, event logs, event fire logs, audience sync logs, writeback logs, and debug logs are automatically purged after 30 days by a dedicated nightly job, independent of KPI sync or any other feature being configured.
 
 ---
 
