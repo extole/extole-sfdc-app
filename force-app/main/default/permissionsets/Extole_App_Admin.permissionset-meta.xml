@@ -298,4 +298,8 @@
         <enabled>true</enabled>
         <name>RunFlow</name>
     </userPermissions>
+    <applicationVisibilities>
+        <application>Extole_App</application>
+        <visible>true</visible>
+    </applicationVisibilities>
 </PermissionSet>
