@@ -7,7 +7,7 @@ private class ExtoleAudienceSchedulerTest {
         DateTime lastSync,
         String state
     ) {
-        Extole_Audience_Cfg__c cfg = new Extole_Audience_Cfg__c(
+        Extole_Audience_Cfg__c config = new Extole_Audience_Cfg__c(
             Config_Key__c = key,
             Extole_Audience_Name__c = key,
             Source_Report_Id__c = null,
@@ -17,8 +17,8 @@ private class ExtoleAudienceSchedulerTest {
             Last_Sync_At__c = lastSync,
             Last_Operation_State__c = state
         );
-        insert cfg;
-        return cfg;
+        insert config;
+        return config;
     }
 
     @IsTest
@@ -35,9 +35,6 @@ private class ExtoleAudienceSchedulerTest {
         new ExtoleAudienceScheduler().execute(null);
         Test.stopTest();
 
-        // The scheduler enqueues a Queueable per due config; since Source_Report_Id__c
-        // is null it will fail fast inside the Queueable, but Last_Operation_State__c
-        // should have moved off 'READY' (proves the scheduler actually enqueued work).
         Extole_Audience_Cfg__c updated = [
             SELECT Last_Operation_State__c
             FROM Extole_Audience_Cfg__c

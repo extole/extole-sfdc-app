@@ -1,7 +1,5 @@
 @IsTest
 private class ExtoleControllerTest {
-    // ── User context / debug logs ────────────────────────────────────────────
-
     @IsTest
     static void testGetCurrentUserTimezone() {
         Test.startTest();
@@ -45,13 +43,8 @@ private class ExtoleControllerTest {
         System.assertEquals(0, [SELECT COUNT() FROM Extole_Sync_Log__c]);
     }
 
-    // ── Schedule status ──────────────────────────────────────────────────────
-
     @IsTest
     static void testGetScheduleStatus_noSettings() {
-        // Note: isScheduled reflects any real 'ExtoleSync_%' CronTrigger already
-        // active in this org (CronTrigger is visible in test context regardless of
-        // SeeAllData), so it isn't asserted here — only the settings-driven cadence is.
         Test.startTest();
         Map<String, Object> result = ExtoleController.getScheduleStatus();
         Test.stopTest();
@@ -82,28 +75,26 @@ private class ExtoleControllerTest {
         System.assertEquals(true, result.get('isScheduled'));
     }
 
-    // ── getReportColumns ──────────────────────────────────────────────────────
-
     private class SequentialMock implements HttpCalloutMock {
         List<HttpResponse> responses;
         Integer callIndex = 0;
         SequentialMock(List<HttpResponse> responses) {
             this.responses = responses;
         }
-        public HttpResponse respond(HttpRequest req) {
-            HttpResponse res = responses[
+        public HttpResponse respond(HttpRequest request) {
+            HttpResponse response = responses[
                 Math.min(callIndex, responses.size() - 1)
             ];
             callIndex++;
-            return res;
+            return response;
         }
     }
 
     private static HttpResponse mockResponse(Integer status, String body) {
-        HttpResponse res = new HttpResponse();
-        res.setStatusCode(status);
-        res.setBody(body);
-        return res;
+        HttpResponse response = new HttpResponse();
+        response.setStatusCode(status);
+        response.setBody(body);
+        return response;
     }
 
     @IsTest
@@ -213,8 +204,6 @@ private class ExtoleControllerTest {
         System.assertEquals(0, columns.size());
     }
 
-    // ── getObjectFields / getFieldValues ─────────────────────────────────────
-
     @IsTest
     static void testGetObjectFields_contactIncludesAccountNameVirtualField() {
         Test.startTest();
@@ -283,8 +272,6 @@ private class ExtoleControllerTest {
 
     @IsTest
     static void testGetFieldValues_textFieldReturnsDistinctValues() {
-        // Department is a genuine free-text field (unlike LeadSource, which is a
-        // picklist and would take the picklist-entries branch instead).
         insert new Contact(LastName = 'A', Department = 'Engineering');
         insert new Contact(LastName = 'B', Department = 'Engineering');
         insert new Contact(LastName = 'C', Department = 'Sales');
@@ -299,8 +286,6 @@ private class ExtoleControllerTest {
         System.assert(values.contains('Engineering'));
         System.assert(values.contains('Sales'));
     }
-
-    // ── getAttributedLeads ────────────────────────────────────────────────────
 
     @IsTest
     static void testGetAttributedLeads_noSettingsReturnsUnconfigured() {

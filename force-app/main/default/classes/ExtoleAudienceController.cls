@@ -1,19 +1,4 @@
-/**
- * ExtoleAudienceController
- *
- * @AuraEnabled controller for the Manage Audiences LWC tab.
- * Surfaces audience configs, available Salesforce reports, and sync control.
- *
- * Sync flow:
- *   1. LWC calls syncAudience(configKey) → controller enqueues ExtoleAudienceSyncQueueable
- *   2. Queueable runs the SOQL/report read + Extole API calls asynchronously
- *   3. LWC polls pollAudienceState(configKey) for progress
- */
 public with sharing class ExtoleAudienceController {
-    // ─────────────────────────────────────────────────────────────────────────
-    // Config CRUD
-    // ─────────────────────────────────────────────────────────────────────────
-
     @AuraEnabled(cacheable=false)
     public static List<Extole_Audience_Cfg__c> getAudienceConfigs() {
         try {
@@ -83,10 +68,6 @@ public with sharing class ExtoleAudienceController {
         return config.Id;
     }
 
-    /**
-     * Run the audience scheduler immediately. Useful for testing scheduled
-     * cadences without waiting for the next hourly tick.
-     */
     @AuraEnabled
     public static void runSchedulerNow() {
         new ExtoleAudienceScheduler().execute(null);
@@ -104,10 +85,6 @@ public with sharing class ExtoleAudienceController {
             );
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Salesforce report picker
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getAvailableReports() {
@@ -147,15 +124,6 @@ public with sharing class ExtoleAudienceController {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Sync orchestration
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Enqueue a Queueable that runs the report, builds the Extole audience operation,
-     * and updates the config record with operation id + state.
-     * Returns the Queueable job id (not the Extole op id — that comes via polling).
-     */
     @AuraEnabled
     public static Id syncAudience(String configKey) {
         if (String.isBlank(configKey))
@@ -184,7 +152,6 @@ public with sharing class ExtoleAudienceController {
                     '). Wait for it to finish before syncing again.'
             );
         }
-        // Mark as SUBMITTED immediately so the UI reflects state before the Queueable runs
         configs[0].Last_Operation_State__c = 'PREPARING';
         configs[0].Last_Error__c = null;
         update configs[0];
@@ -192,10 +159,6 @@ public with sharing class ExtoleAudienceController {
         return System.enqueueJob(new ExtoleAudienceSyncQueueable(configKey));
     }
 
-    /**
-     * Refresh state for a config — useful when the LWC wants the latest after polling.
-     * Also pulls fresh state from Extole if the operation is non-terminal.
-     */
     @AuraEnabled
     public static Extole_Audience_Cfg__c pollAudienceState(String configKey) {
         if (String.isBlank(configKey))
@@ -225,69 +188,61 @@ public with sharing class ExtoleAudienceController {
                 'Audience config not found: ' + configKey
             );
 
-        Extole_Audience_Cfg__c cfg = configs[0];
-        String state = cfg.Last_Operation_State__c;
+        Extole_Audience_Cfg__c config = configs[0];
+        String state = config.Last_Operation_State__c;
         Boolean shouldPoll =
-            String.isNotBlank(cfg.Last_Operation_Id__c) &&
-            String.isNotBlank(cfg.Extole_Audience_Id__c) &&
+            String.isNotBlank(config.Last_Operation_Id__c) &&
+            String.isNotBlank(config.Extole_Audience_Id__c) &&
             (state == 'PREPARING' ||
             state == 'BUILDING' ||
             state == 'VALIDATING');
         if (!shouldPoll)
-            return cfg;
+            return config;
 
         String previousState = state;
         try {
             ExtoleConfig extoleConfig = new ExtoleConfig('Extole_API');
             ExtoleClient client = new ExtoleClient();
-            HttpRequest req = new ExtoleAudienceOperationStateRequest(
-                    cfg.Extole_Audience_Id__c,
-                    cfg.Last_Operation_Id__c
+            HttpRequest request = new ExtoleAudienceOperationStateRequest(
+                    config.Extole_Audience_Id__c,
+                    config.Last_Operation_Id__c
                 )
                 .build(extoleConfig);
-            HttpResponse res = client.send(extoleConfig, req);
-            ExtoleAudienceOperationStateResponse resp = ExtoleAudienceOperationStateResponse.fromResponse(
-                res
+            HttpResponse httpResponse = client.send(extoleConfig, request);
+            ExtoleAudienceOperationStateResponse response = ExtoleAudienceOperationStateResponse.fromResponse(
+                httpResponse
             );
 
-            String newState = resp.operation.state;
-            cfg.Last_Operation_State__c = newState;
-            if (resp.isTerminal()) {
-                cfg.Last_Sync_At__c = DateTime.now();
-                if (!resp.isSuccess()) {
-                    cfg.Last_Error__c = 'Operation FAILED — check Extole for details.';
+            String newState = response.operation.state;
+            config.Last_Operation_State__c = newState;
+            if (response.isTerminal()) {
+                config.Last_Sync_At__c = DateTime.now();
+                if (!response.isSuccess()) {
+                    config.Last_Error__c = 'Operation FAILED — check Extole for details.';
                 }
             }
-            update cfg;
+            update config;
 
-            // Log only the terminal transition — intermediate states (PREPARING →
-            // BUILDING → VALIDATING) are noise in the historical record; live status
-            // is already surfaced by the LWC via cfg.Last_Operation_State__c.
-            if (previousState != newState && resp.isTerminal()) {
-                String detail = resp.isSuccess()
+            if (previousState != newState && response.isTerminal()) {
+                String detail = response.isSuccess()
                     ? 'Sync complete'
                     : 'Sync failed';
                 writeLog(
-                    cfg.Config_Key__c,
-                    cfg.Extole_Audience_Id__c,
-                    cfg.Last_Operation_Id__c,
+                    config.Config_Key__c,
+                    config.Extole_Audience_Id__c,
+                    config.Last_Operation_Id__c,
                     'REPLACE',
                     newState,
-                    cfg.Last_Member_Count__c,
+                    config.Last_Member_Count__c,
                     detail,
-                    cfg.Last_Error__c
+                    config.Last_Error__c
                 );
             }
         } catch (Exception e) {
-            // Non-fatal — return the current config; UI will retry on next poll
             System.debug('pollAudienceState ERROR: ' + e.getMessage());
         }
-        return cfg;
+        return config;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Sync log reads
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
     public static List<Extole_Audience_Sync_Log__c> getAudienceSyncLogs() {
@@ -334,10 +289,6 @@ public with sharing class ExtoleAudienceController {
             );
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Package-visible helpers used by the Queueable
-    // ─────────────────────────────────────────────────────────────────────────
 
     public static void writeLog(
         String configKey,

@@ -1,24 +1,10 @@
-/**
- * ExtoleEventController
- *
- * @AuraEnabled controller for the Event Configurator LWC tab.
- * All data access, deploy orchestration, and maintenance operations for the
- * configurator go through this class — LWC components call nothing else.
- *
- * Logging: every meaningful action is written to Extole_Event_Log__c.
- */
 public with sharing class ExtoleEventController {
-    // Common objects that appear at the top of the object picker
     private static final List<String> PRIORITY_OBJECTS = new List<String>{
         'Lead',
         'Opportunity',
         'Contact',
         'Account'
     };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Sortable wrapper for object picker (Comparable on label)
-    // ─────────────────────────────────────────────────────────────────────────
 
     private class SortableObject implements Comparable {
         public String label;
@@ -49,14 +35,6 @@ public with sharing class ExtoleEventController {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Event Config reads
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Return all Extole_Event_Cfg__c records.
-     * Includes all runtime telemetry and state fields needed by the list view.
-     */
     @AuraEnabled(cacheable=false)
     public static List<Extole_Event_Cfg__c> getEventConfigs() {
         return [
@@ -94,10 +72,6 @@ public with sharing class ExtoleEventController {
         ];
     }
 
-    /**
-     * Return recent Extole_Event_Log__c entries for a given config key.
-     * Returns up to 200 entries in reverse-chronological order.
-     */
     @AuraEnabled(cacheable=false)
     public static List<Extole_Event_Log__c> getEventLogs(String configKey) {
         if (String.isBlank(configKey)) {
@@ -135,20 +109,10 @@ public with sharing class ExtoleEventController {
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Schema inspection
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Enumerate all org objects.
-     * Returns a list of { label, apiName, isCustom } maps.
-     * Common objects (Lead, Opportunity, Contact, Account) are surfaced first.
-     */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getAvailableObjects() {
         Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
 
-        // Separate priority objects from the rest
         Map<String, Map<String, Object>> priorityMap = new Map<String, Map<String, Object>>();
         List<SortableObject> others = new List<SortableObject>();
 
@@ -156,7 +120,6 @@ public with sharing class ExtoleEventController {
             Schema.DescribeSObjectResult describe = gd.get(apiName)
                 .getDescribe();
 
-            // Skip non-queryable, non-accessible, and internal objects
             if (!describe.isQueryable() || !describe.isAccessible())
                 continue;
             if (describe.isDeprecatedAndHidden())
@@ -182,10 +145,8 @@ public with sharing class ExtoleEventController {
             }
         }
 
-        // Sort non-priority objects alphabetically by label
         others.sort();
 
-        // Build result: priority first (in defined order), then alphabetical rest
         List<Map<String, Object>> result = new List<Map<String, Object>>();
         for (String priorityName : PRIORITY_OBJECTS) {
             if (priorityMap.containsKey(priorityName)) {
@@ -198,12 +159,6 @@ public with sharing class ExtoleEventController {
         return result;
     }
 
-    /**
-     * Return all queryable fields for the given object, plus one-hop lookup fields.
-     * Excludes polymorphic relationships per spec.
-     *
-     * Return shape per field: { label, apiName, type, isRelationship, relationshipLabel }
-     */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getFieldsForObject(
         String objectApiName
@@ -237,7 +192,6 @@ public with sharing class ExtoleEventController {
                 }
             );
 
-            // One-hop lookup / master-detail fields — non-polymorphic only
             if (
                 f.getType() == Schema.DisplayType.REFERENCE && !isPolymorphic(f)
             ) {
@@ -283,9 +237,6 @@ public with sharing class ExtoleEventController {
         return result;
     }
 
-    /**
-     * Returns active picklist values for a given object field.
-     */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getPicklistValues(
         String objectApiName,
@@ -318,13 +269,6 @@ public with sharing class ExtoleEventController {
         return result;
     }
 
-    /**
-     * Build a preview JSON payload for a real record without sending it.
-     * Queries the record, applies the field mappings, and returns the payload string.
-     *
-     * Accepts configJson (a serialized config object from the LWC) and recordId.
-     * configJson must contain: triggerObject, fieldMappingsJson, eventName.
-     */
     @AuraEnabled
     public static String previewPayload(String configJson, Id recordId) {
         if (recordId == null || String.isBlank(configJson)) {
@@ -348,7 +292,6 @@ public with sharing class ExtoleEventController {
             );
         }
 
-        // Validate objectApiName against Schema before interpolating into SOQL
         Schema.SObjectType sot = Schema.getGlobalDescribe().get(objectApiName);
         if (sot == null) {
             throw new AuraHandledException('Unknown object: ' + objectApiName);
@@ -361,11 +304,6 @@ public with sharing class ExtoleEventController {
             fieldMappingsJSON
         );
 
-        // Build the field set to SOQL-query — validate each field against Schema.
-        // Matches ExtoleUniversalHandler's validation: a dot-notation field (e.g.
-        // "Account.Name") is a relationship name + field name, not a field API name
-        // itself, so it can't be checked against fieldMap the way a plain field can —
-        // validate its format instead (blocks injection chars; parens/commas/spaces).
         Set<String> fieldsToQuery = new Set<String>{ 'Id' };
         for (Object rawM : mappings) {
             Map<String, Object> m = (Map<String, Object>) rawM;
@@ -418,19 +356,18 @@ public with sharing class ExtoleEventController {
             } else if (
                 !String.isBlank(sfdcField) && fieldsToQuery.contains(sfdcField)
             ) {
-                // Only access fields that passed Schema validation (were added to fieldsToQuery)
                 if (sfdcField.contains('.')) {
                     String[] parts = sfdcField.split('\\.', 2);
                     SObject rel = r.getSObject(parts[0]);
                     if (rel != null) {
-                        Object val = rel.get(parts[1]);
-                        if (val != null)
-                            dataMap.put(extoleParam, val);
+                        Object value = rel.get(parts[1]);
+                        if (value != null)
+                            dataMap.put(extoleParam, value);
                     }
                 } else {
-                    Object val = r.get(sfdcField);
-                    if (val != null)
-                        dataMap.put(extoleParam, val);
+                    Object value = r.get(sfdcField);
+                    if (value != null)
+                        dataMap.put(extoleParam, value);
                 }
             }
         }
@@ -445,18 +382,6 @@ public with sharing class ExtoleEventController {
         return JSON.serializePretty(payload);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Config save (upsert via Metadata API)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Save (create or update) an Extole_Event_Cfg__c record as DRAFT.
-     * Called when the user advances from step 2 to step 3 in the wizard,
-     * so the config is persisted before deploy and appears in the list.
-     *
-     * Accepts the same configJson format as deployEventConfig.
-     * Returns the configKey so the LWC can pass it on deploy.
-     */
     @AuraEnabled
     public static String saveEventConfig(String configJson) {
         Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(
@@ -511,12 +436,6 @@ public with sharing class ExtoleEventController {
         return configKey;
     }
 
-    /**
-     * Returns the first available event name derived from baseEventName.
-     * If baseEventName is taken, tries baseEventName_2, _3, etc.
-     * Excludes the current config (excludeConfigKey) from the uniqueness check
-     * so editing an existing config does not flag itself as a duplicate.
-     */
     @AuraEnabled
     public static String suggestUniqueEventName(
         String baseEventName,
@@ -549,31 +468,13 @@ public with sharing class ExtoleEventController {
         return baseEventName;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Deploy orchestration
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Full deploy sequence for a config:
-     * 1. Load the saved config record
-     * 2. Deactivate old Flow (if it exists)
-     * 3. Deploy updated Flow via Metadata API (calls ExtoleUniversalHandler at runtime)
-     * 4. Update record: Apex_Class_Name__c, Flow_Name__c, Status__c=ACTIVE, Last_Deployed__c
-     *
-     * Callouts use the Extole_Tooling Named Credential — no session token in JS.
-     *
-     * @param configJson  Full config JSON from the LWC wizard
-     * @return String jobId (=configKey, for use with pollDeployStatus)
-     */
     @AuraEnabled
     public static String deployEventConfig(String configJson) {
-        // Step 1: Parse the configJson and determine the configKey
         Map<String, Object> configMap = (Map<String, Object>) JSON.deserializeUntyped(
             configJson
         );
         String configKey = (String) configMap.get('configKey');
         if (String.isBlank(configKey)) {
-            // Generate a key from eventName + triggerObject
             String eventName = (String) configMap.get('eventName');
             String triggerObject = (String) configMap.get('triggerObject');
             if (String.isBlank(eventName) || String.isBlank(triggerObject)) {
@@ -587,7 +488,6 @@ public with sharing class ExtoleEventController {
                 .replaceAll('[^a-zA-Z0-9_]', '_');
         }
 
-        // Step 2: Load saved config — saveEventConfig must be called before deployEventConfig
         List<Extole_Event_Cfg__c> configs = [
             SELECT
                 Id,
@@ -615,35 +515,24 @@ public with sharing class ExtoleEventController {
             );
         }
 
-        Extole_Event_Cfg__c cfg = configs[0];
+        Extole_Event_Cfg__c config = configs[0];
 
-        deployEventConfigByKey(cfg);
+        deployEventConfigByKey(config);
 
-        // Return the configKey as the jobId for polling
         return configKey;
     }
 
-    /**
-     * Internal deploy sequence given a loaded Extole_Event_Cfg__c record.
-     */
-    private static void deployEventConfigByKey(Extole_Event_Cfg__c cfg) {
-        String configKey = cfg.Config_Key__c;
+    private static void deployEventConfigByKey(Extole_Event_Cfg__c config) {
+        String configKey = config.Config_Key__c;
         String batchId = generateBatchId();
 
         try {
-            // ── CALLOUTS PHASE ────────────────────────────────────────────
-            // No DML may occur before or between callouts.
-
-            Integer newVersion = (cfg.Config_Version__c == null)
+            Integer newVersion = (config.Config_Version__c == null)
                 ? 1
-                : (Integer) cfg.Config_Version__c + 1;
+                : (Integer) config.Config_Version__c + 1;
 
-            // Callout 1: Deactivate then delete old Flow versions (non-fatal).
-            // Always attempt the expected flow name (derived from configKey) in addition
-            // to the stored Flow_Name__c, so stale flows from prior failed deploys are
-            // cleaned up even when Flow_Name__c was never set.
             String expectedFlowName = 'Extole_Flow_' + configKey;
-            String oldFlowName = cfg.Flow_Name__c;
+            String oldFlowName = config.Flow_Name__c;
             Boolean oldFlowDeactivated = false;
             Set<String> flowNamesToClean = new Set<String>{ expectedFlowName };
             if (!String.isBlank(oldFlowName))
@@ -663,28 +552,24 @@ public with sharing class ExtoleEventController {
                 }
             }
 
-            // Callout 2: Deploy new Flow (invokes ExtoleUniversalHandler at runtime)
             String flowName = ExtoleMetadataService.deployFlow(
-                cfg.Config_Key__c,
-                cfg.Trigger_Object__c,
-                cfg.Trigger_Type__c,
-                cfg.Trigger_Field__c,
-                cfg.Trigger_Value__c
+                config.Config_Key__c,
+                config.Trigger_Object__c,
+                config.Trigger_Type__c,
+                config.Trigger_Field__c,
+                config.Trigger_Value__c
             );
 
-            // ── DML PHASE ─────────────────────────────────────────────────
-            // All callouts are complete — DML is now safe.
-
-            cfg.Apex_Class_Name__c = 'ExtoleUniversalHandler';
-            cfg.Flow_Name__c = flowName;
-            cfg.Status__c = 'ACTIVE';
-            cfg.Active__c = true;
-            cfg.Config_Version__c = newVersion;
-            cfg.Last_Deployed__c = DateTime.now();
-            cfg.Deployed_By_User_Id__c = UserInfo.getUserId();
-            cfg.Deploy_Error__c = '';
-            cfg.Deploy_Error_Raw__c = '';
-            update cfg;
+            config.Apex_Class_Name__c = 'ExtoleUniversalHandler';
+            config.Flow_Name__c = flowName;
+            config.Status__c = 'ACTIVE';
+            config.Active__c = true;
+            config.Config_Version__c = newVersion;
+            config.Last_Deployed__c = DateTime.now();
+            config.Deployed_By_User_Id__c = UserInfo.getUserId();
+            config.Deploy_Error__c = '';
+            config.Deploy_Error_Raw__c = '';
+            update config;
 
             writeEventLogWithBatch(
                 configKey,
@@ -721,19 +606,14 @@ public with sharing class ExtoleEventController {
             );
         } catch (ExtoleMetadataService.ExtoleMetadataException e) {
             String msg = e.getMessage();
-            handleDeployFailure(cfg, msg, msg, batchId);
+            handleDeployFailure(config, msg, msg, batchId);
         } catch (Exception e) {
             String rawMsg = e.getMessage();
             String friendly = 'Unexpected error during deploy: ' + rawMsg;
-            handleDeployFailure(cfg, friendly, rawMsg, batchId);
+            handleDeployFailure(config, friendly, rawMsg, batchId);
         }
     }
 
-    /**
-     * Delete a config: deactivate flow, retain Apex class as orphan, delete record.
-     *
-     * @param configKey  Config_Key__c of the record
-     */
     @AuraEnabled
     public static void deleteEventConfig(String configKey) {
         List<Extole_Event_Cfg__c> configs = [
@@ -749,19 +629,18 @@ public with sharing class ExtoleEventController {
             );
         }
 
-        Extole_Event_Cfg__c cfg = configs[0];
+        Extole_Event_Cfg__c config = configs[0];
 
-        // Deactivate and delete the Flow
-        if (!String.isBlank(cfg.Flow_Name__c)) {
+        if (!String.isBlank(config.Flow_Name__c)) {
             try {
-                ExtoleMetadataService.deactivateFlow(cfg.Flow_Name__c);
-                ExtoleMetadataService.deleteFlow(cfg.Flow_Name__c);
+                ExtoleMetadataService.deactivateFlow(config.Flow_Name__c);
+                ExtoleMetadataService.deleteFlow(config.Flow_Name__c);
                 writeEventLog(
                     configKey,
                     'FLOW_DEACTIVATED',
                     'SUCCESS',
                     'Deactivated and deleted on config delete: ' +
-                    cfg.Flow_Name__c
+                    config.Flow_Name__c
                 );
             } catch (Exception e) {
                 System.debug(
@@ -772,7 +651,7 @@ public with sharing class ExtoleEventController {
         }
 
         try {
-            delete cfg;
+            delete config;
         } catch (DmlException e) {
             throw new AuraHandledException(
                 'Failed to delete config record: ' + e.getMessage()
@@ -792,12 +671,6 @@ public with sharing class ExtoleEventController {
         return ExtoleSafetyCheckService.checkEventUsage(eventName);
     }
 
-    /**
-     * Deactivate (set INACTIVE) a config without deleting it.
-     * Deactivates the associated Flow and writes a log entry.
-     *
-     * @param configKey  Config_Key__c of the record
-     */
     @AuraEnabled
     public static void deactivateEventConfig(String configKey) {
         List<Extole_Event_Cfg__c> configs = [
@@ -813,12 +686,11 @@ public with sharing class ExtoleEventController {
             );
         }
 
-        Extole_Event_Cfg__c cfg = configs[0];
+        Extole_Event_Cfg__c config = configs[0];
 
-        // Deactivate the Flow
-        if (!String.isBlank(cfg.Flow_Name__c)) {
+        if (!String.isBlank(config.Flow_Name__c)) {
             try {
-                ExtoleMetadataService.deactivateFlow(cfg.Flow_Name__c);
+                ExtoleMetadataService.deactivateFlow(config.Flow_Name__c);
             } catch (Exception e) {
                 System.debug(
                     'deactivateEventConfig: flow deactivation failed (non-fatal): ' +
@@ -827,10 +699,10 @@ public with sharing class ExtoleEventController {
             }
         }
 
-        cfg.Status__c = 'INACTIVE';
-        cfg.Active__c = false;
+        config.Status__c = 'INACTIVE';
+        config.Active__c = false;
         try {
-            update cfg;
+            update config;
         } catch (DmlException e) {
             throw new AuraHandledException(
                 'Failed to update config status: ' + e.getMessage()
@@ -844,10 +716,6 @@ public with sharing class ExtoleEventController {
             'Config deactivated: ' + configKey
         );
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Event Fire Log (runtime event firings from ExtoleUniversalHandler)
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
     public static List<Extole_Event_Fire_Log__c> getEventFireLogs() {
@@ -895,12 +763,6 @@ public with sharing class ExtoleEventController {
         }
     }
 
-    /**
-     * Delete Extole_Event_Log__c records in the org.
-     * Used by the "Clear History" button in Configure Events.
-     * Synchronous Apex caps at 10k DML rows per transaction; returns the
-     * count remaining so the LWC can prompt the admin to click again.
-     */
     @AuraEnabled
     public static Map<String, Integer> clearEventLog() {
         try {
@@ -925,14 +787,6 @@ public with sharing class ExtoleEventController {
         }
     }
 
-    /**
-     * Returns the current deploy status for a config.
-     * deployEventConfig is synchronous, so by the time the LWC calls this,
-     * the deploy is already complete. Looks up the config record status as the source of truth.
-     *
-     * @param jobId  The configKey returned by deployEventConfig
-     * @return Map with status (PENDING | SUCCEEDED | FAILED) and errorMessage
-     */
     @AuraEnabled
     public static Map<String, Object> pollDeployStatus(String jobId) {
         Map<String, Object> result = new Map<String, Object>{
@@ -946,8 +800,6 @@ public with sharing class ExtoleEventController {
             return result;
         }
 
-        // deployEventConfig is synchronous — by the time pollDeployStatus is called,
-        // the deploy is already complete. Look up the record status as proxy.
         List<Extole_Event_Cfg__c> configs = [
             SELECT Status__c, Deploy_Error__c
             FROM Extole_Event_Cfg__c
@@ -961,48 +813,37 @@ public with sharing class ExtoleEventController {
             return result;
         }
 
-        Extole_Event_Cfg__c cfg = configs[0];
-        if (cfg.Status__c == 'ACTIVE') {
+        Extole_Event_Cfg__c config = configs[0];
+        if (config.Status__c == 'ACTIVE') {
             result.put('status', 'SUCCEEDED');
-        } else if (cfg.Status__c == 'DEPLOY_FAILED') {
+        } else if (config.Status__c == 'DEPLOY_FAILED') {
             result.put('status', 'FAILED');
-            result.put('errorMessage', cfg.Deploy_Error__c);
+            result.put('errorMessage', config.Deploy_Error__c);
         } else {
-            // DRAFT / INACTIVE — treat as still pending
             result.put('status', 'PENDING');
         }
 
         return result;
     }
 
-    // clearOrphanedHandlers() was removed — per-config handler classes no longer exist.
-    // The universal handler (ExtoleUniversalHandler) is a static class; there is nothing to clean up.
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Mark config as DEPLOY_FAILED and log the error.
-     */
     private static void handleDeployFailure(
-        Extole_Event_Cfg__c cfg,
+        Extole_Event_Cfg__c config,
         String friendlyMsg,
         String rawMsg,
         String batchId
     ) {
-        cfg.Status__c = 'DEPLOY_FAILED';
-        cfg.Active__c = false;
-        cfg.Deploy_Error__c = truncate(friendlyMsg, 1300);
-        cfg.Deploy_Error_Raw__c = truncate(rawMsg, 1300);
+        config.Status__c = 'DEPLOY_FAILED';
+        config.Active__c = false;
+        config.Deploy_Error__c = truncate(friendlyMsg, 1300);
+        config.Deploy_Error_Raw__c = truncate(rawMsg, 1300);
         try {
-            if (cfg.Id != null)
-                update cfg;
+            if (config.Id != null)
+                update config;
         } catch (Exception ignored) {
         }
 
         writeEventLogWithBatch(
-            cfg.Config_Key__c,
+            config.Config_Key__c,
             'DEPLOY_FAILED',
             'FAILED',
             truncate(friendlyMsg, 1000),
@@ -1061,7 +902,6 @@ public with sharing class ExtoleEventController {
             Pattern.matches('^[a-zA-Z][a-zA-Z0-9_]*$', name);
     }
 
-    // Infrastructure/system objects excluded from one-hop relationship traversal
     private static final Set<String> SKIP_RELATIONSHIP_OBJECTS = new Set<String>{
         'User',
         'Profile',
@@ -1076,10 +916,6 @@ public with sharing class ExtoleEventController {
         'Territory2'
     };
 
-    /**
-     * Returns true for polymorphic reference fields (e.g. Task.WhoId, Task.WhatId).
-     * Polymorphic = can reference more than one object type.
-     */
     private static Boolean isPolymorphic(Schema.DescribeFieldResult f) {
         return f.getReferenceTo() != null && f.getReferenceTo().size() > 1;
     }

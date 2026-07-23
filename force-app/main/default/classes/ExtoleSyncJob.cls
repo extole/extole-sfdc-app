@@ -1,29 +1,19 @@
 public class ExtoleSyncJob implements Schedulable {
-    // ─────────────────────────────────────────────────────────────────────────
-    // Schedulable entry point
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public void execute(SchedulableContext ctx) {
+    public void execute(SchedulableContext context) {
         System.debug('ExtoleSyncJob.execute: scheduled run triggered');
         System.enqueueJob(new SyncQueueable());
     }
 
     public class SyncQueueable implements Queueable, Database.AllowsCallouts {
-        public void execute(QueueableContext ctx) {
+        public void execute(QueueableContext context) {
             ExtoleSyncJob.performSync('Scheduled');
         }
     }
 
-    // Called by ExtoleController.triggerSync() for on-demand manual syncs.
-    // Returns the number of configs that failed in this run.
     public static Integer runNow() {
         System.debug('ExtoleSyncJob.runNow: manual sync triggered');
         return performSync('Manual');
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Core sync logic
-    // ─────────────────────────────────────────────────────────────────────────
 
     @TestVisible
     private static Integer performSync(String triggerType) {
@@ -33,8 +23,6 @@ public class ExtoleSyncJob implements Schedulable {
             UserInfo.getUserId().left(8);
         System.debug('ExtoleSyncJob.performSync: batchId=' + batchId);
 
-        // Load settings (read-only reference — never upsert this object back directly,
-        // use writeSyncFields() below to avoid clobbering user-configured fields)
         Extole_App_Settings__c settings = Extole_App_Settings__c.getOrgDefaults();
         if (settings == null)
             settings = new Extole_App_Settings__c();
@@ -43,7 +31,6 @@ public class ExtoleSyncJob implements Schedulable {
             ? (Integer) settings.History_Depth__c
             : 30;
 
-        // Load active configs
         List<Extole_Report_Config__c> configs = [
             SELECT
                 Id,
@@ -69,33 +56,30 @@ public class ExtoleSyncJob implements Schedulable {
         );
 
         if (configs.isEmpty()) {
-            // No active configs — delete all snapshots and return
-            List<Extole_Report_Snapshot__c> allSnaps = [
+            List<Extole_Report_Snapshot__c> allSnapshots = [
                 SELECT Id
                 FROM Extole_Report_Snapshot__c
             ];
-            if (!allSnaps.isEmpty())
-                delete allSnaps;
+            if (!allSnapshots.isEmpty())
+                delete allSnapshots;
             writeSyncFields(settings.Id, System.now(), null);
             return 0;
         }
 
-        // ── Group configs by runner ID ─────────────────────────────────────
         Map<String, List<Extole_Report_Config__c>> configsByRunner = new Map<String, List<Extole_Report_Config__c>>();
         Set<String> activeConfigIds = new Set<String>();
 
-        for (Extole_Report_Config__c cfg : configs) {
-            activeConfigIds.add(cfg.Id);
-            String rid = cfg.Report_Type__c;
+        for (Extole_Report_Config__c config : configs) {
+            activeConfigIds.add(config.Id);
+            String rid = config.Report_Type__c;
             if (!configsByRunner.containsKey(rid)) {
                 configsByRunner.put(rid, new List<Extole_Report_Config__c>());
             }
-            configsByRunner.get(rid).add(cfg);
+            configsByRunner.get(rid).add(config);
         }
 
-        // ── Load existing snapshots ────────────────────────────────────────
         Map<String, Extole_Report_Snapshot__c> existingByConfigId = new Map<String, Extole_Report_Snapshot__c>();
-        for (Extole_Report_Snapshot__c snap : [
+        for (Extole_Report_Snapshot__c snapshot : [
             SELECT
                 Id,
                 Config_Id__c,
@@ -108,24 +92,23 @@ public class ExtoleSyncJob implements Schedulable {
             FROM Extole_Report_Snapshot__c
             WHERE Config_Id__c IN :activeConfigIds
         ]) {
-            existingByConfigId.put(snap.Config_Id__c, snap);
+            existingByConfigId.put(snapshot.Config_Id__c, snapshot);
         }
 
-        // ── Parse existing time series and find last known date per config ─
         Map<String, List<Map<String, Object>>> seriesByConfigId = new Map<String, List<Map<String, Object>>>();
         Map<String, Long> lastDateMsByConfigId = new Map<String, Long>();
 
         for (String configId : activeConfigIds) {
-            Extole_Report_Snapshot__c snap = existingByConfigId.get(configId);
-            List<Map<String, Object>> series = snap != null
-                ? parseTimeSeries(snap.Time_Series_JSON__c)
+            Extole_Report_Snapshot__c snapshot = existingByConfigId.get(
+                configId
+            );
+            List<Map<String, Object>> series = snapshot != null
+                ? parseTimeSeries(snapshot.Time_Series_JSON__c)
                 : new List<Map<String, Object>>();
             seriesByConfigId.put(configId, series);
             lastDateMsByConfigId.put(configId, getLastSeriesDateMs(series));
         }
 
-        // ── Callout budget ─────────────────────────────────────────────────
-        // 1 list call per runner + N download calls per runner, budget = 90
         Integer numRunners = configsByRunner.size();
         Integer downloadBudget = 90 - numRunners;
         Integer effectiveDepth = Math.max(
@@ -139,9 +122,6 @@ public class ExtoleSyncJob implements Schedulable {
                 effectiveDepth
         );
 
-        // ── Per-runner: list reports, download new ones ────────────────────
-        // runnerDownloads: runnerId -> List of {reportId, createdAt, createdAtMs,
-        //                                       viewUrl, clientId, rawJson}
         Map<String, List<Map<String, Object>>> runnerDownloads = new Map<String, List<Map<String, Object>>>();
 
         List<Extole_Sync_Log__c> syncLogs = new List<Extole_Sync_Log__c>();
@@ -153,24 +133,21 @@ public class ExtoleSyncJob implements Schedulable {
         Http http = new Http();
 
         for (String runnerId : configsByRunner.keySet()) {
-            List<Extole_Report_Config__c> runnerCfgs = configsByRunner.get(
+            List<Extole_Report_Config__c> runnerConfigs = configsByRunner.get(
                 runnerId
             );
 
-            // Earliest last-date across all configs for this runner
-            // (most aggressive cutoff = most data needed)
-            Long runnerCutoffMs = 9999999999999L; // sentinel: will be replaced by real min date
-            for (Extole_Report_Config__c cfg : runnerCfgs) {
-                Long d = lastDateMsByConfigId.get(cfg.Id);
+            Long runnerCutoffMs = 9999999999999L;
+            for (Extole_Report_Config__c config : runnerConfigs) {
+                Long d = lastDateMsByConfigId.get(config.Id);
                 if (d == null || d < 0L) {
-                    runnerCutoffMs = -1L; // new config — need full history
+                    runnerCutoffMs = -1L;
                     break;
                 }
                 if (d < runnerCutoffMs)
                     runnerCutoffMs = d;
             }
 
-            // ── Step 1: List reports for this runner ──────────────────────
             List<Map<String, Object>> completedReports = new List<Map<String, Object>>();
             String listError = '';
             Integer listHttpStatus = 0;
@@ -181,16 +158,16 @@ public class ExtoleSyncJob implements Schedulable {
                     runnerId +
                     '/reports?limit=' +
                     effectiveDepth;
-                HttpRequest listReq = new HttpRequest();
-                listReq.setEndpoint(listUrl);
-                listReq.setMethod('GET');
-                listReq.setTimeout(30000);
-                HttpResponse listRes = http.send(listReq);
-                listHttpStatus = listRes.getStatusCode();
+                HttpRequest listRequest = new HttpRequest();
+                listRequest.setEndpoint(listUrl);
+                listRequest.setMethod('GET');
+                listRequest.setTimeout(30000);
+                HttpResponse listResponse = http.send(listRequest);
+                listHttpStatus = listResponse.getStatusCode();
 
                 System.debug(
                     'ExtoleSyncJob /reports HTTP ' +
-                        listRes.getStatusCode() +
+                        listResponse.getStatusCode() +
                         ' runner=' +
                         runnerId
                 );
@@ -201,30 +178,29 @@ public class ExtoleSyncJob implements Schedulable {
                             runnerId,
                             'HTTP_RESPONSE',
                             'GET /reports | HTTP ' +
-                                listRes.getStatusCode() +
+                                listResponse.getStatusCode() +
                                 ' | ' +
-                                listRes.getBody().left(500),
+                                listResponse.getBody().left(500),
                             batchId
                         )
                     );
                 }
 
-                if (listRes.getStatusCode() != 200) {
+                if (listResponse.getStatusCode() != 200) {
                     listError =
                         'List reports HTTP ' +
-                        listRes.getStatusCode() +
+                        listResponse.getStatusCode() +
                         ': ' +
-                        listRes.getBody().left(200);
+                        listResponse.getBody().left(200);
                 } else {
                     List<Object> raw = (List<Object>) JSON.deserializeUntyped(
-                        listRes.getBody()
+                        listResponse.getBody()
                     );
-                    // API returns newest first; collect DONE ones, then reverse to oldest-first
                     List<Map<String, Object>> doneReports = new List<Map<String, Object>>();
                     for (Object r : raw) {
-                        Map<String, Object> rpt = (Map<String, Object>) r;
-                        if (rpt.get('status') == 'DONE')
-                            doneReports.add(rpt);
+                        Map<String, Object> report = (Map<String, Object>) r;
+                        if (report.get('status') == 'DONE')
+                            doneReports.add(report);
                     }
                     for (Integer i = doneReports.size() - 1; i >= 0; i--) {
                         completedReports.add(doneReports[i]);
@@ -241,12 +217,11 @@ public class ExtoleSyncJob implements Schedulable {
             }
 
             if (!String.isBlank(listError)) {
-                // Mark all configs for this runner as failed in the sync log
-                for (Extole_Report_Config__c cfg : runnerCfgs) {
+                for (Extole_Report_Config__c config : runnerConfigs) {
                     consecutiveFailCount++;
                     lastError = listError;
                     Extole_Sync_Log__c logEntry = new Extole_Sync_Log__c();
-                    logEntry.Report_Name__c = cfg.Report_Name__c;
+                    logEntry.Report_Name__c = config.Report_Name__c;
                     logEntry.Status__c = 'FAILED';
                     logEntry.Trigger_Type__c = triggerType;
                     logEntry.Sync_Timestamp__c = System.now();
@@ -257,23 +232,22 @@ public class ExtoleSyncJob implements Schedulable {
                     logEntry.Sync_Batch_Id__c = batchId;
                     syncLogs.add(logEntry);
                 }
-                // 404 means the runner no longer exists in Extole — mark snapshots SOURCE_UNAVAILABLE
-                // so the dashboard tile can surface a clear "Source Unavailable" state instead of
-                // showing stale data silently.
                 if (listHttpStatus == 404) {
-                    Set<String> cfgIds = new Set<String>();
-                    for (Extole_Report_Config__c cfg : runnerCfgs)
-                        cfgIds.add(cfg.Id);
-                    List<Extole_Report_Snapshot__c> unavailSnaps = [
+                    Set<String> configIds = new Set<String>();
+                    for (Extole_Report_Config__c config : runnerConfigs)
+                        configIds.add(config.Id);
+                    List<Extole_Report_Snapshot__c> unavailableSnapshots = [
                         SELECT Id, Config_Status__c
                         FROM Extole_Report_Snapshot__c
-                        WHERE Config_Id__c IN :cfgIds
+                        WHERE Config_Id__c IN :configIds
                     ];
-                    if (!unavailSnaps.isEmpty()) {
-                        for (Extole_Report_Snapshot__c s : unavailSnaps) {
+                    if (!unavailableSnapshots.isEmpty()) {
+                        for (
+                            Extole_Report_Snapshot__c s : unavailableSnapshots
+                        ) {
                             s.Config_Status__c = 'SOURCE_UNAVAILABLE';
                         }
-                        update unavailSnaps;
+                        update unavailableSnapshots;
                     }
                 }
                 failedRunnerIds.add(runnerId);
@@ -281,22 +255,22 @@ public class ExtoleSyncJob implements Schedulable {
                 continue;
             }
 
-            // ── Step 2: Download reports newer than the runner cutoff ──────
             List<Map<String, Object>> downloaded = new List<Map<String, Object>>();
 
-            for (Map<String, Object> rpt : completedReports) {
-                String reportId = rpt.get('report_id') != null
-                    ? (String) rpt.get('report_id')
-                    : rpt.get('id') != null ? (String) rpt.get('id') : null;
+            for (Map<String, Object> report : completedReports) {
+                String reportId = report.get('report_id') != null
+                    ? (String) report.get('report_id')
+                    : report.get('id') != null
+                          ? (String) report.get('id')
+                          : null;
                 if (String.isBlank(reportId))
                     continue;
 
-                String createdAt = rpt.get('created_at') != null
-                    ? (String) rpt.get('created_at')
+                String createdAt = report.get('created_at') != null
+                    ? (String) report.get('created_at')
                     : '';
                 Long createdAtMs = parseDateMs(createdAt);
 
-                // Skip if already have data at or before this report (incremental)
                 if (
                     runnerCutoffMs > 0 &&
                     createdAtMs > 0 &&
@@ -305,22 +279,21 @@ public class ExtoleSyncJob implements Schedulable {
                     continue;
                 }
 
-                // Download report data
                 String rawJson = null;
                 try {
-                    HttpRequest dlReq = new HttpRequest();
-                    dlReq.setEndpoint(
+                    HttpRequest downloadRequest = new HttpRequest();
+                    downloadRequest.setEndpoint(
                         'callout:Extole_API/v4/reports/' +
                             reportId +
                             '/download.json'
                     );
-                    dlReq.setMethod('GET');
-                    dlReq.setTimeout(30000);
-                    HttpResponse dlRes = http.send(dlReq);
+                    downloadRequest.setMethod('GET');
+                    downloadRequest.setTimeout(30000);
+                    HttpResponse downloadResponse = http.send(downloadRequest);
 
                     System.debug(
                         'ExtoleSyncJob download HTTP ' +
-                            dlRes.getStatusCode() +
+                            downloadResponse.getStatusCode() +
                             ' reportId=' +
                             reportId
                     );
@@ -333,16 +306,16 @@ public class ExtoleSyncJob implements Schedulable {
                                 'GET /download.json | reportId=' +
                                     reportId +
                                     ' | HTTP ' +
-                                    dlRes.getStatusCode() +
+                                    downloadResponse.getStatusCode() +
                                     ' | len=' +
-                                    dlRes.getBody().length(),
+                                    downloadResponse.getBody().length(),
                                 batchId
                             )
                         );
                     }
 
-                    if (dlRes.getStatusCode() == 200)
-                        rawJson = dlRes.getBody();
+                    if (downloadResponse.getStatusCode() == 200)
+                        rawJson = downloadResponse.getBody();
                 } catch (Exception e) {
                     System.debug(
                         'ExtoleSyncJob: download failed for report ' +
@@ -360,11 +333,11 @@ public class ExtoleSyncJob implements Schedulable {
                         'reportId' => reportId,
                         'createdAt' => createdAt,
                         'createdAtMs' => createdAtMs,
-                        'viewUrl' => rpt.get('view_url') != null
-                            ? rpt.get('view_url')
+                        'viewUrl' => report.get('view_url') != null
+                            ? report.get('view_url')
                             : '',
-                        'clientId' => rpt.get('client_id') != null
-                            ? rpt.get('client_id')
+                        'clientId' => report.get('client_id') != null
+                            ? report.get('client_id')
                             : '',
                         'rawJson' => rawJson
                     }
@@ -381,26 +354,23 @@ public class ExtoleSyncJob implements Schedulable {
             );
         }
 
-        // ── Process each config → build/update snapshot ───────────────────
         List<Extole_Report_Snapshot__c> snapshotsToUpsert = new List<Extole_Report_Snapshot__c>();
 
-        for (Extole_Report_Config__c cfg : configs) {
-            String runnerId = cfg.Report_Type__c;
-            // Runner-level failure already logged above — skip per-config processing
+        for (Extole_Report_Config__c config : configs) {
+            String runnerId = config.Report_Type__c;
             if (failedRunnerIds.contains(runnerId))
                 continue;
             List<Map<String, Object>> downloads = runnerDownloads.get(runnerId);
             if (downloads == null)
                 downloads = new List<Map<String, Object>>();
 
-            // Working copy of the time series (oldest first)
             List<Map<String, Object>> series = new List<Map<String, Object>>();
-            series.addAll(seriesByConfigId.get(cfg.Id));
-            Long configLastDateMs = lastDateMsByConfigId.get(cfg.Id);
+            series.addAll(seriesByConfigId.get(config.Id));
+            Long configLastDateMs = lastDateMsByConfigId.get(config.Id);
             if (configLastDateMs == null)
                 configLastDateMs = -1L;
 
-            String latestExtractedVal = null;
+            String latestExtractedValue = null;
             String latestReportId = null;
             String latestViewUrl = '';
             String latestClientId = '';
@@ -409,11 +379,9 @@ public class ExtoleSyncJob implements Schedulable {
             String errMsg = '';
 
             try {
-                // Merge new downloads into this config's time series
                 for (Map<String, Object> dl : downloads) {
                     Long dlDateMs = (Long) dl.get('createdAtMs');
 
-                    // Skip data points already in this config's series
                     if (
                         dlDateMs != null &&
                         dlDateMs > 0 &&
@@ -424,14 +392,12 @@ public class ExtoleSyncJob implements Schedulable {
                     }
 
                     String rawJson = (String) dl.get('rawJson');
-                    String val = extractValue(
+                    String value = extractValue(
                         rawJson,
-                        cfg.Value_Column__c,
-                        cfg.Aggregation__c
+                        config.Value_Column__c,
+                        config.Aggregation__c
                     );
 
-                    // Use Extole's createdAt if present; fall back to sync time so
-                    // the series always has parseable dates for comparison period.
                     String pointDate = (String) dl.get('createdAt');
                     if (String.isBlank(pointDate)) {
                         pointDate = System.now()
@@ -440,26 +406,24 @@ public class ExtoleSyncJob implements Schedulable {
                     series.add(
                         new Map<String, Object>{
                             'date' => pointDate,
-                            'value' => val != null ? val : '0'
+                            'value' => value != null ? value : '0'
                         }
                     );
 
-                    latestExtractedVal = val;
+                    latestExtractedValue = value;
                     latestReportId = (String) dl.get('reportId');
                     latestViewUrl = (String) dl.get('viewUrl');
                     latestClientId = (String) dl.get('clientId');
                     latestReportDateMs = dlDateMs != null ? dlDateMs : -1L;
                 }
 
-                // Fall back to existing value if nothing new was downloaded
                 Extole_Report_Snapshot__c existing = existingByConfigId.get(
-                    cfg.Id
+                    config.Id
                 );
-                if (latestExtractedVal == null && existing != null) {
-                    latestExtractedVal = existing.Value__c;
+                if (latestExtractedValue == null && existing != null) {
+                    latestExtractedValue = existing.Value__c;
                 }
 
-                // Trim to history depth (keep most recent N points)
                 if (series.size() > historyDepth) {
                     List<Map<String, Object>> trimmed = new List<Map<String, Object>>();
                     for (
@@ -472,70 +436,64 @@ public class ExtoleSyncJob implements Schedulable {
                     series = trimmed;
                 }
 
-                // Compute Prior_Period_Value__c from comparison period
-                String priorVal = null;
+                String priorValue = null;
                 Integer compDays = parseComparisonDays(
-                    cfg.Comparison_Period__c
+                    config.Comparison_Period__c
                 );
                 if (compDays > 0 && !series.isEmpty()) {
-                    priorVal = findClosestSeriesValue(
+                    priorValue = findClosestSeriesValue(
                         series,
                         System.now().addDays(-compDays)
                     );
                     System.debug(
-                        'ExtoleSyncJob: priorVal=' +
-                            priorVal +
+                        'ExtoleSyncJob: priorValue=' +
+                            priorValue +
                             ' compDays=' +
                             compDays +
                             ' for ' +
-                            cfg.Report_Name__c
+                            config.Report_Name__c
                     );
                 }
 
-                // Build snapshot record (update existing or create new)
-                Extole_Report_Snapshot__c snap = existing != null
+                Extole_Report_Snapshot__c snapshot = existing != null
                     ? existing
                     : new Extole_Report_Snapshot__c();
 
-                snap.Name = cfg.Display_Label__c != null
-                    ? cfg.Display_Label__c
-                    : cfg.Report_Name__c;
-                snap.Display_Label__c = cfg.Display_Label__c;
-                snap.Value__c = latestExtractedVal;
-                snap.Prior_Period_Value__c = priorVal;
-                snap.Time_Series_JSON__c = series.isEmpty()
+                snapshot.Name = config.Display_Label__c != null
+                    ? config.Display_Label__c
+                    : config.Report_Name__c;
+                snapshot.Display_Label__c = config.Display_Label__c;
+                snapshot.Value__c = latestExtractedValue;
+                snapshot.Prior_Period_Value__c = priorValue;
+                snapshot.Time_Series_JSON__c = series.isEmpty()
                     ? null
                     : JSON.serialize(series);
-                snap.Report_Name__c = cfg.Report_Name__c;
-                snap.Executor_Type__c = cfg.Executor_Type__c;
-                // As_Of_Date reflects when SFDC last successfully synced, not when
-                // Extole generated the report — keeps the tile footer date current.
-                snap.As_Of_Date__c = System.now();
-                // Date_Range__c stores the comparison period label for the tile trendText
-                snap.Date_Range__c = cfg.Comparison_Period__c != null
-                    ? cfg.Comparison_Period__c
-                    : cfg.Date_Range__c;
-                snap.Display_Order__c = cfg.Display_Order__c;
-                snap.Chart_Type__c = cfg.Chart_Type__c;
-                snap.Config_Id__c = cfg.Id;
-                snap.Config_Status__c = 'ACTIVE';
-                snap.Next_Expected_Sync__c = calcNextExpectedSync(
+                snapshot.Report_Name__c = config.Report_Name__c;
+                snapshot.Executor_Type__c = config.Executor_Type__c;
+                snapshot.As_Of_Date__c = System.now();
+                snapshot.Date_Range__c = config.Comparison_Period__c != null
+                    ? config.Comparison_Period__c
+                    : config.Date_Range__c;
+                snapshot.Display_Order__c = config.Display_Order__c;
+                snapshot.Chart_Type__c = config.Chart_Type__c;
+                snapshot.Config_Id__c = config.Id;
+                snapshot.Config_Status__c = 'ACTIVE';
+                snapshot.Next_Expected_Sync__c = calcNextExpectedSync(
                     settings.Sync_Cadence__c
                 );
 
-                // Only overwrite connection metadata when we actually downloaded something
                 if (latestReportId != null) {
-                    snap.View_URL__c = latestViewUrl;
-                    snap.Report_Id__c = latestReportId;
-                    snap.Client_Id__c = latestClientId;
-                    snap.Schedule_URL__c =
+                    snapshot.View_URL__c = latestViewUrl;
+                    snapshot.Report_Id__c = latestReportId;
+                    snapshot.Client_Id__c = latestClientId;
+                    snapshot.Schedule_URL__c =
                         'https://my.extole.com/reports?user_id=' +
                         latestClientId +
                         '#/schedules/' +
                         runnerId;
                 }
 
-                snapshotsToUpsert.add(snap);
+                snapshotsToUpsert.add(snapshot);
 
                 if (debugEnabled) {
                     String firstDate = !series.isEmpty()
@@ -546,12 +504,12 @@ public class ExtoleSyncJob implements Schedulable {
                         : 'n/a';
                     debugLogs.add(
                         makeDebugLog(
-                            cfg.Report_Name__c,
+                            config.Report_Name__c,
                             'VALUE_EXTRACTED',
                             'value=' +
-                                latestExtractedVal +
-                                ' priorVal=' +
-                                priorVal +
+                                latestExtractedValue +
+                                ' priorValue=' +
+                                priorValue +
                                 ' seriesLen=' +
                                 series.size() +
                                 ' firstDate=' +
@@ -569,23 +527,24 @@ public class ExtoleSyncJob implements Schedulable {
                 statusStr = 'FAILED';
                 System.debug(
                     'ExtoleSyncJob ERROR for config ' +
-                        cfg.Report_Name__c +
+                        config.Report_Name__c +
                         ': ' +
                         errMsg
                 );
             }
 
-            // Always write a sync log entry
             Extole_Sync_Log__c logEntry = new Extole_Sync_Log__c();
-            logEntry.Report_Name__c = cfg.Report_Name__c;
-            logEntry.Date_Range__c = String.isNotBlank(cfg.Comparison_Period__c)
-                ? cfg.Comparison_Period__c
-                : cfg.Date_Range__c;
-            logEntry.Executor_Type__c = cfg.Executor_Type__c;
+            logEntry.Report_Name__c = config.Report_Name__c;
+            logEntry.Date_Range__c = String.isNotBlank(
+                    config.Comparison_Period__c
+                )
+                ? config.Comparison_Period__c
+                : config.Date_Range__c;
+            logEntry.Executor_Type__c = config.Executor_Type__c;
             logEntry.Status__c = statusStr;
             logEntry.Trigger_Type__c = triggerType;
             logEntry.Sync_Timestamp__c = System.now();
-            logEntry.Value_Extracted__c = latestExtractedVal;
+            logEntry.Value_Extracted__c = latestExtractedValue;
             logEntry.HTTP_Status_Code__c = statusStr == 'SUCCESS' ? 200 : null;
             logEntry.Poll_Attempts__c = 0;
             logEntry.Error_Message__c = errMsg.length() > 255
@@ -595,7 +554,6 @@ public class ExtoleSyncJob implements Schedulable {
             syncLogs.add(logEntry);
         }
 
-        // ── Upsert snapshots ──────────────────────────────────────────────
         if (!snapshotsToUpsert.isEmpty()) {
             upsert snapshotsToUpsert;
             System.debug(
@@ -605,7 +563,6 @@ public class ExtoleSyncJob implements Schedulable {
             );
         }
 
-        // ── Orphan reconciliation — delete snapshots for removed configs ──────
         Set<String> orphanCheckSet = new Set<String>(activeConfigIds);
         orphanCheckSet.add('000000000000000000');
         List<Extole_Report_Snapshot__c> toDelete = [
@@ -622,15 +579,11 @@ public class ExtoleSyncJob implements Schedulable {
             );
         }
 
-        // ── Bulk insert logs ──────────────────────────────────────────────
         if (!syncLogs.isEmpty())
             insert syncLogs;
         if (!debugLogs.isEmpty())
             insert debugLogs;
 
-        // Log retention runs independently on its own schedule — see ExtoleLogPurgeJob.
-
-        // ── Update Last_Sync_Timestamp + Consecutive_Failure_Count ──────────
         Integer prevConsecutive = settings.Consecutive_Failure_Count__c != null
             ? (Integer) settings.Consecutive_Failure_Count__c
             : 0;
@@ -639,7 +592,6 @@ public class ExtoleSyncJob implements Schedulable {
             : 0;
         writeSyncFields(settings.Id, System.now(), newConsecutive);
 
-        // ── Failure notification ──────────────────────────────────────────
         if (consecutiveFailCount > 0) {
             Integer notifyAfter = settings.Notify_After_N_Failures__c != null
                 ? (Integer) settings.Notify_After_N_Failures__c
@@ -657,10 +609,6 @@ public class ExtoleSyncJob implements Schedulable {
 
         return consecutiveFailCount;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Value extraction
-    // ─────────────────────────────────────────────────────────────────────────
 
     public static String extractValue(
         String rawJson,
@@ -700,22 +648,22 @@ public class ExtoleSyncJob implements Schedulable {
         );
 
         if (aggregation == 'FIRST_ROW') {
-            Object val = firstRow.get(valueColumn);
-            return val != null ? String.valueOf(val) : null;
+            Object value = firstRow.get(valueColumn);
+            return value != null ? String.valueOf(value) : null;
         }
 
         if (aggregation == 'SUM') {
             Decimal total = 0;
             for (Object rowObj : rows) {
                 Map<String, Object> row = (Map<String, Object>) rowObj;
-                Object val = row.get(valueColumn);
-                if (val != null) {
+                Object value = row.get(valueColumn);
+                if (value != null) {
                     try {
-                        total += Decimal.valueOf(String.valueOf(val));
+                        total += Decimal.valueOf(String.valueOf(value));
                     } catch (Exception e) {
                         System.debug(
                             'ExtoleSyncJob.extractValue SUM: non-numeric value=' +
-                            val
+                            value
                         );
                     }
                 }
@@ -725,10 +673,6 @@ public class ExtoleSyncJob implements Schedulable {
 
         return null;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Time series helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private static List<Map<String, Object>> parseTimeSeries(String jsonStr) {
         if (String.isBlank(jsonStr))
@@ -760,10 +704,7 @@ public class ExtoleSyncJob implements Schedulable {
         if (String.isBlank(isoDate))
             return -1L;
         try {
-            // Normalise to "YYYY-MM-DD HH:MM:SS" for DateTime.valueOfGmt().
-            // Handles Z, +HH:MM, -HH:MM, +HHMM, milliseconds — any ISO 8601 variant.
             String cleaned = isoDate.replace('T', ' ');
-            // First 19 chars is always YYYY-MM-DD HH:MM:SS — drop everything after
             if (cleaned.length() > 19)
                 cleaned = cleaned.substring(0, 19);
             return DateTime.valueOfGmt(cleaned).getTime();
@@ -772,8 +713,6 @@ public class ExtoleSyncJob implements Schedulable {
         }
     }
 
-    // Finds the time series value whose date is closest to targetDate.
-    // Falls back to the oldest point in the series if no dates are parseable.
     private static String findClosestSeriesValue(
         List<Map<String, Object>> series,
         DateTime targetDate
@@ -792,8 +731,6 @@ public class ExtoleSyncJob implements Schedulable {
                 closest = (String) pt.get('value');
             }
         }
-        // If no dates were parseable, fall back to the oldest point in the series.
-        // This handles legacy series with blank dates and gives a meaningful baseline.
         if (closest == null && !series.isEmpty()) {
             closest = (String) series[0].get('value');
         }
@@ -814,10 +751,6 @@ public class ExtoleSyncJob implements Schedulable {
         return 0;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Utility: next expected sync calculation
-    // ─────────────────────────────────────────────────────────────────────────
-
     public static DateTime calcNextExpectedSync(String cadence) {
         DateTime now = System.now();
         if (cadence == 'Every 30min')
@@ -826,12 +759,8 @@ public class ExtoleSyncJob implements Schedulable {
             return now.addHours(6);
         if (cadence == 'Every 12hrs')
             return now.addHours(12);
-        return now.addHours(24); // Nightly default
+        return now.addHours(24);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Utility: debug log factory
-    // ─────────────────────────────────────────────────────────────────────────
 
     private static Extole_Debug_Log__c makeDebugLog(
         String reportName,
@@ -851,11 +780,6 @@ public class ExtoleSyncJob implements Schedulable {
         return log;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Targeted settings write — only touches sync-internal fields so user-
-    // configured fields (Notify, email, cadence, etc.) are never clobbered
-    // ─────────────────────────────────────────────────────────────────────────
-
     private static void writeSyncFields(
         Id settingsId,
         DateTime lastSync,
@@ -863,9 +787,6 @@ public class ExtoleSyncJob implements Schedulable {
     ) {
         Extole_App_Settings__c upd;
         if (settingsId != null) {
-            // Read the full record first so the update never clobbers user-configured fields.
-            // Assigning only 2 fields to a new sObject(Id=x) can behave unexpectedly with
-            // Hierarchy Custom Settings upsert — reading first is the safe pattern.
             List<Extole_App_Settings__c> rows = [
                 SELECT
                     Id,
@@ -894,10 +815,6 @@ public class ExtoleSyncJob implements Schedulable {
         upd.Consecutive_Failure_Count__c = failCount;
         upsert upd;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Failure notification email
-    // ─────────────────────────────────────────────────────────────────────────
 
     private static void sendFailureEmail(
         Extole_App_Settings__c settings,
@@ -939,7 +856,6 @@ public class ExtoleSyncJob implements Schedulable {
                 settings.Failure_Notification_Email__c
             );
 
-            // Record the send attempt in the debug log so it's visible without enabling full debug logging
             insert new Extole_Debug_Log__c(
                 Report_Name__c = 'SYSTEM',
                 Log_Timestamp__c = System.now(),
@@ -967,17 +883,7 @@ public class ExtoleSyncJob implements Schedulable {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Schedule management
-    // Aborts any existing job stored in settings, then registers a new one
-    // for the given cadence. Returns the new CronTrigger ID (or null if cadence
-    // is blank/None). Called by ExtoleController.saveSettings so that changing
-    // the cadence slider immediately re-wires the scheduled job.
-    // ─────────────────────────────────────────────────────────────────────────
-
     public static String scheduleJob(String cadence) {
-        // Abort ALL active ExtoleSync_* jobs — query by name so stale stored IDs
-        // don't leave orphan jobs behind when the ID in settings is out of date.
         List<CronTrigger> existingJobs = [
             SELECT Id
             FROM CronTrigger
@@ -1010,7 +916,6 @@ public class ExtoleSyncJob implements Schedulable {
 
         String ts = String.valueOf(System.currentTimeMillis());
 
-        // Every 30min requires two jobs (:00 and :30) — Salesforce cron does not support 0/30 syntax
         if (cadence == 'Every 30min') {
             String id1 = System.schedule(
                 'ExtoleSync_30m_top_' + ts,
@@ -1031,16 +936,20 @@ public class ExtoleSyncJob implements Schedulable {
             return id1;
         }
 
-        String cronExpr;
+        String cronExpression;
         if (cadence == 'Every 6hrs')
-            cronExpr = '0 0 0/6 * * ?';
+            cronExpression = '0 0 0/6 * * ?';
         else if (cadence == 'Every 12hrs')
-            cronExpr = '0 0 0/12 * * ?';
+            cronExpression = '0 0 0/12 * * ?';
         else
-            cronExpr = '0 0 2 * * ?'; // Nightly at 2 AM
+            cronExpression = '0 0 2 * * ?';
 
         String jobName = 'ExtoleSync_' + ts;
-        String jobId = System.schedule(jobName, cronExpr, new ExtoleSyncJob());
+        String jobId = System.schedule(
+            jobName,
+            cronExpression,
+            new ExtoleSyncJob()
+        );
         System.debug(
             'ExtoleSyncJob.scheduleJob: scheduled id=' +
                 jobId +
@@ -1049,10 +958,6 @@ public class ExtoleSyncJob implements Schedulable {
         );
         return jobId;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Custom exception
-    // ─────────────────────────────────────────────────────────────────────────
 
     public class ExtoleSyncException extends Exception {
     }

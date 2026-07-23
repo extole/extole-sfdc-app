@@ -1,7 +1,5 @@
 @IsTest
 private class ExtoleProgramDashboardControllerTest {
-    // ── Programs ─────────────────────────────────────────────────────────────
-
     @IsTest
     static void testGetProgramsFiltersAndDedupes() {
         Test.setMock(
@@ -11,10 +9,10 @@ private class ExtoleProgramDashboardControllerTest {
                     200,
                     '[' +
                         '{"program_label":"account-openings","state":"LIVE","campaign_type":"MARKETING"},' +
-                        '{"program_label":"account-openings","state":"LIVE","campaign_type":"MARKETING"},' + // duplicate
-                        '{"program_label":"hubspot-sync","state":"LIVE","campaign_type":"INTEGRATION"},' + // wrong type
-                        '{"program_label":"paused-program","state":"PAUSED","campaign_type":"MARKETING"},' + // not LIVE
-                        '{"program_label":"","state":"LIVE","campaign_type":"MARKETING"}' + // blank label
+                        '{"program_label":"account-openings","state":"LIVE","campaign_type":"MARKETING"},' +
+                        '{"program_label":"hubspot-sync","state":"LIVE","campaign_type":"INTEGRATION"},' +
+                        '{"program_label":"paused-program","state":"PAUSED","campaign_type":"MARKETING"},' +
+                        '{"program_label":"","state":"LIVE","campaign_type":"MARKETING"}' +
                         ']'
                 )
         );
@@ -27,8 +25,6 @@ private class ExtoleProgramDashboardControllerTest {
         System.assertEquals('account-openings', programs[0].get('label'));
         System.assertEquals('Account Openings', programs[0].get('displayName'));
     }
-
-    // ── Dashboard report lifecycle ───────────────────────────────────────────
 
     @IsTest
     static void testStartDashboardReportBlankProgramThrows() {
@@ -160,8 +156,6 @@ private class ExtoleProgramDashboardControllerTest {
         System.assertNotEquals(null, result.get('error'));
     }
 
-    // ── Promotions lifecycle ─────────────────────────────────────────────────
-
     @IsTest
     static void testStartPromotionsReportBlankProgramThrows() {
         Boolean threw = false;
@@ -232,14 +226,11 @@ private class ExtoleProgramDashboardControllerTest {
         Map<String, Object> data = (Map<String, Object>) result.get('data');
         List<Object> promotions = (List<Object>) data.get('promotions');
         System.assertEquals(2, promotions.size());
-        // Highest total ("header", 50) sorts first.
         Map<String, Object> first = (Map<String, Object>) promotions[0];
         System.assertEquals('header', first.get('source'));
         System.assertEquals('Header', first.get('displayName'));
         System.assertEquals(50, first.get('total'));
     }
-
-    // ── Channels lifecycle ───────────────────────────────────────────────────
 
     @IsTest
     static void testStartChannelsReportBlankProgramThrows() {
@@ -310,7 +301,6 @@ private class ExtoleProgramDashboardControllerTest {
         Map<String, Object> data = (Map<String, Object>) result.get('data');
         List<Object> channels = (List<Object>) data.get('channels');
         System.assertEquals(2, channels.size());
-        // SMS has more shares (500 > 100), so it sorts first.
         Map<String, Object> first = (Map<String, Object>) channels[0];
         System.assertEquals('SMS', first.get('channel'));
         System.assertEquals('Sms', first.get('displayName'));

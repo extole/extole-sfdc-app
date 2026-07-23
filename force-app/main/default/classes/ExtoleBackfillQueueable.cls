@@ -1,34 +1,14 @@
-/**
- * ExtoleBackfillQueueable
- *
- * For each record: look up the person in Extole by email (creating them if
- * they don't exist), then create a shareable to obtain the share link, and
- * write it back to the target SFDC field.
- *
- * API flow per person (up to 3 callouts):
- *   GET  /v5/persons?identity_key_value={email}
- *   POST /v5/persons                              (only if person not found)
- *   POST /v5/persons/{id}/shareables              (returns link)
- *   GET  /v5/persons/{id}/shareables              (only if label already taken)
- *
- * Chunk size is 25 to stay well within the 90-callout-per-execution limit.
- *
- * audienceType values:
- *   'default' — built-in filter (Closed Won contacts / unconverted leads); cursor-based, unlimited scale
- *   'date'    — all records with email created on/after selectedDate; cursor-based, unlimited scale
- *   'report'  — IDs loaded via Analytics REST API; capped at 2,000 rows
- */
 public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallouts {
     private static final Integer CHUNK_SIZE = 25;
 
     private Id logId;
-    private String objectType; // 'Contact' or 'Lead'
-    private String audienceType; // 'default', 'date', or 'report'
-    private String selectedDate; // YYYY-MM-DD, used when audienceType == 'date'
+    private String objectType;
+    private String audienceType;
+    private String selectedDate;
     private String reportId;
     private String targetField;
     private String programLabel;
-    private Id cursor; // last processed Id for cursor-based pagination
+    private Id cursor;
     private List<Id> reportIds;
     private Integer reportOffset;
 
@@ -70,7 +50,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         this.reportOffset = reportOffset;
     }
 
-    public void execute(QueueableContext ctx) {
+    public void execute(QueueableContext context) {
         List<SObject> chunk;
 
         if (audienceType == 'report') {
@@ -80,8 +60,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                 reportOffset = 0;
             }
             if (isFirstLoad && reportIds == null) {
-                // loadReportIds() already marked the log FAILED — finalize() would
-                // overwrite that with a false 'COMPLETED', so skip it entirely.
                 return;
             }
             if (reportIds.isEmpty()) {
@@ -145,7 +123,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
             successCount++;
         }
 
-        // Single bulk DML after all callouts
         if (!toUpdate.isEmpty()) {
             try {
                 update toUpdate;
@@ -198,17 +175,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Extole API — person lookup + shareable creation
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Resolves the share link for a person by email.
-     * 1. Look up person by identity_key_value (email).
-     * 2. Create person if not found.
-     * 3. Create shareable → returns link.
-     * 4. If label already taken, fetch existing shareables and return matching link.
-     */
     private String resolveShareLink(String email) {
         String personId = lookupOrCreatePerson(email);
         if (personId == null)
@@ -223,40 +189,39 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
 
     private String lookupOrCreatePerson(String email) {
         try {
-            HttpResponse res = EXTOLE_CLIENT.send(
+            HttpResponse response = EXTOLE_CLIENT.send(
                 EXTOLE_CONFIG,
                 ExtoleGetPersonRequest.byEmail(email).build(EXTOLE_CONFIG)
             );
             ExtoleGetPersonResponse lookup = ExtoleGetPersonResponse.fromResponse(
-                res
+                response
             );
             if (lookup.person != null)
                 return lookup.person.id;
 
-            // Person not found — create
-            HttpRequest createReq = new HttpRequest();
-            createReq.setEndpoint(
+            HttpRequest createRequest = new HttpRequest();
+            createRequest.setEndpoint(
                 'callout:Extole_API' + ExtoleConstants.PEOPLE_PATH
             );
-            createReq.setMethod('POST');
-            createReq.setHeader('Content-Type', 'application/json');
-            createReq.setBody(
+            createRequest.setMethod('POST');
+            createRequest.setHeader('Content-Type', 'application/json');
+            createRequest.setBody(
                 JSON.serialize(
                     new Map<String, Object>{ 'identity_key_value' => email }
                 )
             );
-            createReq.setTimeout(30000);
-            HttpResponse createRes = EXTOLE_CLIENT.send(
+            createRequest.setTimeout(30000);
+            HttpResponse createResponse = EXTOLE_CLIENT.send(
                 EXTOLE_CONFIG,
-                createReq
+                createRequest
             );
 
             if (
-                createRes.getStatusCode() >= 200 &&
-                createRes.getStatusCode() < 300
+                createResponse.getStatusCode() >= 200 &&
+                createResponse.getStatusCode() < 300
             ) {
                 Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
-                    createRes.getBody()
+                    createResponse.getBody()
                 );
                 return (String) body.get('id');
             }
@@ -272,13 +237,13 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
 
     private String createOrGetShareable(String personId) {
         try {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(
                 'callout:Extole_API/v5/persons/' + personId + '/shareables'
             );
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
-            req.setBody(
+            request.setMethod('POST');
+            request.setHeader('Content-Type', 'application/json');
+            request.setBody(
                 JSON.serialize(
                     new Map<String, Object>{
                         'label' => String.isNotBlank(programLabel)
@@ -287,19 +252,21 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                     }
                 )
             );
-            req.setTimeout(30000);
-            HttpResponse res = new Http().send(req);
+            request.setTimeout(30000);
+            HttpResponse response = new Http().send(request);
 
-            if (res.getStatusCode() >= 200 && res.getStatusCode() < 300) {
+            if (
+                response.getStatusCode() >= 200 &&
+                response.getStatusCode() < 300
+            ) {
                 Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
-                    res.getBody()
+                    response.getBody()
                 );
                 return (String) body.get('link');
             }
 
-            // Shareable label already exists — fetch and return the existing one
             Map<String, Object> errBody = (Map<String, Object>) JSON.deserializeUntyped(
-                res.getBody()
+                response.getBody()
             );
             String code = (String) errBody.get('code');
             if (code == 'shareable_key_taken') {
@@ -317,19 +284,19 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
 
     private String fetchExistingShareable(String personId) {
         try {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(
                 'callout:Extole_API/v5/persons/' + personId + '/shareables'
             );
-            req.setMethod('GET');
-            req.setTimeout(30000);
-            HttpResponse res = new Http().send(req);
+            request.setMethod('GET');
+            request.setTimeout(30000);
+            HttpResponse response = new Http().send(request);
 
-            if (res.getStatusCode() != 200)
+            if (response.getStatusCode() != 200)
                 return null;
 
             List<Object> shareables = (List<Object>) JSON.deserializeUntyped(
-                res.getBody()
+                response.getBody()
             );
             String label = String.isNotBlank(programLabel)
                 ? programLabel
@@ -339,7 +306,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                 if (label == (String) s.get('label'))
                     return (String) s.get('link');
             }
-            // Return first available if label not matched
             if (!shareables.isEmpty()) {
                 return (String) ((Map<String, Object>) shareables[0])
                     .get('link');
@@ -353,10 +319,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
             return null;
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // SOQL helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private List<SObject> queryNextCursorChunk() {
         try {
@@ -373,7 +335,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                 return Database.query(soql);
             }
 
-            // Default filter
             List<String> filters = new List<String>{ 'Email != null' };
             if (objectType == 'Contact') {
                 filters.add(
@@ -417,36 +378,33 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         }
     }
 
-    /**
-     * Fetch report rows via the Analytics REST API rather than the Reports Apex namespace,
-     * which avoids Reports.ReportDataRow type availability issues across org configurations.
-     *
-     * Returns null (as opposed to an empty list) specifically when the fetch itself
-     * failed — the caller uses that distinction to avoid finalize() overwriting the
-     * FAILED status markFailed() already set here with a false 'COMPLETED'.
-     */
-    private List<Id> loadReportIds(String rptId) {
+    private List<Id> loadReportIds(String reportId) {
         List<Id> ids = new List<Id>();
         try {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(
                 URL.getOrgDomainUrl().toExternalForm() +
                     '/services/data/v59.0/analytics/reports/' +
-                    rptId +
+                    reportId +
                     '?includeDetails=true'
             );
-            req.setMethod('GET');
-            req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionId());
-            req.setTimeout(30000);
-            HttpResponse res = new Http().send(req);
+            request.setMethod('GET');
+            request.setHeader(
+                'Authorization',
+                'Bearer ' + UserInfo.getSessionId()
+            );
+            request.setTimeout(30000);
+            HttpResponse response = new Http().send(request);
 
-            if (res.getStatusCode() != 200) {
-                markFailed('Analytics API error: HTTP ' + res.getStatusCode());
+            if (response.getStatusCode() != 200) {
+                markFailed(
+                    'Analytics API error: HTTP ' + response.getStatusCode()
+                );
                 return null;
             }
 
             Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
-                res.getBody()
+                response.getBody()
             );
             Map<String, Object> factMap = (Map<String, Object>) body.get(
                 'factMap'
@@ -468,10 +426,10 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
                 if (dataCells == null || dataCells.isEmpty())
                     continue;
                 Map<String, Object> firstCell = (Map<String, Object>) dataCells[0];
-                Object val = firstCell.get('value');
-                if (val != null) {
+                Object value = firstCell.get('value');
+                if (value != null) {
                     try {
-                        ids.add((Id) String.valueOf(val));
+                        ids.add((Id) String.valueOf(value));
                     } catch (Exception ignore) {
                     }
                 }
@@ -485,10 +443,6 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
         }
         return ids;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Log helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void updateLogProgress(
         Integer successes,

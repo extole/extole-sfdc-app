@@ -1,16 +1,8 @@
 public with sharing class ExtoleController {
-    // ─────────────────────────────────────────────────────────────────────────
-    // User context
-    // ─────────────────────────────────────────────────────────────────────────
-
     @AuraEnabled(cacheable=true)
     public static String getCurrentUserTimezone() {
         return UserInfo.getTimeZone().getID();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Snapshots
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
     public static List<Extole_Report_Snapshot__c> getSnapshots() {
@@ -39,10 +31,6 @@ public with sharing class ExtoleController {
             ORDER BY Display_Order__c ASC NULLS LAST, Name ASC
         ];
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Configs
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
     public static List<Extole_Report_Config__c> getConfigs() {
@@ -77,23 +65,21 @@ public with sharing class ExtoleController {
         );
         upsert config;
 
-        // Immediately push display-only fields to the matching snapshot so the
-        // dashboard reflects config changes without waiting for the next sync.
-        List<Extole_Report_Snapshot__c> snaps = [
+        List<Extole_Report_Snapshot__c> snapshots = [
             SELECT Id
             FROM Extole_Report_Snapshot__c
             WHERE Config_Id__c = :config.Id
             LIMIT 1
         ];
-        if (!snaps.isEmpty()) {
-            Extole_Report_Snapshot__c snap = snaps[0];
-            snap.Chart_Type__c = config.Chart_Type__c;
-            snap.Display_Label__c = config.Display_Label__c;
-            snap.Display_Order__c = config.Display_Order__c;
-            snap.Name = config.Display_Label__c != null
+        if (!snapshots.isEmpty()) {
+            Extole_Report_Snapshot__c snapshot = snapshots[0];
+            snapshot.Chart_Type__c = config.Chart_Type__c;
+            snapshot.Display_Label__c = config.Display_Label__c;
+            snapshot.Display_Order__c = config.Display_Order__c;
+            snapshot.Name = config.Display_Label__c != null
                 ? config.Display_Label__c
                 : config.Report_Name__c;
-            update snap;
+            update snapshot;
         }
 
         return config.Id;
@@ -106,10 +92,6 @@ public with sharing class ExtoleController {
         );
         delete new Extole_Report_Config__c(Id = configId);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Sync Logs
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
     public static List<Extole_Sync_Log__c> getSyncLogs() {
@@ -134,10 +116,6 @@ public with sharing class ExtoleController {
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // App Settings
-    // ─────────────────────────────────────────────────────────────────────────
-
     @AuraEnabled(cacheable=false)
     public static Extole_App_Settings__c getSettings() {
         try {
@@ -149,18 +127,14 @@ public with sharing class ExtoleController {
             );
         }
 
-        // Return null for a brand-new org so the LWC onboarding flow triggers correctly.
-        // The LWC checks for null to detect first-launch state.
         Extole_App_Settings__c s = Extole_App_Settings__c.getOrgDefaults();
-        return s; // null when no settings record has been saved yet
+        return s;
     }
 
     @AuraEnabled
     public static void saveSettings(Extole_App_Settings__c settings) {
         System.debug('ExtoleController.saveSettings called');
 
-        // Wire up the scheduled job before saving so the job ID lands in the same upsert.
-        // Wrapped in try-catch so a scheduling failure never prevents settings from saving.
         try {
             String jobId = ExtoleSyncJob.scheduleJob(settings.Sync_Cadence__c);
             settings.Scheduled_Job_Id__c = jobId;
@@ -173,22 +147,20 @@ public with sharing class ExtoleController {
 
         upsert settings;
 
-        // Refresh Next_Expected_Sync__c on all active snapshots immediately so the
-        // tile stale indicator reflects the new cadence without waiting for next sync.
         if (settings.Sync_Cadence__c != null) {
             DateTime nextExpected = ExtoleSyncJob.calcNextExpectedSync(
                 settings.Sync_Cadence__c
             );
-            List<Extole_Report_Snapshot__c> snaps = [
+            List<Extole_Report_Snapshot__c> snapshots = [
                 SELECT Id
                 FROM Extole_Report_Snapshot__c
                 WHERE Config_Status__c = 'ACTIVE'
             ];
-            for (Extole_Report_Snapshot__c snap : snaps) {
-                snap.Next_Expected_Sync__c = nextExpected;
+            for (Extole_Report_Snapshot__c snapshot : snapshots) {
+                snapshot.Next_Expected_Sync__c = nextExpected;
             }
-            if (!snaps.isEmpty())
-                update snaps;
+            if (!snapshots.isEmpty())
+                update snapshots;
         }
     }
 
@@ -236,40 +208,34 @@ public with sharing class ExtoleController {
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Report Types (live callout)
-    // ─────────────────────────────────────────────────────────────────────────
-
     @AuraEnabled(cacheable=false)
     public static String getReportTypes() {
         System.debug(
             'ExtoleController.getReportTypes: calling Extole API /v7/report-runners'
         );
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint('callout:Extole_API/v7/report-runners?type=SCHEDULED');
-        req.setMethod('GET');
-        req.setTimeout(30000);
+        HttpRequest request = new HttpRequest();
+        request.setEndpoint(
+            'callout:Extole_API/v7/report-runners?type=SCHEDULED'
+        );
+        request.setMethod('GET');
+        request.setTimeout(30000);
 
         Http http = new Http();
-        HttpResponse res = http.send(req);
+        HttpResponse response = http.send(request);
         System.debug(
-            'ExtoleController.getReportTypes: HTTP ' + res.getStatusCode()
+            'ExtoleController.getReportTypes: HTTP ' + response.getStatusCode()
         );
 
-        if (res.getStatusCode() != 200) {
+        if (response.getStatusCode() != 200) {
             throw new AuraHandledException(
                 'Extole API returned HTTP ' +
-                    res.getStatusCode() +
+                    response.getStatusCode() +
                     ': ' +
-                    res.getBody()
+                    response.getBody()
             );
         }
-        return res.getBody();
+        return response.getBody();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Connection test
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled(cacheable=false)
     public static Map<String, Object> testConnection() {
@@ -281,29 +247,33 @@ public with sharing class ExtoleController {
         };
 
         try {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(
+            HttpRequest request = new HttpRequest();
+            request.setEndpoint(
                 'callout:Extole_API/v7/report-runners?type=SCHEDULED'
             );
-            req.setMethod('GET');
-            req.setTimeout(15000);
+            request.setMethod('GET');
+            request.setTimeout(15000);
 
             Http http = new Http();
-            HttpResponse res = http.send(req);
+            HttpResponse response = http.send(request);
             System.debug(
-                'ExtoleController.testConnection: HTTP ' + res.getStatusCode()
+                'ExtoleController.testConnection: HTTP ' +
+                response.getStatusCode()
             );
 
-            if (res.getStatusCode() == 200) {
+            if (response.getStatusCode() == 200) {
                 List<Object> runners = (List<Object>) JSON.deserializeUntyped(
-                    res.getBody()
+                    response.getBody()
                 );
                 result.put('success', true);
                 result.put('reportCount', runners.size());
             } else {
                 result.put(
                     'errorMessage',
-                    'HTTP ' + res.getStatusCode() + ': ' + res.getBody()
+                    'HTTP ' +
+                        response.getStatusCode() +
+                        ': ' +
+                        response.getBody()
                 );
             }
         } catch (Exception e) {
@@ -314,10 +284,6 @@ public with sharing class ExtoleController {
         }
         return result;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Sync triggers
-    // ─────────────────────────────────────────────────────────────────────────
 
     @AuraEnabled
     public static Integer triggerSync() {
@@ -330,51 +296,49 @@ public with sharing class ExtoleController {
         System.debug('ExtoleController.getReportColumns: runnerId=' + runnerId);
         Http http = new Http();
 
-        // Step 1: find a completed report — try /latest first, fall back to /reports list
         String reportId = null;
 
-        HttpRequest latestReq = new HttpRequest();
-        latestReq.setEndpoint(
+        HttpRequest latestRequest = new HttpRequest();
+        latestRequest.setEndpoint(
             'callout:Extole_API/v6/report-runners/' + runnerId + '/latest'
         );
-        latestReq.setMethod('GET');
-        latestReq.setTimeout(30000);
-        HttpResponse latestRes = http.send(latestReq);
+        latestRequest.setMethod('GET');
+        latestRequest.setTimeout(30000);
+        HttpResponse latestHttpResponse = http.send(latestRequest);
 
-        if (latestRes.getStatusCode() == 200) {
-            Map<String, Object> latestResp = (Map<String, Object>) JSON.deserializeUntyped(
-                latestRes.getBody()
+        if (latestHttpResponse.getStatusCode() == 200) {
+            Map<String, Object> latestResponseData = (Map<String, Object>) JSON.deserializeUntyped(
+                latestHttpResponse.getBody()
             );
-            String status = (String) latestResp.get('status');
+            String status = (String) latestResponseData.get('status');
             if (status == 'DONE') {
-                reportId = latestResp.get('report_id') != null
-                    ? (String) latestResp.get('report_id')
-                    : (String) latestResp.get('id');
+                reportId = latestResponseData.get('report_id') != null
+                    ? (String) latestResponseData.get('report_id')
+                    : (String) latestResponseData.get('id');
             }
         }
 
-        // If latest isn't DONE, search recent reports for a completed one
         if (String.isBlank(reportId)) {
-            HttpRequest histReq = new HttpRequest();
-            histReq.setEndpoint(
+            HttpRequest historyRequest = new HttpRequest();
+            historyRequest.setEndpoint(
                 'callout:Extole_API/v6/report-runners/' +
                     runnerId +
                     '/reports?limit=10'
             );
-            histReq.setMethod('GET');
-            histReq.setTimeout(30000);
-            HttpResponse histRes = http.send(histReq);
+            historyRequest.setMethod('GET');
+            historyRequest.setTimeout(30000);
+            HttpResponse historyHttpResponse = http.send(historyRequest);
 
-            if (histRes.getStatusCode() == 200) {
+            if (historyHttpResponse.getStatusCode() == 200) {
                 List<Object> reports = (List<Object>) JSON.deserializeUntyped(
-                    histRes.getBody()
+                    historyHttpResponse.getBody()
                 );
                 for (Object r : reports) {
-                    Map<String, Object> rpt = (Map<String, Object>) r;
-                    if (rpt.get('status') == 'DONE') {
-                        reportId = rpt.get('report_id') != null
-                            ? (String) rpt.get('report_id')
-                            : (String) rpt.get('id');
+                    Map<String, Object> report = (Map<String, Object>) r;
+                    if (report.get('status') == 'DONE') {
+                        reportId = report.get('report_id') != null
+                            ? (String) report.get('report_id')
+                            : (String) report.get('id');
                         break;
                     }
                 }
@@ -387,23 +351,23 @@ public with sharing class ExtoleController {
             );
         }
 
-        // Step 2: download and extract column names from first row
-        HttpRequest dlReq = new HttpRequest();
-        dlReq.setEndpoint(
+        HttpRequest downloadRequest = new HttpRequest();
+        downloadRequest.setEndpoint(
             'callout:Extole_API/v4/reports/' + reportId + '/download.json'
         );
-        dlReq.setMethod('GET');
-        dlReq.setTimeout(30000);
-        HttpResponse dlRes = http.send(dlReq);
+        downloadRequest.setMethod('GET');
+        downloadRequest.setTimeout(30000);
+        HttpResponse downloadHttpResponse = http.send(downloadRequest);
 
-        if (dlRes.getStatusCode() != 200) {
+        if (downloadHttpResponse.getStatusCode() != 200) {
             throw new AuraHandledException(
-                'Could not download report: HTTP ' + dlRes.getStatusCode()
+                'Could not download report: HTTP ' +
+                downloadHttpResponse.getStatusCode()
             );
         }
 
         List<Object> rows = (List<Object>) JSON.deserializeUntyped(
-            dlRes.getBody()
+            downloadHttpResponse.getBody()
         );
         if (rows == null || rows.isEmpty()) {
             return new List<String>();
@@ -454,63 +418,63 @@ public with sharing class ExtoleController {
             String runnerId = config.Report_Type__c;
             Http http = new Http();
 
-            // GET latest report for this runner
-            HttpRequest latestReq = new HttpRequest();
-            latestReq.setEndpoint(
+            HttpRequest latestRequest = new HttpRequest();
+            latestRequest.setEndpoint(
                 'callout:Extole_API/v6/report-runners/' + runnerId + '/latest'
             );
-            latestReq.setMethod('GET');
-            latestReq.setTimeout(30000);
+            latestRequest.setMethod('GET');
+            latestRequest.setTimeout(30000);
 
-            HttpResponse latestRes = http.send(latestReq);
+            HttpResponse latestHttpResponse = http.send(latestRequest);
             System.debug(
-                'triggerSingleSync /latest HTTP ' + latestRes.getStatusCode()
+                'triggerSingleSync /latest HTTP ' +
+                latestHttpResponse.getStatusCode()
             );
 
-            if (latestRes.getStatusCode() != 200) {
+            if (latestHttpResponse.getStatusCode() != 200) {
                 result.put(
                     'rawOutput',
                     'GET /latest failed: HTTP ' +
-                        latestRes.getStatusCode() +
+                        latestHttpResponse.getStatusCode() +
                         ' ' +
-                        latestRes.getBody()
+                        latestHttpResponse.getBody()
                 );
                 return result;
             }
 
-            Map<String, Object> latestResp = (Map<String, Object>) JSON.deserializeUntyped(
-                latestRes.getBody()
+            Map<String, Object> latestResponseData = (Map<String, Object>) JSON.deserializeUntyped(
+                latestHttpResponse.getBody()
             );
-            String reportId = latestResp.get('report_id') != null
-                ? (String) latestResp.get('report_id')
-                : latestResp.get('id') != null
-                      ? (String) latestResp.get('id')
+            String reportId = latestResponseData.get('report_id') != null
+                ? (String) latestResponseData.get('report_id')
+                : latestResponseData.get('id') != null
+                      ? (String) latestResponseData.get('id')
                       : null;
 
             if (String.isBlank(reportId)) {
                 result.put(
                     'rawOutput',
-                    'No report_id in /latest response: ' + latestRes.getBody()
+                    'No report_id in /latest response: ' +
+                    latestHttpResponse.getBody()
                 );
                 return result;
             }
 
-            // Download
-            HttpRequest dlReq = new HttpRequest();
-            dlReq.setEndpoint(
+            HttpRequest downloadRequest = new HttpRequest();
+            downloadRequest.setEndpoint(
                 'callout:Extole_API/v4/reports/' + reportId + '/download.json'
             );
-            dlReq.setMethod('GET');
-            dlReq.setTimeout(30000);
-            HttpResponse dlRes = http.send(dlReq);
-            String rawJson = dlRes.getBody();
+            downloadRequest.setMethod('GET');
+            downloadRequest.setTimeout(30000);
+            HttpResponse downloadHttpResponse = http.send(downloadRequest);
+            String rawJson = downloadHttpResponse.getBody();
             result.put('rawOutput', rawJson);
 
-            if (dlRes.getStatusCode() != 200) {
+            if (downloadHttpResponse.getStatusCode() != 200) {
                 result.put(
                     'rawOutput',
                     'Download failed HTTP ' +
-                        dlRes.getStatusCode() +
+                        downloadHttpResponse.getStatusCode() +
                         ': ' +
                         rawJson
                 );
@@ -533,20 +497,13 @@ public with sharing class ExtoleController {
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Maintenance
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Lead Attribution
-    // ─────────────────────────────────────────────────────────────────────────
-
     @AuraEnabled(cacheable=false)
     public static List<Map<String, String>> getObjectFields(String objectName) {
         List<Map<String, String>> fields = new List<Map<String, String>>();
 
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
-        if (objType == null)
+        Schema.SObjectType objectType = Schema.getGlobalDescribe()
+            .get(objectName);
+        if (objectType == null)
             return fields;
 
         Set<Schema.DisplayType> allowedTypes = new Set<Schema.DisplayType>{
@@ -565,7 +522,6 @@ public with sharing class ExtoleController {
             Schema.DisplayType.DATETIME
         };
 
-        // Special virtual field for Contact's and Opportunity's related Account name
         if (objectName == 'Contact' || objectName == 'Opportunity') {
             fields.add(
                 new Map<String, String>{
@@ -576,7 +532,7 @@ public with sharing class ExtoleController {
         }
 
         for (
-            Schema.SObjectField f : objType.getDescribe()
+            Schema.SObjectField f : objectType.getDescribe()
                 .fields.getMap()
                 .values()
         ) {
@@ -600,11 +556,12 @@ public with sharing class ExtoleController {
         String objectName,
         String fieldName
     ) {
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectName);
-        if (objType == null)
+        Schema.SObjectType objectType = Schema.getGlobalDescribe()
+            .get(objectName);
+        if (objectType == null)
             return new List<String>();
 
-        Map<String, Schema.SObjectField> fieldMap = objType.getDescribe()
+        Map<String, Schema.SObjectField> fieldMap = objectType.getDescribe()
             .fields.getMap();
         if (!fieldMap.containsKey(fieldName.toLowerCase()))
             return new List<String>();
@@ -612,7 +569,6 @@ public with sharing class ExtoleController {
         Schema.DescribeFieldResult fd = fieldMap.get(fieldName.toLowerCase())
             .getDescribe();
 
-        // Picklist: return defined entries
         if (
             fd.getType() == Schema.DisplayType.PICKLIST ||
             fd.getType() == Schema.DisplayType.MULTIPICKLIST
@@ -625,7 +581,6 @@ public with sharing class ExtoleController {
             return vals;
         }
 
-        // Text / other: return distinct values from existing records
         String soql =
             'SELECT ' +
             fieldName +
@@ -675,11 +630,11 @@ public with sharing class ExtoleController {
         String fieldValue = s.List_View_Value__c;
         Date startDate = s.List_View_Start_Date__c;
 
-        // Validate field exists on target object
-        Schema.SObjectType objType = Schema.getGlobalDescribe().get(objectType);
+        Schema.SObjectType targetObjectType = Schema.getGlobalDescribe()
+            .get(objectType);
         if (
-            objType == null ||
-            !objType.getDescribe()
+            targetObjectType == null ||
+            !targetObjectType.getDescribe()
                 .fields.getMap()
                 .containsKey(fieldName.toLowerCase())
         ) {
@@ -694,14 +649,13 @@ public with sharing class ExtoleController {
             return result;
         }
 
-        // Resolve extra display columns (saved setting or smart defaults)
         String columnsRaw = String.isBlank(s.List_View_Columns__c)
             ? (objectType == 'Contact'
                   ? 'Account.Name,Email,Title'
                   : 'Email,Company,Status')
             : s.List_View_Columns__c;
 
-        Map<String, Schema.SObjectField> fieldMap = objType.getDescribe()
+        Map<String, Schema.SObjectField> fieldMap = targetObjectType.getDescribe()
             .fields.getMap();
         List<Map<String, String>> extraColumns = new List<Map<String, String>>();
         List<String> extraSelect = new List<String>();
@@ -763,7 +717,6 @@ public with sharing class ExtoleController {
 
         List<SObject> records = Database.query(soql);
 
-        // Accurate counts via COUNT() — not capped by the 500-record LIMIT
         String baseWhere =
             fieldName +
             ' = :fieldValue' +

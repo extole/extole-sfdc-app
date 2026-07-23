@@ -13,8 +13,6 @@ private class ExtoleBackfillQueueableReportTest {
         return log;
     }
 
-    // Handles both the Analytics REST report endpoint and the Extole API calls
-    // in the same mock, since a single HttpCalloutMock covers every callout in the test.
     private class ReportAndExtoleMock implements HttpCalloutMock {
         String reportBody;
         Integer reportStatus;
@@ -22,37 +20,37 @@ private class ExtoleBackfillQueueableReportTest {
             this.reportStatus = reportStatus;
             this.reportBody = reportBody;
         }
-        public HttpResponse respond(HttpRequest req) {
-            HttpResponse res = new HttpResponse();
-            String ep = req.getEndpoint();
-            String mth = req.getMethod();
+        public HttpResponse respond(HttpRequest request) {
+            HttpResponse response = new HttpResponse();
+            String ep = request.getEndpoint();
+            String mth = request.getMethod();
 
             if (ep.contains('/services/data/v59.0/analytics/reports/')) {
-                res.setStatusCode(reportStatus);
-                res.setBody(reportBody);
-                return res;
+                response.setStatusCode(reportStatus);
+                response.setBody(reportBody);
+                return response;
             }
             if (ep.contains('identity_key_value') && mth == 'GET') {
-                res.setStatusCode(200);
-                res.setBody(
+                response.setStatusCode(200);
+                response.setBody(
                     '[{"id":"person-001","email":"test@extole-test.com"}]'
                 );
-                return res;
+                return response;
             }
             if (
                 ep.contains('/v5/persons/') &&
                 ep.endsWith('/shareables') &&
                 mth == 'POST'
             ) {
-                res.setStatusCode(201);
-                res.setBody(
+                response.setStatusCode(201);
+                response.setBody(
                     '{"id":"share-001","link":"https://test.extole.com/s/report","label":"extole-sfdc-app"}'
                 );
-                return res;
+                return response;
             }
-            res.setStatusCode(404);
-            res.setBody('{}');
-            return res;
+            response.setStatusCode(404);
+            response.setBody('{}');
+            return response;
         }
     }
 

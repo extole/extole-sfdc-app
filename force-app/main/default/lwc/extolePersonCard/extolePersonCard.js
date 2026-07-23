@@ -133,8 +133,6 @@ export default class ExtolePersonCard extends LightningElement {
         }
     }
 
-    // ── Computed view state ─────────────────────────────────────────────────
-
     get shouldRender() {
         return this.card && this.card.hasAnyData;
     }

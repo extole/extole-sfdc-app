@@ -27,7 +27,6 @@
 
         <template lwc:elseif={shouldRender}>
             <div class="person-card">
-                <!-- Header: avatar + name + role -->
                 <div class="card-header">
                     <div class="avatar avatar-lg">
                         <span class="avatar-initials">{initials}</span>
@@ -40,7 +39,6 @@
                     </div>
                 </div>
 
-                <!-- Referred-by -->
                 <template lwc:if={hasReferredBy}>
                     <div class="section">
                         <div
@@ -83,7 +81,6 @@
                     </div>
                 </template>
 
-                <!-- Share links -->
                 <template lwc:if={hasShareLinks}>
                     <div class="section">
                         <div
@@ -145,7 +142,6 @@
                     </div>
                 </template>
 
-                <!-- Friends grouped by program -->
                 <template lwc:if={hasFriends}>
                     <div class="section">
                         <div

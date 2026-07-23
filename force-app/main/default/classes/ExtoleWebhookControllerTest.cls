@@ -1,7 +1,5 @@
 @IsTest
 private class ExtoleWebhookControllerTest {
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
     private static void setRequest(String body) {
         RestContext.request = new RestRequest();
         RestContext.response = new RestResponse();
@@ -10,20 +8,18 @@ private class ExtoleWebhookControllerTest {
 
     private static Extole_Writeback_Cfg__c makeConfig(
         String eventName,
-        String objType,
+        String objectType,
         String mappingsJson
     ) {
-        Extole_Writeback_Cfg__c cfg = new Extole_Writeback_Cfg__c();
-        cfg.Name = 'Test Config';
-        cfg.Event_Name__c = eventName;
-        cfg.Object_Type__c = objType;
-        cfg.Status__c = 'ACTIVE';
-        cfg.Field_Mappings__c = mappingsJson;
-        insert cfg;
-        return cfg;
+        Extole_Writeback_Cfg__c config = new Extole_Writeback_Cfg__c();
+        config.Name = 'Test Config';
+        config.Event_Name__c = eventName;
+        config.Object_Type__c = objectType;
+        config.Status__c = 'ACTIVE';
+        config.Field_Mappings__c = mappingsJson;
+        insert config;
+        return config;
     }
-
-    // ── Bad request tests ──────────────────────────────────────────────────────
 
     @IsTest
     static void testInvalidJson() {
@@ -51,8 +47,6 @@ private class ExtoleWebhookControllerTest {
         );
     }
 
-    // ── No-config path ─────────────────────────────────────────────────────────
-
     @IsTest
     static void testNoConfigSkipped() {
         setRequest(
@@ -75,13 +69,13 @@ private class ExtoleWebhookControllerTest {
 
     @IsTest
     static void testInactiveConfigSkipped() {
-        Extole_Writeback_Cfg__c cfg = makeConfig(
+        Extole_Writeback_Cfg__c config = makeConfig(
             'reward_earned',
             'Contact',
             null
         );
-        cfg.Status__c = 'INACTIVE';
-        update cfg;
+        config.Status__c = 'INACTIVE';
+        update config;
 
         Contact c = new Contact(
             LastName = 'Test',
@@ -108,11 +102,8 @@ private class ExtoleWebhookControllerTest {
         System.assertEquals('SKIPPED', logs[0].Status__c);
     }
 
-    // ── Duplicate event_id ─────────────────────────────────────────────────────
-
     @IsTest
     static void testDuplicateEventId() {
-        // Seed a prior SUCCESS log for the same event_id
         Extole_Writeback_Log__c prior = new Extole_Writeback_Log__c(
             Event_Id__c = 'dup-123',
             Event_Name__c = 'reward_earned',
@@ -131,11 +122,8 @@ private class ExtoleWebhookControllerTest {
         System.assert(
             RestContext.response.responseBody.toString().contains('duplicate')
         );
-        // Only the seeded log, no new one
         System.assertEquals(1, [SELECT COUNT() FROM Extole_Writeback_Log__c]);
     }
-
-    // ── Contact update ─────────────────────────────────────────────────────────
 
     @IsTest
     static void testContactUpdateByEmail() {
@@ -190,8 +178,6 @@ private class ExtoleWebhookControllerTest {
         System.assertEquals(c.Id, logs[0].Record_Id__c);
     }
 
-    // ── Lead update ────────────────────────────────────────────────────────────
-
     @IsTest
     static void testLeadUpdateByEmail() {
         Lead l = new Lead(
@@ -217,8 +203,6 @@ private class ExtoleWebhookControllerTest {
         System.assertEquals(l.Id, logs[0].Record_Id__c);
     }
 
-    // ── No matching record ─────────────────────────────────────────────────────
-
     @IsTest
     static void testNoRecordFound() {
         makeConfig('reward_earned', 'Contact', null);
@@ -237,8 +221,6 @@ private class ExtoleWebhookControllerTest {
         System.assertEquals('SKIPPED', logs[0].Status__c);
     }
 
-    // ── Field mapping ──────────────────────────────────────────────────────────
-
     @IsTest
     static void testApplyMappings() {
         Contact c = new Contact(
@@ -246,7 +228,6 @@ private class ExtoleWebhookControllerTest {
             Email = 'map@example.com'
         );
         insert c;
-        // Map extole 'value' → SFDC Description (standard field, always writable)
         makeConfig(
             'reward_earned',
             'Contact',
@@ -271,7 +252,6 @@ private class ExtoleWebhookControllerTest {
 
     @IsTest
     static void testApplyMappings_missingKey() {
-        // Key not present in data → field should not be set but no error
         Contact c = new Contact(
             LastName = 'MapMiss',
             Email = 'miss@example.com'
@@ -315,8 +295,6 @@ private class ExtoleWebhookControllerTest {
         }
     }
 
-    // ── Multiple configs for same event ────────────────────────────────────────
-
     @IsTest
     static void testMultipleConfigs() {
         Contact c = new Contact(
@@ -353,8 +331,6 @@ private class ExtoleWebhookControllerTest {
             System.assertEquals('SUCCESS', log.Status__c);
         }
     }
-
-    // ── findRecord unit tests ──────────────────────────────────────────────────
 
     @IsTest
     static void testFindRecord_contactByEmail() {

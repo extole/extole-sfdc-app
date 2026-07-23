@@ -10,9 +10,9 @@ Installation takes about 20–30 minutes and has two distinct phases.
 
 Phase 2 is only needed for the Event Configurator — Program Analytics, the KPI Dashboard, and Share Link Backfill run entirely on the Step 3 credential. If you don't plan to use record-triggered events into Extole, skip Steps 4–6 and go straight to Step 7.
 
-Steps 7–8 assign permissions and launch the app. Steps 9–11 cover optional features (Share Link Backfill, Receive Events, and the Person Card) — set up only the ones you plan to use.
+Steps 7–8 assign permissions and launch the app. Steps 9–11 cover optional features (Share Link Backfill, Receive Extole Events, and the Person Card) — set up only the ones you plan to use.
 
-Everything here is reversible: each feature is gated by its own permission set or toggle, so you can disable Event Configurator triggers, pause Receive Events, or remove permission set assignments at any time without side effects. Uninstalling the package entirely is a standard Salesforce package removal.
+Everything here is reversible: each feature is gated by its own permission set or toggle, so you can disable Event Configurator triggers, pause Receive Extole Events, or remove permission set assignments at any time without side effects. Uninstalling the package entirely is a standard Salesforce package removal.
 
 ---
 
@@ -210,7 +210,7 @@ Both permission sets grant visibility into the **Extole** app itself, so assigni
 
 1. Open the **Extole** app from the App Launcher (grid icon, top left)
 2. The Getting Started screen will appear on first launch
-3. Open the **Configure Events** tab → click **Test Connection** — verify it shows "Connected"
+3. Open the **Send Extole Events** tab → click **Test Connection** — verify it shows "Connected"
 4. Open the **Configure KPIs** tab → click **Add Report** and configure your first KPI
     - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
 5. Trigger a manual sync from the Configure KPIs tab — your KPI Dashboard will populate once the first sync completes
@@ -250,9 +250,9 @@ The **Manage Share Links** tab generates Extole share links for existing Contact
 
 ---
 
-## Step 10 — Set up Receive Events (optional)
+## Step 10 — Set up Receive Extole Events (optional)
 
-The **Receive Events** tab lets Extole send events (e.g. a reward being earned) into Salesforce, where they get written to a matching Contact or Lead. This direction is the reverse of everything above — Extole calls into Salesforce, so the auth setup lives on the Salesforce side, in the form of a Connected App, plus a matching credential stored in Extole's own Security Center.
+The **Receive Extole Events** tab lets Extole send events (e.g. a reward being earned) into Salesforce, where they get written to a matching Contact or Lead. This direction is the reverse of everything above — Extole calls into Salesforce, so the auth setup lives on the Salesforce side, in the form of a Connected App, plus a matching credential stored in Extole's own Security Center.
 
 **In Salesforce Setup UI:**
 
@@ -263,7 +263,7 @@ The **Receive Events** tab lets Extole send events (e.g. a reward being earned) 
 3. Under **OAuth Settings**, check **Enable Client Credentials Flow**
 4. Save, then open the app's detail page to find the **Consumer Key** and **Consumer Secret**
 
-**In the Receive Events tab:**
+**In the Receive Extole Events tab:**
 
 5. Copy the **Webhook Endpoint** URL shown at the top of the tab (`.../services/apexrest/extole/events`) — this is generated dynamically from your org's own domain (`ExtoleWritebackController.getEndpointUrl()`), so it's always correct for whichever org you view it in
 
@@ -281,7 +281,10 @@ The **Receive Events** tab lets Extole send events (e.g. a reward being earned) 
 7. Set the Security Center key from step 6 as the `CLIENT_KEY` setting, and the endpoint URL from step 5 as the webhook target setting
 8. Check the **Enable Salesforce Writeback** setting to turn on the outbound webhooks. This is **off by default** — if your account doesn't want any data written back to Salesforce, simply leave it unchecked. No request is ever built or sent while off (checked at the very start of the webhook's own script, before any reward/event data is touched), so nothing leaves the Extole platform and nothing is logged on either side — this is different from just arriving and being silently skipped.
 
-> Keep the endpoint URL and client key filled in even during testing or if you want to pause writeback for a while — use the **Enable Salesforce Writeback** toggle for that instead. Extole treats these two fields as required once the integration is active, so clearing them blocks saving further changes until they're restored. 9. Click **Add Rule** under **Writeback Rules** to map incoming event fields to Contact or Lead fields — target fields must be **Text** type; `ExtoleWebhookController.applyMappings()` always writes values as strings, so a Number/Date field will silently fail to populate 10. Trigger a test event from Extole and confirm it appears in the **Event Log** on the same tab
+> Keep the endpoint URL and client key filled in even during testing or if you want to pause writeback for a while — use the **Enable Salesforce Writeback** toggle for that instead. Extole treats these two fields as required once the integration is active, so clearing them blocks saving further changes until they're restored.
+
+9. Click **Add Rule** under **Rules** to map incoming event fields to Contact or Lead fields — target fields must be **Text** type; `ExtoleWebhookController.applyMappings()` always writes values as strings, so a Number/Date field will silently fail to populate
+10. Trigger a test event from Extole and confirm it appears in the **Event Log** on the same tab
 
 > Requires `Extole_App_Admin` — the underlying `ExtoleWebhookController`/`ExtoleWritebackController` classes and the `Extole_Writeback_Cfg__c`/`Extole_Writeback_Log__c` objects are only accessible to that permission set.
 
@@ -298,7 +301,7 @@ javascript@runtime:(function () {
 })();
 ```
 
-Save that change in Extole, trigger a test event, and confirm it appears in the Receive Events **Event Log** here in Salesforce.
+Save that change in Extole, trigger a test event, and confirm it appears in the Receive Extole Events **Event Log** here in Salesforce.
 
 ---
 
@@ -331,7 +334,7 @@ The component exposes a **Disabled** checkbox in the page's properties panel (cl
 | Extole app doesn't appear in App Launcher for a user                                                                                                     | Confirm they're assigned `Extole_App_Admin` or `Extole_App_Viewer` (Setup → Permission Sets → the set → Manage Assignments). If assigned and still missing, redeploy the permission set — its `applicationVisibilities` grant may not have deployed.                                                                                                                                             |
 | "You do not have access to the Apex class named '...'" error on any tab                                                                                  | The user's assigned permission set doesn't grant that class. Check Setup → Permission Sets → the set → Apex Class Access.                                                                                                                                                                                                                                                                        |
 | A tab renders but shows no data (e.g. "No live Extole programs found") with no explicit error                                                            | The LWC may be silently swallowing a permission exception rather than surfacing it. Check the user's actual Apex debug log (Setup → Debug Logs, add a trace flag on their user) for the real error before assuming it's a data issue — this exact symptom was caused by a missing **read** permission on the standard `UserExternalCredential` object, not by the Extole API or the data itself. |
-| Receive Events shows no incoming events                                                                                                                  | Confirm the Connected App's Client Credentials flow is enabled and its Consumer Key/Secret match the Extole component's `CLIENT_KEY` setting (see Step 10). Check the Event Log on the tab for delivery attempts and errors.                                                                                                                                                                     |
+| Receive Extole Events shows no incoming events                                                                                                           | Confirm the Connected App's Client Credentials flow is enabled and its Consumer Key/Secret match the Extole component's `CLIENT_KEY` setting (see Step 10). Check the Event Log on the tab for delivery attempts and errors.                                                                                                                                                                     |
 | Extole webhook dispatch returns `401 INVALID_SESSION_ID`, even though the Connected App's token exchange succeeds when tested directly (e.g. via `curl`) | The webhook's request script is likely built from `context.createRequestBuilder()` instead of `context.createRequestBuilderWithDefaults()` — only the latter attaches the `CLIENT_KEY`'s Authorization header. This produces a request that looks correct in every other way (right URL, right body) but is silently unauthenticated.                                                            |
 
-For detailed diagnostics, enable **Debug Logging** on the **Configure Events** tab and check the KPI Data Import Log on the **Configure KPIs** tab.
+For detailed diagnostics, enable **Debug Logging** on the **Send Extole Events** tab and check the KPI Data Import Log on the **Configure KPIs** tab.

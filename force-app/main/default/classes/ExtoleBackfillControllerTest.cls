@@ -1,27 +1,25 @@
 @IsTest
 private class ExtoleBackfillControllerTest {
     private class CampaignsMock implements HttpCalloutMock {
-        public HTTPResponse respond(HTTPRequest req) {
-            HttpResponse res = new HttpResponse();
-            res.setStatusCode(200);
-            res.setBody(
+        public HTTPResponse respond(HTTPRequest request) {
+            HttpResponse response = new HttpResponse();
+            response.setStatusCode(200);
+            response.setBody(
                 '[{"program_label":"referral-program","name":"Referral Program"},' +
                 '{"program_label":"test-program","name":"Test Program"}]'
             );
-            return res;
+            return response;
         }
     }
 
     private class FailingMock implements HttpCalloutMock {
-        public HTTPResponse respond(HTTPRequest req) {
-            HttpResponse res = new HttpResponse();
-            res.setStatusCode(500);
-            res.setBody('{"error":"Internal Server Error"}');
-            return res;
+        public HTTPResponse respond(HTTPRequest request) {
+            HttpResponse response = new HttpResponse();
+            response.setStatusCode(500);
+            response.setBody('{"error":"Internal Server Error"}');
+            return response;
         }
     }
-
-    // ─── getShareLinkFieldSetting ────────────────────────────────────────────
 
     @IsTest
     static void testGetShareLinkFieldSetting_defaultsToStandardFieldWhenUnset() {
@@ -52,8 +50,6 @@ private class ExtoleBackfillControllerTest {
         );
         System.assertEquals(null, field);
     }
-
-    // ─── getWritebackFields ───────────────────────────────────────────────────
 
     @IsTest
     static void testGetWritebackFieldsContactNotNull() {
@@ -134,8 +130,6 @@ private class ExtoleBackfillControllerTest {
         }
     }
 
-    // ─── getExtoleCampaigns ───────────────────────────────────────────────────
-
     @IsTest
     static void testGetExtoleCampaignsReturnsSortedOptions() {
         Test.setMock(HttpCalloutMock.class, new CampaignsMock());
@@ -180,11 +174,11 @@ private class ExtoleBackfillControllerTest {
     }
 
     private class MalformedJsonMock implements HttpCalloutMock {
-        public HTTPResponse respond(HTTPRequest req) {
-            HttpResponse res = new HttpResponse();
-            res.setStatusCode(200);
-            res.setBody('not valid json{{{');
-            return res;
+        public HTTPResponse respond(HTTPRequest request) {
+            HttpResponse response = new HttpResponse();
+            response.setStatusCode(200);
+            response.setBody('not valid json{{{');
+            return response;
         }
     }
 
@@ -196,8 +190,6 @@ private class ExtoleBackfillControllerTest {
         Test.stopTest();
         System.assertEquals(0, options.size());
     }
-
-    // ─── getReports ──────────────────────────────────────────────────────────
 
     @IsTest
     static void testGetReportsNotNull() {
@@ -219,8 +211,6 @@ private class ExtoleBackfillControllerTest {
         }
         System.assertEquals(true, found);
     }
-
-    // ─── previewCount ─────────────────────────────────────────────────────────
 
     @IsTest
     static void testPreviewCountDateFilterContactMatchesToday() {
@@ -324,21 +314,37 @@ private class ExtoleBackfillControllerTest {
             LIMIT 1
         ]
         .Id;
-        Integer count = ExtoleBackfillController.previewCount(
+
+        Integer countBefore = ExtoleBackfillController.previewCount(
             'Lead',
             'report',
             null,
             reportId
         );
-        System.assert(count >= 0);
-    }
 
-    // ─── startBackfill ────────────────────────────────────────────────────────
+        insert new Lead(
+            FirstName = 'Report',
+            LastName = 'CountLead',
+            Email = 'audiencetest_previewcount@extole-test.com',
+            Company = 'Test'
+        );
+
+        Integer countAfter = ExtoleBackfillController.previewCount(
+            'Lead',
+            'report',
+            null,
+            reportId
+        );
+
+        System.assertEquals(
+            countBefore + 1,
+            countAfter,
+            'Report-based count should increase by exactly one after inserting a matching Lead'
+        );
+    }
 
     @IsTest
     static void testStartBackfillCreatesLogInProgress() {
-        // Don't use startTest/stopTest here — we want to verify the log state BEFORE
-        // the queueable runs, and stopTest() flushes the queue synchronously.
         Id logId = ExtoleBackfillController.startBackfill(
             'Contact',
             'default',
@@ -403,8 +409,6 @@ private class ExtoleBackfillControllerTest {
             log.Audience_Criteria__c.contains('2025-01-01'),
             'Criteria should contain the date'
         );
-        // startBackfill prefers programName ("My Program") over the raw programLabel
-        // key ("my-program") when both are supplied — programName is the friendlier value.
         System.assertEquals(
             'My Program',
             log.Program_Label__c,
@@ -464,8 +468,6 @@ private class ExtoleBackfillControllerTest {
         );
     }
 
-    // ─── getLastBackfillRun ───────────────────────────────────────────────────
-
     @IsTest
     static void testGetLastBackfillRunNullWhenEmpty() {
         Extole_Backfill_Log__c result = ExtoleBackfillController.getLastBackfillRun();
@@ -505,8 +507,6 @@ private class ExtoleBackfillControllerTest {
         );
     }
 
-    // ─── getBackfillLogs ──────────────────────────────────────────────────────
-
     @IsTest
     static void testGetBackfillLogsEmpty() {
         System.assertEquals(
@@ -538,8 +538,6 @@ private class ExtoleBackfillControllerTest {
             'Should return 2 logs'
         );
     }
-
-    // ─── clearBackfillLogs ────────────────────────────────────────────────────
 
     @IsTest
     static void testClearBackfillLogsDeletesAll() {

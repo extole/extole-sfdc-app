@@ -1,6 +1,5 @@
 <template>
     <div class="settings-container">
-        <!-- ── Setup card ── -->
         <div class="settings-card">
             <div class="settings-card-header">
                 <div class="settings-card-title">
@@ -46,7 +45,6 @@
             </div>
         </div>
 
-        <!-- ── Writeback rules card ── -->
         <div class="settings-card">
             <div class="settings-card-header">
                 <div class="settings-card-title">
@@ -94,23 +92,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template for:each={configs} for:item="cfg">
-                                    <tr key={cfg.Id}>
+                                <template for:each={configs} for:item="config">
+                                    <tr key={config.Id}>
                                         <td class="event-name-cell">
-                                            {cfg.Event_Name__c}
+                                            {config.Event_Name__c}
                                         </td>
-                                        <td>{cfg.Object_Type__c}</td>
+                                        <td>{config.Object_Type__c}</td>
                                         <td>
-                                            <span class={cfg.statusBadgeClass}
-                                                >{cfg.Status__c}</span
+                                            <span
+                                                class={config.statusBadgeClass}
+                                                >{config.Status__c}</span
                                             >
                                         </td>
-                                        <td>{cfg.mappingCount}</td>
+                                        <td>{config.mappingCount}</td>
                                         <td
                                             class="description-cell"
-                                            title={cfg.Description__c}
+                                            title={config.Description__c}
                                         >
-                                            {cfg.Description__c}
+                                            {config.Description__c}
                                         </td>
                                         <td class="col-actions">
                                             <lightning-button-menu
@@ -118,7 +117,7 @@
                                                 variant="bare"
                                                 menu-alignment="right"
                                                 alternative-text="Actions"
-                                                data-id={cfg.Id}
+                                                data-id={config.Id}
                                                 onselect={handleRowMenu}
                                             >
                                                 <lightning-menu-item
@@ -126,12 +125,12 @@
                                                     label="Edit"
                                                 ></lightning-menu-item>
                                                 <lightning-menu-item
-                                                    lwc:if={cfg.isActive}
+                                                    lwc:if={config.isActive}
                                                     value="deactivate"
                                                     label="Deactivate"
                                                 ></lightning-menu-item>
                                                 <lightning-menu-item
-                                                    lwc:if={cfg.isInactive}
+                                                    lwc:if={config.isInactive}
                                                     value="activate"
                                                     label="Activate"
                                                 ></lightning-menu-item>
@@ -157,7 +156,6 @@
             </template>
         </div>
 
-        <!-- ── Event log card ── -->
         <div class="settings-card">
             <div class="settings-card-header">
                 <div class="settings-card-title">
@@ -280,7 +278,6 @@
         </div>
     </div>
 
-    <!-- ── Add / Edit modal ── -->
     <template lwc:if={isModalOpen}>
         <section
             role="dialog"
@@ -343,7 +340,6 @@
                         onchange={handleFieldChange}
                     ></lightning-textarea>
 
-                    <!-- Field mappings editor -->
                     <div class="mapping-section">
                         <div class="mapping-section-header">
                             <span class="mapping-section-label"

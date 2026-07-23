@@ -1,32 +1,15 @@
-/**
- * ExtoleWebhookController
- *
- * Apex REST endpoint that receives outbound webhooks from the Extole platform
- * and writes event data to Salesforce Contact or Lead records based on active
- * Extole_Writeback_Cfg__c rules.
- *
- * URL: /services/apexrest/extole/events
- * Auth: Salesforce OAuth 2.0 client credentials (Connected App configured in Extole)
- *
- * Payload schema:
- *   { "event_id": "...", "event_name": "reward_earned", "data": { "email": "...", "salesforce_id": "...", ... } }
- *
- * Field mappings (Extole_Writeback_Cfg__c.Field_Mappings__c) are a JSON array:
- *   [{ "extoleKey": "value", "sfdcField": "Extole_Reward_Value__c" }, ...]
- */
 @RestResource(urlMapping='/extole/events')
 global without sharing class ExtoleWebhookController {
     @HttpPost
     global static void doPost() {
-        RestRequest req = RestContext.request;
-        RestResponse res = RestContext.response;
-        res.addHeader('Content-Type', 'application/json');
+        RestRequest request = RestContext.request;
+        RestResponse response = RestContext.response;
+        response.addHeader('Content-Type', 'application/json');
 
-        String rawPayload = req.requestBody != null
-            ? req.requestBody.toString()
+        String rawPayload = request.requestBody != null
+            ? request.requestBody.toString()
             : '';
 
-        // ── Parse payload ──────────────────────────────────────────────────────
         String eventName;
         String eventId;
         String email;
@@ -45,18 +28,19 @@ global without sharing class ExtoleWebhookController {
             email = (String) data.get('email');
             salesforceId = (String) data.get('salesforce_id');
         } catch (Exception e) {
-            res.statusCode = 400;
-            res.responseBody = Blob.valueOf('{"error":"invalid_payload"}');
+            response.statusCode = 400;
+            response.responseBody = Blob.valueOf('{"error":"invalid_payload"}');
             return;
         }
 
         if (String.isBlank(eventName)) {
-            res.statusCode = 400;
-            res.responseBody = Blob.valueOf('{"error":"missing_event_name"}');
+            response.statusCode = 400;
+            response.responseBody = Blob.valueOf(
+                '{"error":"missing_event_name"}'
+            );
             return;
         }
 
-        // ── Idempotency: skip duplicate event_ids ──────────────────────────────
         if (String.isNotBlank(eventId)) {
             List<Extole_Writeback_Log__c> prior = [
                 SELECT Id
@@ -65,13 +49,12 @@ global without sharing class ExtoleWebhookController {
                 LIMIT 1
             ];
             if (!prior.isEmpty()) {
-                res.statusCode = 200;
-                res.responseBody = Blob.valueOf('{"status":"duplicate"}');
+                response.statusCode = 200;
+                response.responseBody = Blob.valueOf('{"status":"duplicate"}');
                 return;
             }
         }
 
-        // ── Find matching active writeback configs ─────────────────────────────
         List<Extole_Writeback_Cfg__c> configs = [
             SELECT Id, Object_Type__c, Field_Mappings__c
             FROM Extole_Writeback_Cfg__c
@@ -91,36 +74,35 @@ global without sharing class ExtoleWebhookController {
                 'No active rule for: ' + eventName,
                 rawPayload
             );
-            res.statusCode = 200;
-            res.responseBody = Blob.valueOf(
+            response.statusCode = 200;
+            response.responseBody = Blob.valueOf(
                 '{"status":"skipped","reason":"no_config"}'
             );
             return;
         }
 
-        // ── Apply each matching config ─────────────────────────────────────────
         List<Extole_Writeback_Log__c> logs = new List<Extole_Writeback_Log__c>();
 
-        for (Extole_Writeback_Cfg__c cfg : configs) {
-            String objType = cfg.Object_Type__c;
+        for (Extole_Writeback_Cfg__c config : configs) {
+            String objectType = config.Object_Type__c;
             String status = 'SUCCESS';
             String errDetail = null;
             String recordId = null;
 
             try {
-                SObject record = findRecord(objType, email, salesforceId);
+                SObject record = findRecord(objectType, email, salesforceId);
                 if (record == null) {
                     status = 'SKIPPED';
                     errDetail =
                         'No matching ' +
-                        objType +
+                        objectType +
                         ' found — email=' +
                         email +
                         ' salesforceId=' +
                         salesforceId;
                 } else {
                     recordId = (String) record.get('Id');
-                    applyMappings(record, cfg.Field_Mappings__c, data);
+                    applyMappings(record, config.Field_Mappings__c, data);
                     update record;
                 }
             } catch (Exception e) {
@@ -134,7 +116,7 @@ global without sharing class ExtoleWebhookController {
                     eventId,
                     email,
                     salesforceId,
-                    objType,
+                    objectType,
                     recordId,
                     status,
                     errDetail,
@@ -154,13 +136,11 @@ global without sharing class ExtoleWebhookController {
             }
         }
 
-        res.statusCode = 200;
-        res.responseBody = Blob.valueOf(
+        response.statusCode = 200;
+        response.responseBody = Blob.valueOf(
             '{"status":"ok","processed":' + logs.size() + '}'
         );
     }
-
-    // ── Record lookup ──────────────────────────────────────────────────────────
 
     @TestVisible
     private static SObject findRecord(
@@ -216,8 +196,6 @@ global without sharing class ExtoleWebhookController {
         return null;
     }
 
-    // ── Field mapping ──────────────────────────────────────────────────────────
-
     @TestVisible
     private static void applyMappings(
         SObject record,
@@ -240,11 +218,11 @@ global without sharing class ExtoleWebhookController {
             String sfdcField = (String) mapping.get('sfdcField');
             if (String.isBlank(extoleKey) || String.isBlank(sfdcField))
                 continue;
-            Object val = data.get(extoleKey);
-            if (val == null)
+            Object value = data.get(extoleKey);
+            if (value == null)
                 continue;
             try {
-                record.put(sfdcField, String.valueOf(val));
+                record.put(sfdcField, String.valueOf(value));
             } catch (Exception e) {
                 System.debug(
                     'ExtoleWebhookController: could not set ' +
@@ -255,8 +233,6 @@ global without sharing class ExtoleWebhookController {
             }
         }
     }
-
-    // ── Log helpers ────────────────────────────────────────────────────────────
 
     private static Extole_Writeback_Log__c buildLog(
         String eventName,

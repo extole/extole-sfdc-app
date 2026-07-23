@@ -6,8 +6,6 @@ private class ExtoleAudienceApiTest {
 
     private static final String AUDIENCE_JSON = '{"id":"aud_1","name":"Test Audience","enabled":true,"tags":["source:sfdc"],"component_ids":["c1"]}';
 
-    // ── ExtoleAudience / list / get / create ─────────────────────────────────
-
     @IsTest
     static void testListAudiences_returnsParsedAudiencesAndFindsByName() {
         Test.setMock(
@@ -19,19 +17,19 @@ private class ExtoleAudienceApiTest {
         Test.startTest();
         HttpResponse raw = new ExtoleClient()
             .send(config(), new ExtoleListAudiencesRequest().build(config()));
-        ExtoleListAudiencesResponse resp = ExtoleListAudiencesResponse.fromResponse(
+        ExtoleListAudiencesResponse response = ExtoleListAudiencesResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
-        System.assertEquals(1, resp.audiences.size());
-        ExtoleAudience found = resp.findByName('Test Audience');
+        System.assertEquals(1, response.audiences.size());
+        ExtoleAudience found = response.findByName('Test Audience');
         System.assertNotEquals(null, found);
         System.assertEquals('aud_1', found.audienceId);
         System.assertEquals(true, found.enabled);
         System.assertEquals(1, found.tags.size());
         System.assertEquals(1, found.componentIds.size());
-        System.assertEquals(null, resp.findByName('Nonexistent'));
+        System.assertEquals(null, response.findByName('Nonexistent'));
     }
 
     @IsTest
@@ -47,13 +45,13 @@ private class ExtoleAudienceApiTest {
                 config(),
                 new ExtoleGetAudienceRequest('aud_1').build(config())
             );
-        ExtoleGetAudienceResponse resp = ExtoleGetAudienceResponse.fromResponse(
+        ExtoleGetAudienceResponse response = ExtoleGetAudienceResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
-        System.assertEquals('aud_1', resp.audience.audienceId);
-        System.assertEquals('Test Audience', resp.audience.name);
+        System.assertEquals('aud_1', response.audience.audienceId);
+        System.assertEquals('Test Audience', response.audience.name);
     }
 
     @IsTest
@@ -98,22 +96,22 @@ private class ExtoleAudienceApiTest {
         );
 
         Test.startTest();
-        HttpRequest req = new ExtoleCreateAudienceRequest('Test Audience')
+        HttpRequest request = new ExtoleCreateAudienceRequest('Test Audience')
             .withEnabled(false)
             .withTags(new List<String>{ 'source:sfdc' })
             .build(config());
-        HttpResponse raw = new ExtoleClient().send(config(), req);
-        ExtoleCreateAudienceResponse resp = ExtoleCreateAudienceResponse.fromResponse(
+        HttpResponse raw = new ExtoleClient().send(config(), request);
+        ExtoleCreateAudienceResponse response = ExtoleCreateAudienceResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
         Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
-            req.getBody()
+            request.getBody()
         );
         System.assertEquals('Test Audience', body.get('name'));
         System.assertEquals(false, body.get('enabled'));
-        System.assertEquals('aud_1', resp.audience.audienceId);
+        System.assertEquals('aud_1', response.audience.audienceId);
     }
 
     @IsTest
@@ -127,12 +125,10 @@ private class ExtoleAudienceApiTest {
         System.assertEquals(true, threw);
     }
 
-    // ── ExtoleAudienceOperation (submit + poll state) ────────────────────────
-
     @IsTest
     static void testOperationRequest_buildsPersonListBodyWithEmails() {
         Test.startTest();
-        HttpRequest req = new ExtoleAudienceOperationRequest(
+        HttpRequest request = new ExtoleAudienceOperationRequest(
                 'aud_1',
                 ExtoleAudienceOperationRequest.TYPE_REPLACE
             )
@@ -144,7 +140,7 @@ private class ExtoleAudienceApiTest {
         Test.stopTest();
 
         Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(
-            req.getBody()
+            request.getBody()
         );
         System.assertEquals('REPLACE', body.get('type'));
         Map<String, Object> dataSource = (Map<String, Object>) body.get(
@@ -153,7 +149,6 @@ private class ExtoleAudienceApiTest {
         List<Object> members = (List<Object>) dataSource.get(
             'audience_members'
         );
-        // Blank email is skipped.
         System.assertEquals(2, members.size());
     }
 
@@ -196,20 +191,20 @@ private class ExtoleAudienceApiTest {
         );
 
         Test.startTest();
-        HttpRequest req = new ExtoleAudienceOperationRequest(
+        HttpRequest request = new ExtoleAudienceOperationRequest(
                 'aud_1',
                 ExtoleAudienceOperationRequest.TYPE_REPLACE
             )
             .withEmails(new List<String>{ 'a@example.com' })
             .build(config());
-        HttpResponse raw = new ExtoleClient().send(config(), req);
-        ExtoleAudienceOperationResponse resp = ExtoleAudienceOperationResponse.fromResponse(
+        HttpResponse raw = new ExtoleClient().send(config(), request);
+        ExtoleAudienceOperationResponse response = ExtoleAudienceOperationResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
-        System.assertEquals('op_1', resp.operation.operationId);
-        System.assertEquals('aud_1', resp.operation.audienceId);
+        System.assertEquals('op_1', response.operation.operationId);
+        System.assertEquals('aud_1', response.operation.audienceId);
     }
 
     @IsTest
@@ -244,21 +239,20 @@ private class ExtoleAudienceApiTest {
         );
 
         Test.startTest();
-        HttpRequest req = new ExtoleAudienceOperationStateRequest(
+        HttpRequest request = new ExtoleAudienceOperationStateRequest(
                 'aud_1',
                 'op_1'
             )
             .build(config());
-        HttpResponse raw = new ExtoleClient().send(config(), req);
-        ExtoleAudienceOperationStateResponse resp = ExtoleAudienceOperationStateResponse.fromResponse(
+        HttpResponse raw = new ExtoleClient().send(config(), request);
+        ExtoleAudienceOperationStateResponse response = ExtoleAudienceOperationStateResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
-        // state falls back to top-level "status" when "state" is absent.
-        System.assertEquals('READY', resp.operation.state);
-        System.assertEquals(true, resp.isTerminal());
-        System.assertEquals(true, resp.isSuccess());
+        System.assertEquals('READY', response.operation.state);
+        System.assertEquals(true, response.isTerminal());
+        System.assertEquals(true, response.isSuccess());
     }
 
     @IsTest
@@ -273,19 +267,19 @@ private class ExtoleAudienceApiTest {
         );
 
         Test.startTest();
-        HttpRequest req = new ExtoleAudienceOperationStateRequest(
+        HttpRequest request = new ExtoleAudienceOperationStateRequest(
                 'aud_1',
                 'op_1'
             )
             .build(config());
-        HttpResponse raw = new ExtoleClient().send(config(), req);
-        ExtoleAudienceOperationStateResponse resp = ExtoleAudienceOperationStateResponse.fromResponse(
+        HttpResponse raw = new ExtoleClient().send(config(), request);
+        ExtoleAudienceOperationStateResponse response = ExtoleAudienceOperationStateResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
-        System.assertEquals(true, resp.isTerminal());
-        System.assertEquals(false, resp.isSuccess());
+        System.assertEquals(true, response.isTerminal());
+        System.assertEquals(false, response.isSuccess());
     }
 
     @IsTest
@@ -300,18 +294,18 @@ private class ExtoleAudienceApiTest {
         );
 
         Test.startTest();
-        HttpRequest req = new ExtoleAudienceOperationStateRequest(
+        HttpRequest request = new ExtoleAudienceOperationStateRequest(
                 'aud_1',
                 'op_1'
             )
             .build(config());
-        HttpResponse raw = new ExtoleClient().send(config(), req);
-        ExtoleAudienceOperationStateResponse resp = ExtoleAudienceOperationStateResponse.fromResponse(
+        HttpResponse raw = new ExtoleClient().send(config(), request);
+        ExtoleAudienceOperationStateResponse response = ExtoleAudienceOperationStateResponse.fromResponse(
             raw
         );
         Test.stopTest();
 
-        System.assertEquals(false, resp.isTerminal());
-        System.assertEquals(false, resp.isSuccess());
+        System.assertEquals(false, response.isTerminal());
+        System.assertEquals(false, response.isSuccess());
     }
 }

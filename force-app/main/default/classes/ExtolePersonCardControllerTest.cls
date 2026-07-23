@@ -58,7 +58,6 @@ private class ExtolePersonCardControllerTest {
         insert matchingFriend;
 
         ExtoleConfigurableMock mock = new ExtoleConfigurableMock()
-            // Most specific patterns first — respond() matches first substring hit.
             .addPattern(
                 '/v5/persons/p_friend/data',
                 200,
@@ -151,8 +150,6 @@ private class ExtolePersonCardControllerTest {
         System.assertEquals(matchingFriend.Id, friend.sfdcRecordId);
         System.assertEquals('Contact', friend.sfdcObjectType);
 
-        // Only the friend-journey step survives — the attribution step (was_referred) is filtered out,
-        // and the template step's date is merged in from the completed-steps lookup.
         System.assertEquals(1, friend.steps.size());
         System.assertEquals('friend_signup', friend.steps[0].name);
         System.assertEquals('2026-01-02', friend.steps[0].dateCompleted);

@@ -1,5 +1,7 @@
-@IsTest(SeeAllData=true)
+@IsTest
 private class ExtoleAudienceControllerTest {
+    private static final String FAKE_REPORT_ID = 'aFakeReportId00001';
+
     private static Id testReportId() {
         return [
             SELECT Id
@@ -16,25 +18,31 @@ private class ExtoleAudienceControllerTest {
         String opId,
         String audienceId
     ) {
-        Extole_Audience_Cfg__c cfg = new Extole_Audience_Cfg__c(
+        return makeConfig(key, state, opId, audienceId, FAKE_REPORT_ID);
+    }
+
+    private static Extole_Audience_Cfg__c makeConfig(
+        String key,
+        String state,
+        String opId,
+        String audienceId,
+        String reportId
+    ) {
+        Extole_Audience_Cfg__c config = new Extole_Audience_Cfg__c(
             Config_Key__c = key,
             Extole_Audience_Name__c = key,
-            Source_Report_Id__c = testReportId(),
+            Source_Report_Id__c = reportId,
             Identity_Column__c = 'EMAIL',
             Last_Operation_State__c = state,
             Last_Operation_Id__c = opId,
             Extole_Audience_Id__c = audienceId
         );
-        insert cfg;
-        return cfg;
+        insert config;
+        return config;
     }
-
-    // ── Config CRUD ──────────────────────────────────────────────────────────
 
     @IsTest
     static void testGetAudienceConfigs_returnsOrderedList() {
-        // SeeAllData=true means real pre-existing configs are also visible —
-        // use distinctively-prefixed names and check relative order, not total count.
         makeConfig('zzztest_b_config', 'READY', null, null);
         makeConfig('zzztest_a_config', 'READY', null, null);
 
@@ -61,7 +69,7 @@ private class ExtoleAudienceControllerTest {
         assertThrowsSave(null, 'config is required');
 
         Extole_Audience_Cfg__c missingName = new Extole_Audience_Cfg__c(
-            Source_Report_Id__c = testReportId(),
+            Source_Report_Id__c = FAKE_REPORT_ID,
             Identity_Column__c = 'EMAIL'
         );
         assertThrowsSave(missingName, 'name is required');
@@ -74,18 +82,18 @@ private class ExtoleAudienceControllerTest {
 
         Extole_Audience_Cfg__c missingColumn = new Extole_Audience_Cfg__c(
             Extole_Audience_Name__c = 'x',
-            Source_Report_Id__c = testReportId()
+            Source_Report_Id__c = FAKE_REPORT_ID
         );
         assertThrowsSave(missingColumn, 'column is required');
     }
 
     private static void assertThrowsSave(
-        Extole_Audience_Cfg__c cfg,
+        Extole_Audience_Cfg__c config,
         String expectedFragment
     ) {
         Boolean threw = false;
         try {
-            ExtoleAudienceController.saveAudienceConfig(cfg);
+            ExtoleAudienceController.saveAudienceConfig(config);
         } catch (AuraHandledException e) {
             threw = true;
         }
@@ -100,15 +108,15 @@ private class ExtoleAudienceControllerTest {
     static void testSaveAudienceConfig_generatesConfigKeyAndSchedulesWhenCadenceSet() {
         Integer jobsBefore = countSchedulerJobs();
 
-        Extole_Audience_Cfg__c cfg = new Extole_Audience_Cfg__c(
+        Extole_Audience_Cfg__c config = new Extole_Audience_Cfg__c(
             Extole_Audience_Name__c = 'My Audience',
-            Source_Report_Id__c = testReportId(),
+            Source_Report_Id__c = FAKE_REPORT_ID,
             Identity_Column__c = 'EMAIL',
             Sync_Cadence__c = 'Daily'
         );
 
         Test.startTest();
-        Id savedId = ExtoleAudienceController.saveAudienceConfig(cfg);
+        Id savedId = ExtoleAudienceController.saveAudienceConfig(config);
         Test.stopTest();
 
         Extole_Audience_Cfg__c saved = [
@@ -119,8 +127,6 @@ private class ExtoleAudienceControllerTest {
         System.assertNotEquals(null, saved.Config_Key__c);
         System.assert(saved.Config_Key__c.startsWith('My_Audience_'));
 
-        // ensureScheduled() is idempotent — a job should exist either way; what matters
-        // is it doesn't multiply. Any pre-existing real job is unaffected by this test.
         System.assert(countSchedulerJobs() >= 1);
         System.assert(countSchedulerJobs() <= jobsBefore + 1);
     }
@@ -129,19 +135,17 @@ private class ExtoleAudienceControllerTest {
     static void testSaveAudienceConfig_manualCadenceDoesNotSchedule() {
         Integer jobsBefore = countSchedulerJobs();
 
-        Extole_Audience_Cfg__c cfg = new Extole_Audience_Cfg__c(
+        Extole_Audience_Cfg__c config = new Extole_Audience_Cfg__c(
             Extole_Audience_Name__c = 'Manual Audience',
-            Source_Report_Id__c = testReportId(),
+            Source_Report_Id__c = FAKE_REPORT_ID,
             Identity_Column__c = 'EMAIL',
             Sync_Cadence__c = 'Manual'
         );
 
         Test.startTest();
-        ExtoleAudienceController.saveAudienceConfig(cfg);
+        ExtoleAudienceController.saveAudienceConfig(config);
         Test.stopTest();
 
-        // A manual-cadence save must not add a new scheduled job — the count should
-        // be unchanged (whatever it was before, real pre-existing job or not).
         System.assertEquals(jobsBefore, countSchedulerJobs());
     }
 
@@ -160,7 +164,6 @@ private class ExtoleAudienceControllerTest {
         Test.startTest();
         ExtoleAudienceController.runSchedulerNow();
         Test.stopTest();
-        // No exception — the scheduler ran with zero configs.
     }
 
     @IsTest
@@ -176,7 +179,7 @@ private class ExtoleAudienceControllerTest {
 
     @IsTest
     static void testDeleteAudienceConfig_removesRecord() {
-        Extole_Audience_Cfg__c cfg = makeConfig(
+        Extole_Audience_Cfg__c config = makeConfig(
             'to_delete',
             'READY',
             null,
@@ -184,18 +187,16 @@ private class ExtoleAudienceControllerTest {
         );
 
         Test.startTest();
-        ExtoleAudienceController.deleteAudienceConfig(cfg.Id);
+        ExtoleAudienceController.deleteAudienceConfig(config.Id);
         Test.stopTest();
 
         System.assertEquals(
             0,
-            [SELECT COUNT() FROM Extole_Audience_Cfg__c WHERE Id = :cfg.Id]
+            [SELECT COUNT() FROM Extole_Audience_Cfg__c WHERE Id = :config.Id]
         );
     }
 
-    // ── Report picker ────────────────────────────────────────────────────────
-
-    @IsTest
+    @IsTest(SeeAllData=true)
     static void testGetAvailableReports_returnsTabularReports() {
         Test.startTest();
         List<Map<String, Object>> reports = ExtoleAudienceController.getAvailableReports();
@@ -220,7 +221,7 @@ private class ExtoleAudienceControllerTest {
         System.assertEquals(true, threw);
     }
 
-    @IsTest
+    @IsTest(SeeAllData=true)
     static void testGetReportColumns_returnsDetailColumns() {
         Test.startTest();
         List<String> columns = ExtoleAudienceController.getReportColumns(
@@ -230,8 +231,6 @@ private class ExtoleAudienceControllerTest {
 
         System.assert(columns.contains('EMAIL'));
     }
-
-    // ── Sync orchestration ───────────────────────────────────────────────────
 
     @IsTest
     static void testSyncAudience_blankConfigKeyThrows() {
@@ -267,17 +266,15 @@ private class ExtoleAudienceControllerTest {
         System.assertEquals(true, threw);
     }
 
-    @IsTest
+    @IsTest(SeeAllData=true)
     static void testSyncAudience_marksPreparingAndEnqueuesJob() {
-        makeConfig('sync_now_cfg', 'READY', null, null);
+        makeConfig('sync_now_cfg', 'READY', null, null, testReportId());
 
         Test.startTest();
         Id jobId = ExtoleAudienceController.syncAudience('sync_now_cfg');
         Test.stopTest();
 
         System.assertNotEquals(null, jobId);
-        // The Queueable ran synchronously at stopTest — with 0 matching report rows
-        // (no audiencetest Leads inserted), it deterministically ends in FAILED.
         Extole_Audience_Cfg__c updated = [
             SELECT Last_Operation_State__c
             FROM Extole_Audience_Cfg__c
@@ -285,8 +282,6 @@ private class ExtoleAudienceControllerTest {
         ];
         System.assertEquals('FAILED', updated.Last_Operation_State__c);
     }
-
-    // ── Poll state ───────────────────────────────────────────────────────────
 
     @IsTest
     static void testPollAudienceState_blankConfigKeyThrows() {
@@ -393,16 +388,11 @@ private class ExtoleAudienceControllerTest {
         );
         Test.stopTest();
 
-        // Error was swallowed — state remains whatever it was before the failed poll attempt.
         System.assertEquals('BUILDING', result.Last_Operation_State__c);
     }
 
-    // ── Sync log reads ───────────────────────────────────────────────────────
-
     @IsTest
     static void testGetAudienceSyncLogsAndClear() {
-        // SeeAllData=true means real pre-existing log rows are visible too —
-        // check that our specific row is present, not the total count.
         ExtoleAudienceController.writeLog(
             'zzztest_cfg_key',
             'aud_1',

@@ -18,7 +18,7 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 **List View** — A configurable list of Contacts or Leads filtered by a chosen field/value (e.g. by share-link source) for at-a-glance attribution review.
 
-**Receive Events** — Accepts inbound webhooks from Extole (e.g. reward earned) and writes mapped fields back onto the matching Contact or Lead.
+**Receive Extole Events** — Accepts inbound webhooks from Extole (e.g. reward earned) and writes mapped fields back onto the matching Contact or Lead.
 
 **Person Card** — A Lightning component on the Lead and Contact record pages surfacing that person's Extole share links, referred friends, rewards, and inbound referrer attribution.
 
@@ -52,7 +52,7 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | `Extole_App_Viewer` | Users who need read access to Program Analytics, KPI Dashboard, and List View                 |
 | `Extole_API_Access` | System/integration users — grants access to the Extole API credential only                    |
 
-**App and Tabs** — A Lightning app with nine tabs: Program Analytics, KPI Dashboard, List View, Manage Share Links, Configure Events, Configure KPIs, Manage Audiences, Manage List View, and Receive Events.
+**App and Tabs** — A Lightning app with nine tabs: Program Analytics, KPI Dashboard, List View, Manage Share Links, Send Extole Events, Receive Extole Events, Configure KPIs, Manage Audiences, and Manage List View.
 
 **Apex Classes** — Backend logic for syncing, event handling, and Tooling/webhook integration.
 
@@ -68,7 +68,7 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 
 **Salesforce Tooling API** (`Extole_Tooling`) — OAuth External Credential backed by a Connected App. Used by the Event Configurator to deploy generated Flows into the org. Requires a one-time admin OAuth authorization after setup.
 
-**Inbound webhooks (Receive Events)** — Reversed direction: Extole calls _into_ Salesforce at a `@RestResource` endpoint (`/services/apexrest/extole/events`), authenticated via a Connected App using OAuth 2.0 Client Credentials. Its Consumer Key/Secret live on the Extole side (as the webhook's `CLIENT_KEY` setting), not in this package.
+**Inbound webhooks (Receive Extole Events)** — Reversed direction: Extole calls _into_ Salesforce at a `@RestResource` endpoint (`/services/apexrest/extole/events`), authenticated via a Connected App using OAuth 2.0 Client Credentials. Its Consumer Key/Secret live on the Extole side (as the webhook's `CLIENT_KEY` setting), not in this package.
 
 ---
 
@@ -76,13 +76,13 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 
 - **Sync cadence** — Change in Configure KPIs → Sync Management. The scheduled job is automatically re-registered on save.
 - **Adding KPIs** — Configure KPIs → Add Report. New tiles appear on the KPI Dashboard after the next sync.
-- **Event configs** — Configure Events. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
+- **Event configs** — Send Extole Events. Create, edit, deactivate, or delete event triggers. Before deleting, the app calls the Extole API to check whether the event is still referenced by an active campaign. Deleting a config also removes the associated Flow automatically.
 - **Failure notifications** — Configure KPIs → Sync Management. Enable email alerts after N consecutive sync failures.
-- **Debug logging** — Configure Events → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
+- **Debug logging** — Send Extole Events → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
 - **Backfilling share links** — Manage Share Links. Pick an audience (Closed/Won opps, date range, or custom report), choose the target field, and run. Progress and results are recorded in the backfill log.
 - **List View setup** — Manage List View. Choose the object, filter field/value, columns, and start date for the List View tab.
 - **Audience sync** — Manage Audiences. Pick a Salesforce report and sync cadence; the sync log on the same tab records each run's outcome.
-- **Receive Events / writeback rules** — Receive Events. Map incoming webhook event fields to Contact or Lead fields; the event log on the same tab records every inbound webhook and its outcome.
+- **Receive Extole Events / writeback rules** — Receive Extole Events. Map incoming webhook event fields to Contact or Lead fields; the event log on the same tab records every inbound webhook and its outcome.
 - **Log retention** — Sync logs, event logs, event fire logs, audience sync logs, writeback logs, and debug logs are automatically purged after 30 days by a dedicated nightly job, independent of KPI sync or any other feature being configured.
 
 ---

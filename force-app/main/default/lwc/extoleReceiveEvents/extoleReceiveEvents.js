@@ -33,7 +33,7 @@ export default class ExtoleReceiveEvents extends LightningElement {
         try {
             this.userTimezone = await getCurrentUserTimezone();
         } catch {
-            // fall back to the platform default timezone
+            this.userTimezone = null;
         }
         await Promise.all([
             this.loadEndpoint(),
@@ -81,7 +81,7 @@ export default class ExtoleReceiveEvents extends LightningElement {
                 const arr = JSON.parse(c.Field_Mappings__c);
                 mappingCount = Array.isArray(arr) ? arr.length : 0;
             } catch {
-                // treat unparseable mappings as none
+                mappingCount = 0;
             }
         }
         return {
@@ -166,8 +166,6 @@ export default class ExtoleReceiveEvents extends LightningElement {
             : 'New Rule';
     }
 
-    // ── Endpoint copy ────────────────────────────────────────────────────────
-
     handleCopyEndpoint() {
         navigator.clipboard
             .writeText(this.endpointUrl)
@@ -181,8 +179,6 @@ export default class ExtoleReceiveEvents extends LightningElement {
                 );
             });
     }
-
-    // ── Config table actions ─────────────────────────────────────────────────
 
     handleRefreshConfigs() {
         this.loadConfigs();
@@ -237,26 +233,26 @@ export default class ExtoleReceiveEvents extends LightningElement {
     handleRowMenu(event) {
         const action = event.detail.value;
         const configId = event.target.dataset.id;
-        const cfg = this.configs.find((c) => c.Id === configId);
-        if (!cfg) return;
+        const config = this.configs.find((c) => c.Id === configId);
+        if (!config) return;
 
         if (action === 'edit') {
-            this.openEditModal(cfg);
+            this.openEditModal(config);
         } else if (action === 'activate') {
-            this.setStatus(cfg, 'ACTIVE');
+            this.setStatus(config, 'ACTIVE');
         } else if (action === 'deactivate') {
-            this.setStatus(cfg, 'INACTIVE');
+            this.setStatus(config, 'INACTIVE');
         } else if (action === 'delete') {
-            this.handleDelete(cfg);
+            this.handleDelete(config);
         }
     }
 
-    openEditModal(cfg) {
-        this.editingConfig = { ...cfg };
+    openEditModal(config) {
+        this.editingConfig = { ...config };
         this.mappingRows = [];
-        if (cfg.Field_Mappings__c) {
+        if (config.Field_Mappings__c) {
             try {
-                const parsed = JSON.parse(cfg.Field_Mappings__c);
+                const parsed = JSON.parse(config.Field_Mappings__c);
                 if (Array.isArray(parsed)) {
                     this.mappingRows = parsed.map((m) => ({
                         rowId: newRowId(),
@@ -265,17 +261,17 @@ export default class ExtoleReceiveEvents extends LightningElement {
                     }));
                 }
             } catch {
-                // leave mappingRows empty if the stored JSON is unparseable
+                this.mappingRows = [];
             }
         }
         this.modalError = null;
         this.isModalOpen = true;
     }
 
-    async setStatus(cfg, newStatus) {
+    async setStatus(config, newStatus) {
         try {
             await saveWritebackConfig({
-                config: { ...cfg, Status__c: newStatus }
+                config: { ...config, Status__c: newStatus }
             });
             await this.loadConfigs();
             this.showSuccess(
@@ -286,23 +282,21 @@ export default class ExtoleReceiveEvents extends LightningElement {
         }
     }
 
-    async handleDelete(cfg) {
+    async handleDelete(config) {
         const confirmed = await LightningConfirm.open({
-            message: `Delete writeback rule for "${cfg.Event_Name__c}" → ${cfg.Object_Type__c}? This cannot be undone.`,
+            message: `Delete writeback rule for "${config.Event_Name__c}" → ${config.Object_Type__c}? This cannot be undone.`,
             variant: 'headerless',
             label: 'Delete Rule'
         });
         if (!confirmed) return;
         try {
-            await deleteWritebackConfig({ configId: cfg.Id });
+            await deleteWritebackConfig({ configId: config.Id });
             await this.loadConfigs();
             this.showSuccess('Rule deleted.');
         } catch (error) {
             this.showError('Failed to delete rule.', error);
         }
     }
-
-    // ── Modal ────────────────────────────────────────────────────────────────
 
     handleCloseModal() {
         this.isModalOpen = false;
@@ -390,8 +384,6 @@ export default class ExtoleReceiveEvents extends LightningElement {
         }
     }
 
-    // ── Log actions ──────────────────────────────────────────────────────────
-
     handleClearLogs() {
         this.confirmClearLogs = true;
     }
@@ -427,8 +419,6 @@ export default class ExtoleReceiveEvents extends LightningElement {
         }
     }
 
-    // ── Markdown export ──────────────────────────────────────────────────────
-
     async copyToClipboard(text, successMessage) {
         try {
             await navigator.clipboard.writeText(text);
@@ -447,8 +437,6 @@ export default class ExtoleReceiveEvents extends LightningElement {
             .join('\n');
         return `## ${title}\n\n${header}\n${divider}\n${body || '| (no records) |'}`;
     }
-
-    // ── Toasts ───────────────────────────────────────────────────────────────
 
     showSuccess(message) {
         this.dispatchEvent(

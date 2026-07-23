@@ -5,7 +5,7 @@ private class ExtoleEventControllerTest {
         String status,
         String flowName
     ) {
-        Extole_Event_Cfg__c cfg = new Extole_Event_Cfg__c(
+        Extole_Event_Cfg__c config = new Extole_Event_Cfg__c(
             Config_Key__c = key,
             Event_Name__c = key,
             Trigger_Object__c = 'Lead',
@@ -13,11 +13,10 @@ private class ExtoleEventControllerTest {
             Status__c = status,
             Flow_Name__c = flowName
         );
-        insert cfg;
-        return cfg;
+        insert config;
+        return config;
     }
 
-    // Matches the Tooling-callout mock pattern established in ExtoleEventHandlerTest.
     private class ConfigurableMock implements HttpCalloutMock {
         private List<String> patterns = new List<String>();
         private List<Integer> codes = new List<Integer>();
@@ -40,8 +39,8 @@ private class ExtoleEventControllerTest {
             bodies.add(body);
             return this;
         }
-        public HttpResponse respond(HttpRequest req) {
-            String endpoint = req.getEndpoint();
+        public HttpResponse respond(HttpRequest request) {
+            String endpoint = request.getEndpoint();
             for (Integer i = 0; i < patterns.size(); i++) {
                 if (endpoint.contains(patterns[i])) {
                     HttpResponse r = new HttpResponse();
@@ -56,8 +55,6 @@ private class ExtoleEventControllerTest {
             return def;
         }
     }
-
-    // ── getPicklistValues ─────────────────────────────────────────────────────
 
     @IsTest
     static void testGetPicklistValues_returnsActiveEntries() {
@@ -112,8 +109,6 @@ private class ExtoleEventControllerTest {
         System.assertEquals(0, values.size());
     }
 
-    // ── suggestUniqueEventName ────────────────────────────────────────────────
-
     @IsTest
     static void testSuggestUniqueEventName_blankInputReturnsAsIs() {
         Test.startTest();
@@ -136,13 +131,13 @@ private class ExtoleEventControllerTest {
     @IsTest
     static void testSuggestUniqueEventName_conflictAppendsSuffix() {
         makeConfig('existing_cfg', 'ACTIVE', null);
-        Extole_Event_Cfg__c cfg = [
+        Extole_Event_Cfg__c config = [
             SELECT Id, Event_Name__c
             FROM Extole_Event_Cfg__c
             WHERE Config_Key__c = 'existing_cfg'
         ];
-        cfg.Event_Name__c = 'lead_created';
-        update cfg;
+        config.Event_Name__c = 'lead_created';
+        update config;
 
         Test.startTest();
         String result = ExtoleEventController.suggestUniqueEventName(
@@ -157,16 +152,15 @@ private class ExtoleEventControllerTest {
     @IsTest
     static void testSuggestUniqueEventName_excludesCurrentConfig() {
         makeConfig('self_cfg', 'ACTIVE', null);
-        Extole_Event_Cfg__c cfg = [
+        Extole_Event_Cfg__c config = [
             SELECT Id, Event_Name__c
             FROM Extole_Event_Cfg__c
             WHERE Config_Key__c = 'self_cfg'
         ];
-        cfg.Event_Name__c = 'lead_created';
-        update cfg;
+        config.Event_Name__c = 'lead_created';
+        update config;
 
         Test.startTest();
-        // Excluding self_cfg means its own event name shouldn't count as a conflict.
         String result = ExtoleEventController.suggestUniqueEventName(
             'lead_created',
             'self_cfg'
@@ -175,8 +169,6 @@ private class ExtoleEventControllerTest {
 
         System.assertEquals('lead_created', result);
     }
-
-    // ── deleteEventConfig / deactivateEventConfig ────────────────────────────
 
     @IsTest
     static void testDeleteEventConfig_notFoundThrows() {
@@ -191,7 +183,7 @@ private class ExtoleEventControllerTest {
 
     @IsTest
     static void testDeleteEventConfig_noFlowNameDeletesRecord() {
-        Extole_Event_Cfg__c cfg = makeConfig('to_delete', 'DRAFT', null);
+        Extole_Event_Cfg__c config = makeConfig('to_delete', 'DRAFT', null);
 
         Test.startTest();
         ExtoleEventController.deleteEventConfig('to_delete');
@@ -199,7 +191,7 @@ private class ExtoleEventControllerTest {
 
         System.assertEquals(
             0,
-            [SELECT COUNT() FROM Extole_Event_Cfg__c WHERE Id = :cfg.Id]
+            [SELECT COUNT() FROM Extole_Event_Cfg__c WHERE Id = :config.Id]
         );
         List<Extole_Event_Log__c> logs = [
             SELECT Event_Type__c
@@ -223,7 +215,11 @@ private class ExtoleEventControllerTest {
 
     @IsTest
     static void testDeactivateEventConfig_noFlowNameUpdatesStatus() {
-        Extole_Event_Cfg__c cfg = makeConfig('to_deactivate', 'ACTIVE', null);
+        Extole_Event_Cfg__c config = makeConfig(
+            'to_deactivate',
+            'ACTIVE',
+            null
+        );
 
         Test.startTest();
         ExtoleEventController.deactivateEventConfig('to_deactivate');
@@ -232,13 +228,11 @@ private class ExtoleEventControllerTest {
         Extole_Event_Cfg__c updated = [
             SELECT Status__c, Active__c
             FROM Extole_Event_Cfg__c
-            WHERE Id = :cfg.Id
+            WHERE Id = :config.Id
         ];
         System.assertEquals('INACTIVE', updated.Status__c);
         System.assertEquals(false, updated.Active__c);
     }
-
-    // ── Event Fire Log ────────────────────────────────────────────────────────
 
     @IsTest
     static void testGetEventFireLogsAndClear() {
@@ -277,8 +271,6 @@ private class ExtoleEventControllerTest {
         System.assertEquals(0, result.get('remainingCount'));
     }
 
-    // ── pollDeployStatus pending branch ──────────────────────────────────────
-
     @IsTest
     static void testPollDeployStatus_pendingForDraftConfig() {
         makeConfig('poll_pending_cfg', 'DRAFT', null);
@@ -301,8 +293,6 @@ private class ExtoleEventControllerTest {
         System.assertEquals('FAILED', result.get('status'));
         System.assertEquals('No jobId provided', result.get('errorMessage'));
     }
-
-    // ── previewPayload edge branches ─────────────────────────────────────────
 
     @IsTest
     static void testPreviewPayload_missingTriggerObjectOrMappingsThrows() {
@@ -360,8 +350,6 @@ private class ExtoleEventControllerTest {
         Map<String, Object> data = (Map<String, Object>) parsed.get('data');
         System.assertEquals('Acme Corp', data.get('account_name'));
     }
-
-    // ── deployEventConfig: derive configKey from name, and failure path ─────
 
     @IsTest
     static void testDeployEventConfig_derivesConfigKeyFromEventNameAndTriggerObject() {
@@ -471,11 +459,9 @@ private class ExtoleEventControllerTest {
         System.assertEquals(1, logs.size());
     }
 
-    // ── delete/deactivate with a real flow name set ──────────────────────────
-
     @IsTest
     static void testDeleteEventConfig_withFlowNameAttemptsCleanup() {
-        Extole_Event_Cfg__c cfg = makeConfig(
+        Extole_Event_Cfg__c config = makeConfig(
             'to_delete_with_flow',
             'ACTIVE',
             'Extole_Flow_to_delete_with_flow'
@@ -497,13 +483,13 @@ private class ExtoleEventControllerTest {
 
         System.assertEquals(
             0,
-            [SELECT COUNT() FROM Extole_Event_Cfg__c WHERE Id = :cfg.Id]
+            [SELECT COUNT() FROM Extole_Event_Cfg__c WHERE Id = :config.Id]
         );
     }
 
     @IsTest
     static void testDeactivateEventConfig_withFlowNameAttemptsDeactivation() {
-        Extole_Event_Cfg__c cfg = makeConfig(
+        Extole_Event_Cfg__c config = makeConfig(
             'to_deactivate_with_flow',
             'ACTIVE',
             'Extole_Flow_to_deactivate_with_flow'
@@ -526,7 +512,7 @@ private class ExtoleEventControllerTest {
         Extole_Event_Cfg__c updated = [
             SELECT Status__c
             FROM Extole_Event_Cfg__c
-            WHERE Id = :cfg.Id
+            WHERE Id = :config.Id
         ];
         System.assertEquals('INACTIVE', updated.Status__c);
     }

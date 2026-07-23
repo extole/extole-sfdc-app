@@ -44,7 +44,6 @@
     gap: 8px;
 }
 
-/* Endpoint display */
 .endpoint-row {
     display: flex;
     align-items: center;
@@ -86,14 +85,10 @@
     font-size: 12px;
 }
 
-/* Tables */
 .table-wrapper {
     overflow-x: auto;
 }
 
-/* Rules table has a per-row action menu that must never be clipped —
-   no horizontal-scroll container here (overflow-x auto forces overflow-y
-   to auto too per the CSS overflow spec, which would clip the dropdown). */
 .rules-table-wrapper {
     overflow: visible;
 }
@@ -138,7 +133,6 @@
     color: #c23934;
 }
 
-/* Status badges */
 .status-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -163,21 +157,18 @@
     color: #78611b;
 }
 
-/* Empty state */
 .empty-text {
     color: #54698d;
     font-style: italic;
     padding: 8px 0;
 }
 
-/* Log clear confirm */
 .confirm-clear-label {
     color: #c23934;
     font-weight: 600;
     margin-right: 8px;
 }
 
-/* Field mapping editor */
 .mapping-section {
     margin-top: 12px;
 }
@@ -218,7 +209,6 @@
     margin-top: 4px;
 }
 
-/* Modal */
 .form-error {
     color: #c23934;
     background: #fdecea;
