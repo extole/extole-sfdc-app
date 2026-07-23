@@ -10,10 +10,10 @@ import CONTACT_NAME from '@salesforce/schema/Contact.Name';
 
 const PALETTE = [
     { primary: '#1D9E75', fill: 'rgba(29, 158, 117, 0.12)' },
-    { primary: '#2563EB', fill: 'rgba(37, 99, 235, 0.10)'  },
+    { primary: '#2563EB', fill: 'rgba(37, 99, 235, 0.10)' },
     { primary: '#8B5CF6', fill: 'rgba(139, 92, 246, 0.10)' },
     { primary: '#F97316', fill: 'rgba(249, 115, 22, 0.12)' },
-    { primary: '#E94560', fill: 'rgba(233, 69, 96, 0.10)'  }
+    { primary: '#E94560', fill: 'rgba(233, 69, 96, 0.10)' }
 ];
 
 function hashProgram(name) {
@@ -51,11 +51,16 @@ function formatShortDate(iso) {
 export default class ExtolePersonCard extends LightningElement {
     @api recordId;
     @api objectApiName;
+    @api disabled = false;
 
     @track card = null;
     @track isLoading = false;
     @track loadError = null;
-    @track sectionCollapsed = { shareLinks: false, friends: true, referredBy: false };
+    @track sectionCollapsed = {
+        shareLinks: false,
+        friends: true,
+        referredBy: false
+    };
 
     email = null;
     sfdcName = null;
@@ -77,8 +82,10 @@ export default class ExtolePersonCard extends LightningElement {
 
     async connectedCallback() {
         try {
-            this.configuredShareLinkField = await getShareLinkFieldSetting({ objectType: this.objectApiName });
-        } catch (e) {
+            this.configuredShareLinkField = await getShareLinkFieldSetting({
+                objectType: this.objectApiName
+            });
+        } catch {
             this.configuredShareLinkField = null;
         }
     }
@@ -86,22 +93,28 @@ export default class ExtolePersonCard extends LightningElement {
     @wire(getRecord, { recordId: '$recordId', fields: '$fieldsToFetch' })
     wiredRecord({ data, error }) {
         if (data) {
-            this.email    = getFieldValue(data, this.emailField);
+            this.email = getFieldValue(data, this.emailField);
             this.sfdcName = getFieldValue(data, this.nameField);
             const fname = this.configuredShareLinkField;
-            this.sfdcShareLink = (fname && data.fields && data.fields[fname]) ? data.fields[fname].value : null;
+            this.sfdcShareLink =
+                fname && data.fields && data.fields[fname]
+                    ? data.fields[fname].value
+                    : null;
             if (this.email) {
                 this.loadCard();
             }
         } else if (error) {
-            this.loadError = error.body ? error.body.message : 'Unable to read record.';
+            this.loadError = error.body
+                ? error.body.message
+                : 'Unable to read record.';
         }
     }
 
     get fieldsToFetch() {
-        const base = this.objectApiName === 'Lead'
-            ? [LEAD_EMAIL, LEAD_NAME]
-            : [CONTACT_EMAIL, CONTACT_NAME];
+        const base =
+            this.objectApiName === 'Lead'
+                ? [LEAD_EMAIL, LEAD_NAME]
+                : [CONTACT_EMAIL, CONTACT_NAME];
         const ref = this.shareLinkFieldRef;
         return ref ? [...base, ref] : base;
     }
@@ -112,13 +125,13 @@ export default class ExtolePersonCard extends LightningElement {
         try {
             this.card = await getCardData({ email: this.email });
         } catch (e) {
-            this.loadError = (e && e.body && e.body.message) || 'Failed to load Extole data.';
+            this.loadError =
+                (e && e.body && e.body.message) ||
+                'Failed to load Extole data.';
         } finally {
             this.isLoading = false;
         }
     }
-
-    // ── Computed view state ─────────────────────────────────────────────────
 
     get shouldRender() {
         return this.card && this.card.hasAnyData;
@@ -129,7 +142,9 @@ export default class ExtolePersonCard extends LightningElement {
     }
 
     get hasShareLinks() {
-        return this.card && this.card.shareLinks && this.card.shareLinks.length > 0;
+        return (
+            this.card && this.card.shareLinks && this.card.shareLinks.length > 0
+        );
     }
 
     get hasFriends() {
@@ -144,7 +159,7 @@ export default class ExtolePersonCard extends LightningElement {
         if (this.sfdcName) return this.sfdcName;
         if (!this.card) return '';
         const first = this.card.firstName || '';
-        const last  = this.card.lastName  || '';
+        const last = this.card.lastName || '';
         return (first + ' ' + last).trim() || this.card.email || '';
     }
 
@@ -154,19 +169,23 @@ export default class ExtolePersonCard extends LightningElement {
 
     get roleLabel() {
         const advocate = this.hasFriends;
-        const friend   = this.hasReferredBy;
-        if (advocate && friend)  return 'Advocate · Referred friend';
-        if (advocate)            return 'Advocate';
-        if (friend)              return 'Referred friend';
+        const friend = this.hasReferredBy;
+        if (advocate && friend) return 'Advocate · Referred friend';
+        if (advocate) return 'Advocate';
+        if (friend) return 'Referred friend';
         return '';
     }
 
     get decoratedShareLinks() {
         if (!this.hasShareLinks) return [];
         const saved = (this.sfdcShareLink || '').trim();
-        return this.card.shareLinks.map(sl => {
+        return this.card.shareLinks.map((sl) => {
             const c = programColors(sl.program);
-            const isSavedOnRecord = !!(saved && sl.link && sl.link.trim() === saved);
+            const isSavedOnRecord = !!(
+                saved &&
+                sl.link &&
+                sl.link.trim() === saved
+            );
             return {
                 ...sl,
                 programStyle: `background:${c.fill};color:${c.primary};`,
@@ -181,35 +200,52 @@ export default class ExtolePersonCard extends LightningElement {
         for (const f of this.card.friends) {
             const program = f.program || 'unknown';
             if (!byProgram.has(program)) byProgram.set(program, []);
-            const earned = f.reward
-                && (f.reward.state === 'PAID' || f.reward.state === 'EARNED' || f.reward.state === 'SENT');
-            const rewardDateStr  = earned ? formatShortDate(f.reward.dateEarned) : null;
-            const statusText     = earned ? (rewardDateStr ? `Reward earned ${rewardDateStr}` : 'Reward earned') : '';
-            const rewardStateText  = earned ? f.reward.amountLabel : 'no reward yet';
-            const rewardStateClass = earned ? 'reward-amount-earned' : 'reward-pending';
+            const earned =
+                f.reward &&
+                (f.reward.state === 'PAID' ||
+                    f.reward.state === 'EARNED' ||
+                    f.reward.state === 'SENT');
+            const rewardDateStr = earned
+                ? formatShortDate(f.reward.dateEarned)
+                : null;
+            const statusText = earned
+                ? rewardDateStr
+                    ? `Reward earned ${rewardDateStr}`
+                    : 'Reward earned'
+                : '';
+            const rewardStateText = earned
+                ? f.reward.amountLabel
+                : 'no reward yet';
+            const rewardStateClass = earned
+                ? 'reward-amount-earned'
+                : 'reward-pending';
             const sfdcUrl = f.sfdcRecordId
                 ? `/lightning/r/${f.sfdcObjectType}/${f.sfdcRecordId}/view`
                 : null;
             const displayName = f.displayName || f.email || 'Anonymous';
-            const milestones = (f.steps || []).map(s => ({
-                key:      s.name,
-                label:    s.label,
-                date:     s.dateCompleted ? formatShortDate(s.dateCompleted) : null,
-                rowClass: s.dateCompleted ? 'milestone-row milestone-row-completed' : 'milestone-row milestone-row-pending'
+            const milestones = (f.steps || []).map((s) => ({
+                key: s.name,
+                label: s.label,
+                date: s.dateCompleted ? formatShortDate(s.dateCompleted) : null,
+                rowClass: s.dateCompleted
+                    ? 'milestone-row milestone-row-completed'
+                    : 'milestone-row milestone-row-pending'
             }));
             byProgram.get(program).push({
-                key:             f.personId,
+                key: f.personId,
                 displayName,
                 sfdcUrl,
-                isLinked:        !!f.sfdcRecordId,
-                avatarInitials:  computeInitials(displayName),
-                avatarClass:     earned ? 'avatar avatar-success' : 'avatar avatar-neutral',
-                avatarIsEarned:  earned,
+                isLinked: !!f.sfdcRecordId,
+                avatarInitials: computeInitials(displayName),
+                avatarClass: earned
+                    ? 'avatar avatar-success'
+                    : 'avatar avatar-neutral',
+                avatarIsEarned: earned,
                 statusText,
                 rewardStateText,
                 rewardStateClass,
                 milestones,
-                hasMilestones:   milestones.length > 0
+                hasMilestones: milestones.length > 0
             });
         }
         const groups = [];
@@ -232,9 +268,11 @@ export default class ExtolePersonCard extends LightningElement {
         return {
             ...r,
             displayName,
-            sfdcUrl:        r.sfdcRecordId ? `/lightning/r/${r.sfdcObjectType}/${r.sfdcRecordId}/view` : null,
-            isLinked:       !!r.sfdcRecordId,
-            programStyle:   `background:${c.fill};color:${c.primary};`,
+            sfdcUrl: r.sfdcRecordId
+                ? `/lightning/r/${r.sfdcObjectType}/${r.sfdcRecordId}/view`
+                : null,
+            isLinked: !!r.sfdcRecordId,
+            programStyle: `background:${c.fill};color:${c.primary};`,
             avatarInitials: computeInitials(displayName)
         };
     }
@@ -251,19 +289,41 @@ export default class ExtolePersonCard extends LightningElement {
     toggleSection(event) {
         const key = event.currentTarget.dataset.section;
         if (!key) return;
-        this.sectionCollapsed = { ...this.sectionCollapsed, [key]: !this.sectionCollapsed[key] };
+        this.sectionCollapsed = {
+            ...this.sectionCollapsed,
+            [key]: !this.sectionCollapsed[key]
+        };
     }
 
-    get shareLinksExpanded() { return !this.sectionCollapsed.shareLinks; }
-    get friendsExpanded()    { return !this.sectionCollapsed.friends; }
-    get referredByExpanded() { return !this.sectionCollapsed.referredBy; }
+    get shareLinksExpanded() {
+        return !this.sectionCollapsed.shareLinks;
+    }
+    get friendsExpanded() {
+        return !this.sectionCollapsed.friends;
+    }
+    get referredByExpanded() {
+        return !this.sectionCollapsed.referredBy;
+    }
 
-    get shareLinksChevron() { return this.shareLinksExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
-    get friendsChevron()    { return this.friendsExpanded    ? 'utility:chevrondown' : 'utility:chevronright'; }
-    get referredByChevron() { return this.referredByExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get shareLinksChevron() {
+        return this.shareLinksExpanded
+            ? 'utility:chevrondown'
+            : 'utility:chevronright';
+    }
+    get friendsChevron() {
+        return this.friendsExpanded
+            ? 'utility:chevrondown'
+            : 'utility:chevronright';
+    }
+    get referredByChevron() {
+        return this.referredByExpanded
+            ? 'utility:chevrondown'
+            : 'utility:chevronright';
+    }
 
     get shareLinksLabel() {
-        const n = this.card && this.card.shareLinks ? this.card.shareLinks.length : 0;
+        const n =
+            this.card && this.card.shareLinks ? this.card.shareLinks.length : 0;
         return this.shareLinksExpanded ? 'Share Links' : `Share Links (${n})`;
     }
 

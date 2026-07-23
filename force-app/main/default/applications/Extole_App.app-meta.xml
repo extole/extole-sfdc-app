@@ -1,6 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Event management and KPI dashboard for Extole programs</description>
+    <description
+    >Event management and KPI dashboard for Extole programs</description>
     <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
     <isNavPersonalizationDisabled>true</isNavPersonalizationDisabled>
     <isServiceCloudConsole>false</isServiceCloudConsole>
@@ -11,12 +12,12 @@
     <tabs>Extole_List_View</tabs>
     <tabs>Extole_Backfill</tabs>
     <tabs>Extole_Configure_Events</tabs>
+    <tabs>Extole_Receive_Events</tabs>
     <tabs>Extole_Configure_KPIs</tabs>
     <tabs>Extole_Manage_Audiences</tabs>
     <tabs>Extole_Manage_List_View</tabs>
-    <tabs>Extole_Receive_Events</tabs>
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <formFactors>Small</formFactors>
-    <utilityBar></utilityBar>
+    <utilityBar />
 </CustomApplication>

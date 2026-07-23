@@ -1,5 +1,5 @@
 :host {
-    --extole-green: #1D9E75;
+    --extole-green: #1d9e75;
     display: block;
 }
 
@@ -14,7 +14,7 @@
     background: #ffffff;
     border: 1px solid #dddbda;
     border-radius: 4px;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -44,7 +44,6 @@
     gap: 8px;
 }
 
-/* Endpoint display */
 .endpoint-row {
     display: flex;
     align-items: center;
@@ -86,9 +85,12 @@
     font-size: 12px;
 }
 
-/* Tables */
 .table-wrapper {
-    overflow: auto;
+    overflow-x: auto;
+}
+
+.rules-table-wrapper {
+    overflow: visible;
 }
 
 .event-name-cell {
@@ -118,16 +120,19 @@
     font-size: 12px;
 }
 
-.error-cell {
+.reason-cell {
     font-size: 12px;
-    color: #c23934;
+    color: #444;
     max-width: 240px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* Status badges */
+.reason-cell-failed {
+    color: #c23934;
+}
+
 .status-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -135,26 +140,35 @@
     font-size: 12px;
     font-weight: 600;
 }
-.status-active   { background: #e1f5e8; color: #027e46; }
-.status-inactive { background: #ecebea; color: #54698d; }
-.status-failed   { background: #fdecea; color: #c23934; }
-.status-skipped  { background: #fdf6e3; color: #78611b; }
+.status-active {
+    background: #e1f5e8;
+    color: #027e46;
+}
+.status-inactive {
+    background: #ecebea;
+    color: #54698d;
+}
+.status-failed {
+    background: #fdecea;
+    color: #c23934;
+}
+.status-skipped {
+    background: #fdf6e3;
+    color: #78611b;
+}
 
-/* Empty state */
 .empty-text {
     color: #54698d;
     font-style: italic;
     padding: 8px 0;
 }
 
-/* Log clear confirm */
 .confirm-clear-label {
     color: #c23934;
     font-weight: 600;
     margin-right: 8px;
 }
 
-/* Field mapping editor */
 .mapping-section {
     margin-top: 12px;
 }
@@ -195,7 +209,6 @@
     margin-top: 4px;
 }
 
-/* Modal */
 .form-error {
     color: #c23934;
     background: #fdecea;

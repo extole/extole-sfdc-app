@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
@@ -11,8 +11,16 @@
                 <object>Lead</object>
                 <object>Contact</object>
             </objects>
+            <property
+                name="disabled"
+                type="Boolean"
+                default="false"
+                label="Disabled"
+                description="Check to turn off the Extole Person Card on this page without removing it."
+            />
         </targetConfig>
     </targetConfigs>
     <masterLabel>Extole Person Card</masterLabel>
-    <description>Surfaces Extole referral activity for the host Lead or Contact: share links, referred friends, rewards, and inbound referrer attribution.</description>
+    <description
+    >Surfaces Extole referral activity for the host Lead or Contact: share links, referred friends, rewards, and inbound referrer attribution.</description>
 </LightningComponentBundle>

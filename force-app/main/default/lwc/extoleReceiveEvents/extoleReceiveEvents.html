@@ -1,12 +1,12 @@
 <template>
     <div class="settings-container">
-
-        <!-- ── Setup card ── -->
         <div class="settings-card">
             <div class="settings-card-header">
                 <div class="settings-card-title">
                     Webhook Endpoint
-                    <lightning-helptext content="Extole posts events to this URL. Configure a webhook in the Extole component with this URL and the OAuth 2.0 credentials from your Connected App."></lightning-helptext>
+                    <lightning-helptext
+                        content="Extole posts events to this URL. Configure a webhook in the Extole component with this URL and the OAuth 2.0 credentials from your Connected App."
+                    ></lightning-helptext>
                 </div>
             </div>
             <div class="endpoint-row">
@@ -22,40 +22,65 @@
             </div>
             <div class="setup-steps">
                 <p class="setup-step">
-                    <strong>1. Create a Connected App</strong> in Setup → App Manager. Enable OAuth, add the
-                    <em>Perform requests at any time (refresh_token, offline_access)</em> scope and the
-                    <em>Access and manage your data (api)</em> scope. Use Client Credentials flow.
+                    <strong>1. Create a Connected App</strong> in Setup → App
+                    Manager. Enable OAuth, add the
+                    <em
+                        >Perform requests at any time (refresh_token,
+                        offline_access)</em
+                    >
+                    scope and the
+                    <em>Access and manage your data (api)</em> scope. Use Client
+                    Credentials flow.
                 </p>
                 <p class="setup-step">
-                    <strong>2. In the Extole component</strong>, add the Connected App's Consumer Key and Secret
-                    as the <code>CLIENT_KEY</code> setting, and set the endpoint URL above as the webhook target.
+                    <strong>2. In the Extole component</strong>, add the
+                    Connected App's Consumer Key and Secret as the
+                    <code>CLIENT_KEY</code> setting, and set the endpoint URL
+                    above as the webhook target.
                 </p>
                 <p class="setup-step">
-                    <strong>3. Add writeback rules below</strong> to map incoming event fields to Contact or Lead fields.
+                    <strong>3. Add writeback rules below</strong> to map
+                    incoming event fields to Contact or Lead fields.
                 </p>
             </div>
         </div>
 
-        <!-- ── Writeback rules card ── -->
         <div class="settings-card">
             <div class="settings-card-header">
                 <div class="settings-card-title">
-                    Writeback Rules
-                    <lightning-helptext content="Each rule maps an Extole event to a Salesforce object and defines which event data fields get written to which SFDC fields."></lightning-helptext>
+                    Rules
+                    <lightning-helptext
+                        content="Each rule maps an Extole event to a Salesforce object and defines which event data fields get written to which SFDC fields."
+                    ></lightning-helptext>
                 </div>
                 <div class="diag-header-actions">
-                    <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshConfigs}></lightning-button>
-                    <lightning-button label="Add Rule" variant="brand" icon-name="utility:add" onclick={handleAddRule}></lightning-button>
+                    <lightning-button
+                        label="Refresh"
+                        variant="neutral"
+                        icon-name="utility:refresh"
+                        onclick={handleRefreshConfigs}
+                    ></lightning-button>
+                    <lightning-button
+                        label="Add Rule"
+                        variant="brand"
+                        icon-name="utility:add"
+                        onclick={handleAddRule}
+                    ></lightning-button>
                 </div>
             </div>
 
             <template lwc:if={isLoadingConfigs}>
-                <lightning-spinner size="small" alternative-text="Loading rules..."></lightning-spinner>
+                <lightning-spinner
+                    size="small"
+                    alternative-text="Loading rules..."
+                ></lightning-spinner>
             </template>
             <template lwc:else>
                 <template lwc:if={hasConfigs}>
-                    <div class="table-wrapper">
-                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                    <div class="rules-table-wrapper">
+                        <table
+                            class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped"
+                        >
                             <thead>
                                 <tr class="slds-line-height_reset">
                                     <th scope="col">Event Name</th>
@@ -67,26 +92,52 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template for:each={configs} for:item="cfg">
-                                    <tr key={cfg.Id}>
-                                        <td class="event-name-cell">{cfg.Event_Name__c}</td>
-                                        <td>{cfg.Object_Type__c}</td>
-                                        <td><span class={cfg.statusBadgeClass}>{cfg.Status__c}</span></td>
-                                        <td>{cfg.mappingCount}</td>
-                                        <td class="description-cell" title={cfg.Description__c}>{cfg.Description__c}</td>
+                                <template for:each={configs} for:item="config">
+                                    <tr key={config.Id}>
+                                        <td class="event-name-cell">
+                                            {config.Event_Name__c}
+                                        </td>
+                                        <td>{config.Object_Type__c}</td>
+                                        <td>
+                                            <span
+                                                class={config.statusBadgeClass}
+                                                >{config.Status__c}</span
+                                            >
+                                        </td>
+                                        <td>{config.mappingCount}</td>
+                                        <td
+                                            class="description-cell"
+                                            title={config.Description__c}
+                                        >
+                                            {config.Description__c}
+                                        </td>
                                         <td class="col-actions">
                                             <lightning-button-menu
                                                 icon-name="utility:down"
                                                 variant="bare"
                                                 menu-alignment="right"
                                                 alternative-text="Actions"
-                                                data-id={cfg.Id}
+                                                data-id={config.Id}
                                                 onselect={handleRowMenu}
                                             >
-                                                <lightning-menu-item value="edit" label="Edit"></lightning-menu-item>
-                                                <lightning-menu-item lwc:if={cfg.isActive}   value="deactivate" label="Deactivate"></lightning-menu-item>
-                                                <lightning-menu-item lwc:if={cfg.isInactive} value="activate"   label="Activate"></lightning-menu-item>
-                                                <lightning-menu-item value="delete" label="Delete"></lightning-menu-item>
+                                                <lightning-menu-item
+                                                    value="edit"
+                                                    label="Edit"
+                                                ></lightning-menu-item>
+                                                <lightning-menu-item
+                                                    lwc:if={config.isActive}
+                                                    value="deactivate"
+                                                    label="Deactivate"
+                                                ></lightning-menu-item>
+                                                <lightning-menu-item
+                                                    lwc:if={config.isInactive}
+                                                    value="activate"
+                                                    label="Activate"
+                                                ></lightning-menu-item>
+                                                <lightning-menu-item
+                                                    value="delete"
+                                                    label="Delete"
+                                                ></lightning-menu-item>
                                             </lightning-button-menu>
                                         </td>
                                     </tr>
@@ -96,37 +147,74 @@
                     </div>
                 </template>
                 <template lwc:else>
-                    <p class="empty-text">No writeback rules yet. Click <strong>Add Rule</strong> to map an Extole event to a Salesforce field.</p>
+                    <p class="empty-text">
+                        No writeback rules yet. Click
+                        <strong>Add Rule</strong> to map an Extole event to a
+                        Salesforce field.
+                    </p>
                 </template>
             </template>
         </div>
 
-        <!-- ── Event log card ── -->
         <div class="settings-card">
             <div class="settings-card-header">
                 <div class="settings-card-title">
                     Event Log
-                    <lightning-helptext content="One row per writeback attempt. SUCCESS = field(s) updated. SKIPPED = no matching record or no active rule. FAILED = unhandled error. Logs auto-purge after 30 days."></lightning-helptext>
+                    <lightning-helptext
+                        content="One row per writeback attempt. SUCCESS = field(s) updated. SKIPPED = no matching record or no active rule. FAILED = unhandled error. Logs auto-purge after 30 days."
+                    ></lightning-helptext>
                 </div>
                 <div class="diag-header-actions">
                     <template lwc:if={confirmClearLogs}>
-                        <span class="confirm-clear-label">Clear all log entries?</span>
-                        <lightning-button label="Yes, clear" variant="destructive" onclick={handleConfirmClearLogs} disabled={isClearingLogs}></lightning-button>
-                        <lightning-button label="Cancel" variant="neutral" onclick={handleCancelClearLogs}></lightning-button>
+                        <span class="confirm-clear-label"
+                            >Clear all log entries?</span
+                        >
+                        <lightning-button
+                            label="Yes, clear"
+                            variant="destructive"
+                            onclick={handleConfirmClearLogs}
+                            disabled={isClearingLogs}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Cancel"
+                            variant="neutral"
+                            onclick={handleCancelClearLogs}
+                        ></lightning-button>
                     </template>
                     <template lwc:else>
-                        <lightning-button label="Refresh" variant="neutral" icon-name="utility:refresh" onclick={handleRefreshLogs}></lightning-button>
-                        <lightning-button label="Clear Log" variant="destructive-text" onclick={handleClearLogs} disabled={isClearingLogs}></lightning-button>
+                        <lightning-button
+                            label="Refresh"
+                            variant="neutral"
+                            icon-name="utility:refresh"
+                            onclick={handleRefreshLogs}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Copy as Markdown"
+                            variant="neutral"
+                            icon-name="utility:copy"
+                            onclick={handleCopyEventLogMd}
+                        ></lightning-button>
+                        <lightning-button
+                            label="Clear Log"
+                            variant="destructive-text"
+                            onclick={handleClearLogs}
+                            disabled={isClearingLogs}
+                        ></lightning-button>
                     </template>
                 </div>
             </div>
             <template lwc:if={isLoadingLogs}>
-                <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+                <lightning-spinner
+                    size="small"
+                    alternative-text="Loading..."
+                ></lightning-spinner>
             </template>
             <template lwc:else>
                 <template lwc:if={hasLogs}>
                     <div class="table-wrapper">
-                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                        <table
+                            class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped"
+                        >
                             <thead>
                                 <tr class="slds-line-height_reset">
                                     <th scope="col">Received</th>
@@ -134,20 +222,46 @@
                                     <th scope="col">Email</th>
                                     <th scope="col">Object</th>
                                     <th scope="col">Status</th>
-                                    <th scope="col">Record</th>
-                                    <th scope="col">Error</th>
+                                    <th scope="col">SFDC Record</th>
+                                    <th scope="col">Reason</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <template for:each={logs} for:item="log">
                                     <tr key={log.Id}>
-                                        <td class="timestamp-cell">{log.formattedReceivedAt}</td>
+                                        <td class="timestamp-cell">
+                                            {log.formattedReceivedAt}
+                                        </td>
                                         <td>{log.Event_Name__c}</td>
                                         <td>{log.Email__c}</td>
                                         <td>{log.Object_Type__c}</td>
-                                        <td><span class={log.statusBadgeClass}>{log.Status__c}</span></td>
-                                        <td class="record-id-cell" title={log.Record_Id__c}>{log.shortRecordId}</td>
-                                        <td class="error-cell" title={log.Error__c}>{log.errorPreview}</td>
+                                        <td>
+                                            <span class={log.statusBadgeClass}
+                                                >{log.Status__c}</span
+                                            >
+                                        </td>
+                                        <td
+                                            class="record-id-cell"
+                                            title={log.Record_Id__c}
+                                        >
+                                            <template lwc:if={log.recordUrl}>
+                                                <a
+                                                    href={log.recordUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    >{log.shortRecordId}</a
+                                                >
+                                            </template>
+                                            <template lwc:else
+                                                >{log.shortRecordId}</template
+                                            >
+                                        </td>
+                                        <td
+                                            class={log.reasonClass}
+                                            title={log.Error__c}
+                                        >
+                                            {log.errorPreview}
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -155,25 +269,40 @@
                     </div>
                 </template>
                 <template lwc:else>
-                    <p class="empty-text">No events received yet. Logs appear here when Extole posts to the webhook endpoint.</p>
+                    <p class="empty-text">
+                        No events received yet. Logs appear here when Extole
+                        posts to the webhook endpoint.
+                    </p>
                 </template>
             </template>
         </div>
-
     </div>
 
-    <!-- ── Add / Edit modal ── -->
     <template lwc:if={isModalOpen}>
-        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true" aria-labelledby="wb-modal-heading">
+        <section
+            role="dialog"
+            tabindex="-1"
+            class="slds-modal slds-fade-in-open"
+            aria-modal="true"
+            aria-labelledby="wb-modal-heading"
+        >
             <div class="slds-modal__container">
                 <header class="slds-modal__header">
-                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={handleCloseModal}>
-                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                    <button
+                        class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleCloseModal}
+                    >
+                        <lightning-icon
+                            icon-name="utility:close"
+                            size="small"
+                            alternative-text="Close"
+                        ></lightning-icon>
                     </button>
-                    <h2 id="wb-modal-heading" class="slds-modal__title">{modalTitle}</h2>
+                    <h2 id="wb-modal-heading" class="slds-modal__title">
+                        {modalTitle}
+                    </h2>
                 </header>
                 <div class="slds-modal__content slds-p-around_medium">
-
                     <lightning-input
                         type="text"
                         label="Event Name"
@@ -211,11 +340,14 @@
                         onchange={handleFieldChange}
                     ></lightning-textarea>
 
-                    <!-- Field mappings editor -->
                     <div class="mapping-section">
                         <div class="mapping-section-header">
-                            <span class="mapping-section-label">Field Mappings</span>
-                            <lightning-helptext content="Each row reads a key from the Extole event's data object and writes its value to a Salesforce field on the matched record."></lightning-helptext>
+                            <span class="mapping-section-label"
+                                >Field Mappings</span
+                            >
+                            <lightning-helptext
+                                content="Each row reads a key from the Extole event's data object and writes its value to a Salesforce field on the matched record."
+                            ></lightning-helptext>
                         </div>
                         <template for:each={mappingRows} for:item="row">
                             <div key={row.rowId} class="mapping-row">
@@ -251,7 +383,12 @@
                             </div>
                         </template>
                         <div class="mapping-add-row">
-                            <lightning-button label="Add Field Mapping" variant="neutral" icon-name="utility:add" onclick={handleAddMapping}></lightning-button>
+                            <lightning-button
+                                label="Add Field Mapping"
+                                variant="neutral"
+                                icon-name="utility:add"
+                                onclick={handleAddMapping}
+                            ></lightning-button>
                         </div>
                     </div>
 
@@ -260,8 +397,17 @@
                     </template>
                 </div>
                 <footer class="slds-modal__footer">
-                    <lightning-button label="Cancel" variant="neutral" onclick={handleCloseModal}></lightning-button>
-                    <lightning-button label="Save" variant="brand" onclick={handleSaveModal} disabled={isSaving}></lightning-button>
+                    <lightning-button
+                        label="Cancel"
+                        variant="neutral"
+                        onclick={handleCloseModal}
+                    ></lightning-button>
+                    <lightning-button
+                        label="Save"
+                        variant="brand"
+                        onclick={handleSaveModal}
+                        disabled={isSaving}
+                    ></lightning-button>
                 </footer>
             </div>
         </section>
