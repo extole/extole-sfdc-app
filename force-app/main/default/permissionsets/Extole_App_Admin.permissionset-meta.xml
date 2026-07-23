@@ -1,6 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Grants full admin access to the Extole App including Settings tab, report configuration, sync management, and Named Credential configuration.</description>
+    <description
+    >Grants full admin access to the Extole App including Settings tab, report configuration, sync management, and Named Credential configuration.</description>
     <classAccesses>
         <apexClass>ExtoleAudienceController</apexClass>
         <enabled>true</enabled>
@@ -39,11 +40,13 @@
     </classAccesses>
     <externalCredentialPrincipalAccesses>
         <enabled>true</enabled>
-        <externalCredentialPrincipal>Extole_API-ExtoleAPIUser</externalCredentialPrincipal>
+        <externalCredentialPrincipal
+        >Extole_API-ExtoleAPIUser</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
     <externalCredentialPrincipalAccesses>
         <enabled>true</enabled>
-        <externalCredentialPrincipal>Extole_Tooling_Cred-Admin</externalCredentialPrincipal>
+        <externalCredentialPrincipal
+        >Extole_Tooling_Cred-Admin</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Extole App Admin</label>
@@ -166,96 +169,252 @@
         <object>Extole_Writeback_Log__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Active__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Extole_Audience_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Extole_Audience_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Identity_Column__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Error__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Member_Count__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Operation_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Operation_State__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Last_Sync_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Source_Report_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Source_Report_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Cfg__c.Sync_Cadence__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Audience_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Detail__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Member_Count__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Operation_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Operation_Type__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.State__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Audience_Sync_Log__c.Timestamp__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Contact.Extole_Share_Link__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Criteria__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Audience_Type__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Batch_Job_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Completed_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Error_Count__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Error_Detail__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Object_Type__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Program_Label__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Started_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Status__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Success_Count__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Target_Field__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Backfill_Log__c.Total_Count__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Detail__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Event_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.HTTP_Status__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Record_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Result__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Fire_Log__c.Timestamp__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Lead.Extole_Share_Link__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Active__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Apex_Class_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Config_Key__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Config_Version__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Deploy_Error__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Deploy_Error_Raw__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Deployed_By_User_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Event_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Field_Mappings_JSON__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Flow_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Attempted_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Deployed__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Failed_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_HTTP_Status__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Record_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Response_Summary__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Succeeded_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Last_Tested_Record_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Status__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Trigger_Field__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Trigger_From_Value__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Trigger_Object__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Trigger_To_Value__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Trigger_Type__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Event_Cfg__c.Trigger_Value__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Cfg__c.Description__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Cfg__c.Field_Mappings__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Email__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Error__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Event_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Event_Name__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Object_Type__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Payload__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Received_At__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Record_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Salesforce_Id__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>Extole_Writeback_Log__c.Status__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Active__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Config_Key__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Extole_Audience_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Extole_Audience_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Identity_Column__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Last_Error__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Last_Member_Count__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Last_Operation_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Last_Operation_State__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Last_Sync_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Source_Report_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Source_Report_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Cfg__c.Sync_Cadence__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Audience_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Config_Key__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Detail__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Member_Count__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Operation_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Operation_Type__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.State__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Audience_Sync_Log__c.Timestamp__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Contact.Extole_Share_Link__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Audience_Criteria__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Audience_Type__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Batch_Job_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Completed_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Error_Count__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Error_Detail__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Object_Type__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Program_Label__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Started_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Status__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Success_Count__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Target_Field__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Backfill_Log__c.Total_Count__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.Config_Key__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.Detail__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.Event_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.HTTP_Status__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.Record_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.Result__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Fire_Log__c.Timestamp__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Lead.Extole_Share_Link__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Active__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Apex_Class_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Config_Key__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Config_Version__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Deploy_Error__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Deploy_Error_Raw__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Deployed_By_User_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Event_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Field_Mappings_JSON__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Flow_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Attempted_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Deployed__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Failed_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_HTTP_Status__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Record_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Response_Summary__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Succeeded_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Last_Tested_Record_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Status__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Trigger_Field__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Trigger_From_Value__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Trigger_Object__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Trigger_To_Value__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Trigger_Type__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Event_Cfg__c.Trigger_Value__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Cfg__c.Description__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Cfg__c.Field_Mappings__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Email__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Error__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Event_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Event_Name__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Object_Type__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Payload__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Received_At__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Record_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Salesforce_Id__c</field><readable
+        >true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field
+        >Extole_Writeback_Log__c.Status__c</field><readable
+        >true</readable></fieldPermissions>
     <tabSettings>
         <tab>Extole_Program_Analytics</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
         <tab>Extole_KPI_Dashboard</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
-    <tabSettings>
-        <tab>Extole_List_View</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
@@ -272,10 +431,6 @@
     </tabSettings>
     <tabSettings>
         <tab>Extole_Manage_Audiences</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
-    <tabSettings>
-        <tab>Extole_Manage_List_View</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>

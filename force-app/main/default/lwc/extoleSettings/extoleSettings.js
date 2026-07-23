@@ -27,20 +27,13 @@ import LABEL_SYNC_NOW from '@salesforce/label/c.Extole_Settings_SyncNow';
 import LABEL_SAVE_SETTINGS from '@salesforce/label/c.Extole_Settings_SaveSettings';
 import LABEL_ADD_REPORT from '@salesforce/label/c.Extole_Settings_AddReport';
 import LABEL_REPORT_CONFIG_SECTION from '@salesforce/label/c.Extole_Settings_ReportConfig_Section';
-import LABEL_LIST_VIEW_SECTION from '@salesforce/label/c.Extole_Settings_ListView_Section';
 import LABEL_SYNC_MGMT_SECTION from '@salesforce/label/c.Extole_Settings_SyncManagement_Section';
 import LABEL_DEBUG_SECTION from '@salesforce/label/c.Extole_Settings_Debug_Section';
 import LABEL_CLEAR_DEBUG_LOGS from '@salesforce/label/c.Extole_Settings_ClearDebugLogs';
 import LABEL_API_TOKEN_NOTE from '@salesforce/label/c.Extole_Settings_ApiTokenNote';
 import LABEL_GENERATE_TOKEN from '@salesforce/label/c.Extole_Settings_GenerateToken';
 import LABEL_LONG_LIVED_TOKEN from '@salesforce/label/c.Extole_Settings_LongLivedToken';
-import LABEL_SHOW_LIST_VIEW from '@salesforce/label/c.Extole_Settings_ShowListView';
 import LABEL_SHOW_KPI_DASHBOARD from '@salesforce/label/c.Extole_Settings_ShowKPIDashboard';
-import LABEL_LEAD_FIELD from '@salesforce/label/c.Extole_Settings_ListView_Field';
-import LABEL_LEAD_VALUE from '@salesforce/label/c.Extole_Settings_ListView_Value';
-import LABEL_TRACKING_START from '@salesforce/label/c.Extole_Settings_ListView_StartDate';
-import getObjectFields from '@salesforce/apex/ExtoleController.getObjectFields';
-import getFieldValues from '@salesforce/apex/ExtoleController.getFieldValues';
 import LABEL_SYNC_CADENCE from '@salesforce/label/c.Extole_Settings_SyncCadence';
 import LABEL_NOTIFY_ON_FAILURE from '@salesforce/label/c.Extole_Settings_NotifyOnFailure';
 import LABEL_NOTIFY_AFTER_N from '@salesforce/label/c.Extole_Settings_NotifyAfterN';
@@ -94,20 +87,8 @@ import LABEL_TOOLTIP_NOTIFY_ON_FAILURE from '@salesforce/label/c.Extole_Tooltip_
 import LABEL_TOOLTIP_NOTIFY_AFTER_N from '@salesforce/label/c.Extole_Tooltip_NotifyAfterN';
 import LABEL_TOOLTIP_FAILURE_EMAIL from '@salesforce/label/c.Extole_Tooltip_FailureEmail';
 
-const ATTRIBUTION_COLUMN_DEFAULTS = {
-    Contact:     ['Account.Name', 'Email', 'Title'],
-    Lead:        ['Email', 'Company', 'Status'],
-    Opportunity: ['Account.Name', 'StageName', 'Amount']
-};
-
 const DEFAULT_SETTINGS = {
     Show_Analytics__c: true,
-    Show_List_View__c: false,
-    List_View_Object__c: 'Contact',
-    List_View_Field__c: '',
-    List_View_Value__c: '',
-    List_View_Columns__c: '',
-    List_View_Start_Date__c: null,
     Sync_Cadence__c: 'Nightly',
     Notify_On_Sync_Failure__c: false,
     Notify_After_N_Failures__c: 2,
@@ -149,17 +130,6 @@ export default class ExtoleSettings extends LightningElement {
     @track hasDirtySettings = false;
     @track scheduleWarning = false;
 
-    // List View cascade
-    @track attributionObjectOptions = [
-        { label: 'Contact',     value: 'Contact'     },
-        { label: 'Lead',        value: 'Lead'        },
-        { label: 'Opportunity', value: 'Opportunity' }
-    ];
-    @track attributionFieldOptions = [];
-    @track attributionValueOptions = [];
-    @track isLoadingAttributionFields = false;
-    @track isLoadingAttributionValues = false;
-
     // Modal state
     @track isModalOpen = false;
     @track modalStep = 1;
@@ -180,18 +150,13 @@ export default class ExtoleSettings extends LightningElement {
     labelSaveSettings = LABEL_SAVE_SETTINGS;
     labelAddReport = LABEL_ADD_REPORT;
     labelReportConfigSection = LABEL_REPORT_CONFIG_SECTION;
-    labelListViewSection = LABEL_LIST_VIEW_SECTION;
     labelSyncManagementSection = LABEL_SYNC_MGMT_SECTION;
     labelDebugSection = LABEL_DEBUG_SECTION;
     labelClearDebugLogs = LABEL_CLEAR_DEBUG_LOGS;
     labelApiTokenNote = LABEL_API_TOKEN_NOTE;
     labelGenerateToken = LABEL_GENERATE_TOKEN;
     labelLongLivedToken = LABEL_LONG_LIVED_TOKEN;
-    labelShowListView = LABEL_SHOW_LIST_VIEW;
     labelShowKPIDashboard = LABEL_SHOW_KPI_DASHBOARD;
-    labelLeadField = LABEL_LEAD_FIELD;
-    labelLeadValue = LABEL_LEAD_VALUE;
-    labelTrackingStart = LABEL_TRACKING_START;
     labelSyncCadence = LABEL_SYNC_CADENCE;
     labelNotifyOnFailure = LABEL_NOTIFY_ON_FAILURE;
     labelNotifyAfterN = LABEL_NOTIFY_AFTER_N;
@@ -230,8 +195,10 @@ export default class ExtoleSettings extends LightningElement {
     tooltipAggregation = LABEL_TOOLTIP_AGGREGATION;
     tooltipChartType = LABEL_TOOLTIP_CHART_TYPE;
     tooltipValueColumn = LABEL_TOOLTIP_VALUE_COLUMN;
-    tooltipDisplayOrder = 'Controls the left-to-right position of this widget on the dashboard. Lower numbers appear first (1 = leftmost).';
-    tooltipActive = 'When unchecked, this report will be hidden from the dashboard and skipped during sync.';
+    tooltipDisplayOrder =
+        'Controls the left-to-right position of this widget on the dashboard. Lower numbers appear first (1 = leftmost).';
+    tooltipActive =
+        'When unchecked, this report will be hidden from the dashboard and skipped during sync.';
     labelConfigComparisonPeriod = LABEL_CONFIG_COMPARISON_PERIOD;
     tooltipComparisonPeriod = LABEL_TOOLTIP_COMPARISON_PERIOD;
     labelSettingsHistoryDepth = LABEL_SETTINGS_HISTORY_DEPTH;
@@ -241,11 +208,14 @@ export default class ExtoleSettings extends LightningElement {
     tooltipNotifyOnFailure = LABEL_TOOLTIP_NOTIFY_ON_FAILURE;
     tooltipNotifyAfterN = LABEL_TOOLTIP_NOTIFY_AFTER_N;
     tooltipFailureEmail = LABEL_TOOLTIP_FAILURE_EMAIL;
-    tooltipSectionConnection = 'Connects Salesforce to your Extole account via API. Generate a long-lived token in the Extole Security Center and configure it as a Named Credential.';
-    tooltipSectionReportConfig = 'Define which Extole reports appear as KPI tiles on the dashboard. Each config maps a report runner to a single metric.';
-    tooltipSectionListView = 'Identify which Salesforce records are Extole-influenced. The List View tab uses these settings to filter and display the people your program has generated.';
-    tooltipSectionSyncManagement = 'Control how often Extole data syncs to Salesforce and configure failure alert emails.';
-    tooltipSectionDebug = 'Enable detailed HTTP and value-extraction logging to troubleshoot sync issues. Logs are automatically purged after 30 days.';
+    tooltipSectionConnection =
+        'Connects Salesforce to your Extole account via API. Generate a long-lived token in the Extole Security Center and configure it as a Named Credential.';
+    tooltipSectionReportConfig =
+        'Define which Extole reports appear as KPI tiles on the dashboard. Each config maps a report runner to a single metric.';
+    tooltipSectionSyncManagement =
+        'Control how often Extole data syncs to Salesforce and configure failure alert emails.';
+    tooltipSectionDebug =
+        'Enable detailed HTTP and value-extraction logging to troubleshoot sync issues. Logs are automatically purged after 30 days.';
 
     connectedCallback() {
         this.loadAll();
@@ -261,90 +231,17 @@ export default class ExtoleSettings extends LightningElement {
             this.loadBackfillLogs(),
             this.checkScheduleStatus()
         ]);
-        // Load attribution dropdowns after settings are loaded
-        await this.loadAttributionFields();
-        if (this.settings.List_View_Field__c) {
-            await this.loadAttributionValues();
-        }
-
-    }
-
-    async loadAttributionFields() {
-        const obj = this.settings.List_View_Object__c || 'Contact';
-        this.isLoadingAttributionFields = true;
-        try {
-            const fields = await getObjectFields({ objectName: obj });
-            this.attributionFieldOptions = fields
-                .slice()
-                .sort((a, b) => a.label.localeCompare(b.label))
-                .map(f => ({ label: f.label, value: f.value }));
-        } catch (e) {
-            this.attributionFieldOptions = [];
-        } finally {
-            this.isLoadingAttributionFields = false;
-        }
-    }
-
-    async loadAttributionValues() {
-        const obj   = this.settings.List_View_Object__c || 'Contact';
-        const field = this.settings.List_View_Field__c;
-        if (!field) return;
-        this.isLoadingAttributionValues = true;
-        try {
-            const vals = await getFieldValues({ objectName: obj, fieldName: field });
-            this.attributionValueOptions = vals
-                .slice()
-                .sort()
-                .map(v => ({ label: v, value: v }));
-        } catch (e) {
-            this.attributionValueOptions = [];
-        } finally {
-            this.isLoadingAttributionValues = false;
-        }
-    }
-
-    async handleAttributionObjectChange(event) {
-        const val = event.detail.value;
-        this.settings = {
-            ...this.settings,
-            List_View_Object__c: val,
-            List_View_Field__c: '',
-            List_View_Value__c: '',
-            List_View_Columns__c: ''
-        };
-        this.attributionValueOptions = [];
-        this.hasDirtySettings = true;
-        await this.loadAttributionFields();
-    }
-
-    handleAttributionColumnsChange(event) {
-        this.settings = {
-            ...this.settings,
-            List_View_Columns__c: event.detail.value.join(',')
-        };
-        this.hasDirtySettings = true;
-    }
-
-    async handleAttributionFieldChange(event) {
-        const val = event.detail.value;
-        this.settings = {
-            ...this.settings,
-            List_View_Field__c: val,
-            List_View_Value__c: ''
-        };
-        this.attributionValueOptions = [];
-        this.hasDirtySettings = true;
-        await this.loadAttributionValues();
     }
 
     async checkScheduleStatus() {
         try {
             const status = await getScheduleStatus();
             // Warn if a cadence is set but no active scheduled job exists
-            const hasCadence = status && status.cadence && status.cadence !== 'None';
+            const hasCadence =
+                status && status.cadence && status.cadence !== 'None';
             this.scheduleWarning = hasCadence && !status.isScheduled;
-        } catch (e) {
-            // Non-fatal — don't surface scheduling errors on load
+        } catch {
+            this.scheduleWarning = false;
         }
     }
 
@@ -352,13 +249,16 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingDebugLogs = true;
         try {
             const result = await getDebugLogs();
-            this.debugLogs = (result || []).map(log => ({
+            this.debugLogs = (result || []).map((log) => ({
                 ...log,
                 formattedTimestamp: log.Log_Timestamp__c
                     ? new Intl.DateTimeFormat('en-US', {
-                        month: 'short', day: 'numeric',
-                        hour: 'numeric', minute: '2-digit', second: '2-digit',
-                        hour12: true
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: true
                       }).format(new Date(log.Log_Timestamp__c))
                     : ''
             }));
@@ -376,7 +276,9 @@ export default class ExtoleSettings extends LightningElement {
     async loadSettings() {
         try {
             const result = await getSettings();
-            this.settings = result ? { ...DEFAULT_SETTINGS, ...result } : { ...DEFAULT_SETTINGS };
+            this.settings = result
+                ? { ...DEFAULT_SETTINGS, ...result }
+                : { ...DEFAULT_SETTINGS };
             this.hasDirtySettings = false;
         } catch (error) {
             this.showError('Failed to load settings.', error);
@@ -387,15 +289,29 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingConfigs = true;
         try {
             const result = await getConfigs();
-            const dateOpts = { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-            this.configs = (result || []).map(c => ({
+            const dateOpts = {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            this.configs = (result || []).map((c) => ({
                 ...c,
                 statusLabel: c.Active__c ? 'Active' : 'Inactive',
-                statusCellClass: c.Active__c ? 'kpi-status-active' : 'kpi-status-inactive',
+                statusCellClass: c.Active__c
+                    ? 'kpi-status-active'
+                    : 'kpi-status-inactive',
                 formattedCreatedDate: c.CreatedDate
-                    ? new Intl.DateTimeFormat('en-US', dateOpts).format(new Date(c.CreatedDate)) : '—',
+                    ? new Intl.DateTimeFormat('en-US', dateOpts).format(
+                          new Date(c.CreatedDate)
+                      )
+                    : '—',
                 formattedLastModifiedDate: c.LastModifiedDate
-                    ? new Intl.DateTimeFormat('en-US', dateOpts).format(new Date(c.LastModifiedDate)) : '—'
+                    ? new Intl.DateTimeFormat('en-US', dateOpts).format(
+                          new Date(c.LastModifiedDate)
+                      )
+                    : '—'
             }));
         } catch (error) {
             this.showError('Failed to load report configurations.', error);
@@ -408,14 +324,17 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingLogs = true;
         try {
             const result = await getSyncLogs();
-            this.syncLogs = (result || []).map(log => ({
+            this.syncLogs = (result || []).map((log) => ({
                 ...log,
                 statusClass: this.getStatusClass(log.Status__c),
                 formattedTimestamp: log.Sync_Timestamp__c
                     ? new Intl.DateTimeFormat('en-US', {
-                        month: 'short', day: 'numeric',
-                        hour: 'numeric', minute: '2-digit', second: '2-digit',
-                        hour12: true
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: true
                       }).format(new Date(log.Sync_Timestamp__c))
                     : ''
             }));
@@ -430,17 +349,23 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingEventLogs = true;
         try {
             const result = await getEventLogs({ configKey: null });
-            this.eventLogs = (result || []).map(log => ({
+            this.eventLogs = (result || []).map((log) => ({
                 ...log,
                 formattedTimestamp: log.Timestamp__c
                     ? new Intl.DateTimeFormat('en-US', {
-                        month: 'short', day: 'numeric',
-                        hour: 'numeric', minute: '2-digit', second: '2-digit',
-                        hour12: true
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: true
                       }).format(new Date(log.Timestamp__c))
                     : '',
                 resultClass: this.getResultClass(log.Result__c),
-                detailClass: (log.Result__c && log.Result__c !== 'SUCCESS') ? 'error-cell' : 'truncated-cell'
+                detailClass:
+                    log.Result__c && log.Result__c !== 'SUCCESS'
+                        ? 'error-cell'
+                        : 'truncated-cell'
             }));
         } catch (error) {
             this.showError('Failed to load event logs.', error);
@@ -449,8 +374,12 @@ export default class ExtoleSettings extends LightningElement {
         }
     }
 
-    handleClearSyncLogs() { this.confirmClearSync = true; }
-    handleCancelClearSync() { this.confirmClearSync = false; }
+    handleClearSyncLogs() {
+        this.confirmClearSync = true;
+    }
+    handleCancelClearSync() {
+        this.confirmClearSync = false;
+    }
     async handleConfirmClearSync() {
         this.confirmClearSync = false;
         this.isClearingSyncLogs = true;
@@ -465,8 +394,12 @@ export default class ExtoleSettings extends LightningElement {
         }
     }
 
-    handleClearEventLogs() { this.confirmClearEventLog = true; }
-    handleCancelClearEventLog() { this.confirmClearEventLog = false; }
+    handleClearEventLogs() {
+        this.confirmClearEventLog = true;
+    }
+    handleCancelClearEventLog() {
+        this.confirmClearEventLog = false;
+    }
     async handleConfirmClearEventLog() {
         this.confirmClearEventLog = false;
         this.isClearingEventLogs = true;
@@ -481,12 +414,22 @@ export default class ExtoleSettings extends LightningElement {
         }
     }
 
-    handleRefreshSyncLogs()      { this.loadSyncLogs(); }
-    handleRefreshEventLogs()     { this.loadEventLogs(); }
-    handleRefreshBackfillLogs()  { this.loadBackfillLogs(); }
+    handleRefreshSyncLogs() {
+        this.loadSyncLogs();
+    }
+    handleRefreshEventLogs() {
+        this.loadEventLogs();
+    }
+    handleRefreshBackfillLogs() {
+        this.loadBackfillLogs();
+    }
 
-    handleClearBackfillLogs()    { this.confirmClearBackfillLog = true; }
-    handleCancelClearBackfillLog() { this.confirmClearBackfillLog = false; }
+    handleClearBackfillLogs() {
+        this.confirmClearBackfillLog = true;
+    }
+    handleCancelClearBackfillLog() {
+        this.confirmClearBackfillLog = false;
+    }
     async handleConfirmClearBackfillLog() {
         this.confirmClearBackfillLog = false;
         this.isClearingBackfillLogs = true;
@@ -505,25 +448,44 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingBackfillLogs = true;
         try {
             const result = await getBackfillLogs();
-            this.backfillLogs = (result || []).map(log => {
+            this.backfillLogs = (result || []).map((log) => {
                 const s = log.Status__c;
                 let errorDetail = '';
                 if (log.Error_Detail__c) {
                     try {
                         const errs = JSON.parse(log.Error_Detail__c);
                         if (errs.length > 0) {
-                            const first = errs[0].name ? `${errs[0].name}: ${errs[0].error}` : errs[0].error;
-                            errorDetail = errs.length > 1 ? `${first} (+${errs.length - 1} more)` : first;
+                            const first = errs[0].name
+                                ? `${errs[0].name}: ${errs[0].error}`
+                                : errs[0].error;
+                            errorDetail =
+                                errs.length > 1
+                                    ? `${first} (+${errs.length - 1} more)`
+                                    : first;
                         }
-                    } catch (e) { /* leave empty */ }
+                    } catch {
+                        /* leave empty */
+                    }
                 }
                 return {
                     ...log,
                     formattedStarted: log.Started_At__c
-                        ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(log.Started_At__c))
+                        ? new Intl.DateTimeFormat('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
+                          }).format(new Date(log.Started_At__c))
                         : '',
                     statusClass: this.getBackfillStatusClass(s),
-                    statusLabel: { IN_PROGRESS: 'In Progress', COMPLETED: 'Completed', COMPLETED_WITH_ERRORS: 'Errors', FAILED: 'Failed' }[s] || s,
+                    statusLabel:
+                        {
+                            IN_PROGRESS: 'In Progress',
+                            COMPLETED: 'Completed',
+                            COMPLETED_WITH_ERRORS: 'Errors',
+                            FAILED: 'Failed'
+                        }[s] || s,
                     errorDetail,
                     detailClass: errorDetail ? 'error-cell' : 'truncated-cell'
                 };
@@ -536,45 +498,118 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     getBackfillStatusClass(status) {
-        if (status === 'COMPLETED')             return 'log-badge-success';
-        if (status === 'IN_PROGRESS')           return 'log-badge-skipped';
+        if (status === 'COMPLETED') return 'log-badge-success';
+        if (status === 'IN_PROGRESS') return 'log-badge-skipped';
         if (status === 'COMPLETED_WITH_ERRORS') return 'log-badge-unknown';
         return 'log-badge-failed';
     }
 
     handleCopySyncLogMd() {
-        const now = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date());
-        const headers = ['Report Name', 'Date Range', 'Status', 'Trigger', 'Timestamp', 'Value', 'HTTP', 'Error'];
-        const rows = this.syncLogs.map(l => [
-            l.Report_Name__c || '', l.Date_Range__c || '', l.Status__c || '',
-            l.Trigger_Type__c || '', l.formattedTimestamp || '', l.Value_Extracted__c || '',
-            l.HTTP_Status_Code__c || '', l.Error_Message__c || ''
+        const now = new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        }).format(new Date());
+        const headers = [
+            'Report Name',
+            'Date Range',
+            'Status',
+            'Trigger',
+            'Timestamp',
+            'Value',
+            'HTTP',
+            'Error'
+        ];
+        const rows = this.syncLogs.map((l) => [
+            l.Report_Name__c || '',
+            l.Date_Range__c || '',
+            l.Status__c || '',
+            l.Trigger_Type__c || '',
+            l.formattedTimestamp || '',
+            l.Value_Extracted__c || '',
+            l.HTTP_Status_Code__c || '',
+            l.Error_Message__c || ''
         ]);
-        this.copyToClipboard(this.buildMarkdownTable(`KPI Data Import Log — ${now}`, headers, rows), 'KPI data import log copied to clipboard.');
+        this.copyToClipboard(
+            this.buildMarkdownTable(
+                `KPI Data Import Log — ${now}`,
+                headers,
+                rows
+            ),
+            'KPI data import log copied to clipboard.'
+        );
     }
 
     handleCopyEventLogMd() {
-        const now = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date());
-        const headers = ['Config Key', 'Event Type', 'Result', 'Timestamp', 'Detail'];
-        const rows = this.eventLogs.map(l => [
-            l.Config_Key__c || '', l.Event_Type__c || '', l.Result__c || '',
-            l.formattedTimestamp || '', l.Detail__c || ''
+        const now = new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        }).format(new Date());
+        const headers = [
+            'Config Key',
+            'Event Type',
+            'Result',
+            'Timestamp',
+            'Detail'
+        ];
+        const rows = this.eventLogs.map((l) => [
+            l.Config_Key__c || '',
+            l.Event_Type__c || '',
+            l.Result__c || '',
+            l.formattedTimestamp || '',
+            l.Detail__c || ''
         ]);
-        this.copyToClipboard(this.buildMarkdownTable(`Event Configuration History — ${now}`, headers, rows), 'Event configuration history copied to clipboard.');
+        this.copyToClipboard(
+            this.buildMarkdownTable(
+                `Event Configuration History — ${now}`,
+                headers,
+                rows
+            ),
+            'Event configuration history copied to clipboard.'
+        );
     }
 
     handleCopyBackfillLogMd() {
-        const now = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date());
-        const headers = ['Started', 'Object', 'Audience', 'Program', 'Field', 'Status', 'Total', 'Success', 'Errors', 'Details'];
-        const rows = this.backfillLogs.map(l => [
-            l.formattedStarted || '', l.Object_Type__c || '', l.Audience_Type__c || '',
-            l.Program_Label__c || '', l.Target_Field__c || '', l.Status__c || '',
+        const now = new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        }).format(new Date());
+        const headers = [
+            'Started',
+            'Object',
+            'Audience',
+            'Program',
+            'Field',
+            'Status',
+            'Total',
+            'Success',
+            'Errors',
+            'Details'
+        ];
+        const rows = this.backfillLogs.map((l) => [
+            l.formattedStarted || '',
+            l.Object_Type__c || '',
+            l.Audience_Type__c || '',
+            l.Program_Label__c || '',
+            l.Target_Field__c || '',
+            l.Status__c || '',
             l.Total_Count__c != null ? l.Total_Count__c : '',
             l.Success_Count__c != null ? l.Success_Count__c : '',
             l.Error_Count__c != null ? l.Error_Count__c : '',
             l.errorDetail || ''
         ]);
-        this.copyToClipboard(this.buildMarkdownTable(`Share Link Log — ${now}`, headers, rows), 'Share link log copied to clipboard.');
+        this.copyToClipboard(
+            this.buildMarkdownTable(`Share Link Log — ${now}`, headers, rows),
+            'Share link log copied to clipboard.'
+        );
     }
 
     copyToClipboard(text, successMessage) {
@@ -597,26 +632,28 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     buildMarkdownTable(title, headers, rows) {
-        const esc = s => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
-        const header  = `| ${headers.map(esc).join(' | ')} |`;
+        const esc = (s) => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+        const header = `| ${headers.map(esc).join(' | ')} |`;
         const divider = `| ${headers.map(() => '---').join(' | ')} |`;
-        const body    = rows.map(r => `| ${r.map(esc).join(' | ')} |`).join('\n');
+        const body = rows
+            .map((r) => `| ${r.map(esc).join(' | ')} |`)
+            .join('\n');
         return `## ${title}\n\n${header}\n${divider}\n${body || '| (no records) |'}`;
     }
 
     getStatusClass(status) {
         const map = {
-            'SUCCESS': 'log-badge-success',
-            'FAILED':  'log-badge-failed'
+            SUCCESS: 'log-badge-success',
+            FAILED: 'log-badge-failed'
         };
         return map[status] || 'log-badge-skipped';
     }
 
     getResultClass(result) {
         const map = {
-            'SUCCESS': 'log-badge-success',
-            'FAILED':  'log-badge-failed',
-            'UNKNOWN': 'log-badge-unknown'
+            SUCCESS: 'log-badge-success',
+            FAILED: 'log-badge-failed',
+            UNKNOWN: 'log-badge-unknown'
         };
         return map[result] || 'log-badge-skipped';
     }
@@ -642,7 +679,9 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     get connectionBadgeClass() {
-        return this.isConnected ? 'connection-badge badge-connected' : 'connection-badge badge-failed';
+        return this.isConnected
+            ? 'connection-badge badge-connected'
+            : 'connection-badge badge-failed';
     }
 
     get connectionIcon() {
@@ -651,30 +690,23 @@ export default class ExtoleSettings extends LightningElement {
 
     get connectionResultClass() {
         if (!this.connectionResult) return '';
-        return this.connectionResult.success ? 'connection-result result-success' : 'connection-result result-error';
+        return this.connectionResult.success
+            ? 'connection-result result-success'
+            : 'connection-result result-error';
     }
 
     get lastSyncText() {
         if (this.settings && this.settings.Last_Sync_Timestamp__c) {
             const formatted = new Intl.DateTimeFormat('en-US', {
-                month: 'short', day: 'numeric',
-                hour: 'numeric', minute: '2-digit',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
                 hour12: true
             }).format(new Date(this.settings.Last_Sync_Timestamp__c));
             return `${LABEL_LAST_SYNC}: ${formatted}`;
         }
         return `${LABEL_LAST_SYNC}: ${LABEL_NEVER}`;
-    }
-
-    get isValueDisabled() {
-        return this.isLoadingAttributionValues || !this.settings.List_View_Field__c;
-    }
-
-    get selectedAttributionColumns() {
-        const saved = this.settings.List_View_Columns__c;
-        if (saved) return saved.split(',').map(s => s.trim()).filter(Boolean);
-        const obj = this.settings.List_View_Object__c || 'Contact';
-        return ATTRIBUTION_COLUMN_DEFAULTS[obj] || ATTRIBUTION_COLUMN_DEFAULTS.Contact;
     }
 
     get syncCadenceOptions() {
@@ -690,19 +722,36 @@ export default class ExtoleSettings extends LightningElement {
         if (this.configSortedBy !== field) return '';
         return this.configSortedDirection === 'asc' ? ' ↑' : ' ↓';
     }
-    get kpiSortIconOrder()    { return this.getKpiSortIcon('Display_Order__c'); }
-    get kpiSortIconLabel()    { return this.getKpiSortIcon('Display_Label__c'); }
-    get kpiSortIconReport()   { return this.getKpiSortIcon('Report_Name__c'); }
-    get kpiSortIconAgg()      { return this.getKpiSortIcon('Aggregation__c'); }
-    get kpiSortIconChart()    { return this.getKpiSortIcon('Chart_Type__c'); }
-    get kpiSortIconStatus()   { return this.getKpiSortIcon('statusLabel'); }
-    get kpiSortIconCreated()  { return this.getKpiSortIcon('CreatedDate'); }
-    get kpiSortIconModified() { return this.getKpiSortIcon('LastModifiedDate'); }
+    get kpiSortIconOrder() {
+        return this.getKpiSortIcon('Display_Order__c');
+    }
+    get kpiSortIconLabel() {
+        return this.getKpiSortIcon('Display_Label__c');
+    }
+    get kpiSortIconReport() {
+        return this.getKpiSortIcon('Report_Name__c');
+    }
+    get kpiSortIconAgg() {
+        return this.getKpiSortIcon('Aggregation__c');
+    }
+    get kpiSortIconChart() {
+        return this.getKpiSortIcon('Chart_Type__c');
+    }
+    get kpiSortIconStatus() {
+        return this.getKpiSortIcon('statusLabel');
+    }
+    get kpiSortIconCreated() {
+        return this.getKpiSortIcon('CreatedDate');
+    }
+    get kpiSortIconModified() {
+        return this.getKpiSortIcon('LastModifiedDate');
+    }
 
     handleConfigSortColumn(event) {
         const field = event.currentTarget.dataset.field;
         if (this.configSortedBy === field) {
-            this.configSortedDirection = this.configSortedDirection === 'asc' ? 'desc' : 'asc';
+            this.configSortedDirection =
+                this.configSortedDirection === 'asc' ? 'desc' : 'asc';
         } else {
             this.configSortedBy = field;
             this.configSortedDirection = 'asc';
@@ -718,7 +767,7 @@ export default class ExtoleSettings extends LightningElement {
     handleConfigRowMenuSelect(event) {
         const action = event.detail.value;
         const id = event.target.dataset.id;
-        const row = this.configs.find(c => c.Id === id);
+        const row = this.configs.find((c) => c.Id === id);
         if (!row) return;
         if (action === 'edit') this.openModalForEdit(row);
         else if (action === 'delete') this.handleDeleteConfig(row.Id);
@@ -755,7 +804,7 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     get valueColumnOptions() {
-        return this.reportColumns.map(col => ({ label: col, value: col }));
+        return this.reportColumns.map((col) => ({ label: col, value: col }));
     }
 
     get hasColumnOptions() {
@@ -775,15 +824,21 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     get modalTitle() {
-        return this.modalStep === 1 ? LABEL_MODAL_STEP1_TITLE : LABEL_MODAL_STEP2_TITLE;
+        return this.modalStep === 1
+            ? LABEL_MODAL_STEP1_TITLE
+            : LABEL_MODAL_STEP2_TITLE;
     }
 
     get step1IndicatorClass() {
-        return this.modalStep === 1 ? 'step-indicator-item step-active' : 'step-indicator-item step-done';
+        return this.modalStep === 1
+            ? 'step-indicator-item step-active'
+            : 'step-indicator-item step-done';
     }
 
     get step2IndicatorClass() {
-        return this.modalStep === 2 ? 'step-indicator-item step-active' : 'step-indicator-item';
+        return this.modalStep === 2
+            ? 'step-indicator-item step-active'
+            : 'step-indicator-item';
     }
 
     isUserGeneratedRunner(runner) {
@@ -793,9 +848,13 @@ export default class ExtoleSettings extends LightningElement {
         if (runner.type === 'REFRESHING') return false;
 
         // Fallback for runners with no type field: exclude if tags are all internal:
-        if (runner.tags && Array.isArray(runner.tags) && runner.tags.length > 0) {
-            const lowerTags = runner.tags.map(t => String(t).toLowerCase());
-            if (lowerTags.every(t => t.startsWith('internal:'))) return false;
+        if (
+            runner.tags &&
+            Array.isArray(runner.tags) &&
+            runner.tags.length > 0
+        ) {
+            const lowerTags = runner.tags.map((t) => String(t).toLowerCase());
+            if (lowerTags.every((t) => t.startsWith('internal:'))) return false;
         }
 
         // Last resort: non-empty created_by suggests user ownership
@@ -804,16 +863,17 @@ export default class ExtoleSettings extends LightningElement {
 
     get filteredReportTypes() {
         return this.rawReportTypes
-            .filter(rt => this.isUserGeneratedRunner(rt))
-            .map(rt => {
+            .filter((rt) => this.isUserGeneratedRunner(rt))
+            .map((rt) => {
                 const runnerId = rt.report_runner_id || rt.id;
                 return {
                     ...rt,
                     runnerId,
                     displayName: rt.name || rt.display_name || runnerId,
-                    rowClass: runnerId === this.selectedReportTypeId
-                        ? 'report-row report-row-selected'
-                        : 'report-row'
+                    rowClass:
+                        runnerId === this.selectedReportTypeId
+                            ? 'report-row report-row-selected'
+                            : 'report-row'
                 };
             });
     }
@@ -824,7 +884,10 @@ export default class ExtoleSettings extends LightningElement {
 
     // Event handlers
     async handleKpiDashboardToggle(event) {
-        this.settings = { ...this.settings, Show_Analytics__c: event.detail.checked };
+        this.settings = {
+            ...this.settings,
+            Show_Analytics__c: event.detail.checked
+        };
         await this.handleSaveSettings();
     }
 
@@ -843,15 +906,14 @@ export default class ExtoleSettings extends LightningElement {
     }
 
     async handleSaveSettings() {
-        if (this.settings.Notify_On_Sync_Failure__c && !this.settings.Failure_Notification_Email__c) {
-            this.showError('A notification email address is required when Notify on Sync Failure is enabled.');
+        if (
+            this.settings.Notify_On_Sync_Failure__c &&
+            !this.settings.Failure_Notification_Email__c
+        ) {
+            this.showError(
+                'A notification email address is required when Notify on Sync Failure is enabled.'
+            );
             return;
-        }
-        if (this.settings.Show_List_View__c) {
-            if (!this.settings.List_View_Field__c || !this.settings.List_View_Value__c) {
-                this.showError('Please select both an Extole Field and Extole Value before saving.');
-                return;
-            }
         }
         this.isSaving = true;
         try {
@@ -859,7 +921,9 @@ export default class ExtoleSettings extends LightningElement {
             this.hasDirtySettings = false;
             this.scheduleWarning = false;
             this.showSuccess(LABEL_SETTINGS_SAVED);
-            this.dispatchEvent(new CustomEvent('settingssaved', { detail: this.settings }));
+            this.dispatchEvent(
+                new CustomEvent('settingssaved', { detail: this.settings })
+            );
         } catch (error) {
             this.showError('Failed to save settings.', error);
         } finally {
@@ -878,7 +942,9 @@ export default class ExtoleSettings extends LightningElement {
             this.isConnected = false;
             this.connectionResult = {
                 success: false,
-                errorMessage: (error && error.body && error.body.message) || 'Connection test failed.'
+                errorMessage:
+                    (error && error.body && error.body.message) ||
+                    'Connection test failed.'
             };
         } finally {
             this.isTesting = false;
@@ -890,28 +956,38 @@ export default class ExtoleSettings extends LightningElement {
 
     async handleSyncNow() {
         if (this.hasDirtySettings) {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Unsaved Settings',
-                message: 'You have unsaved settings changes. Save your settings before syncing to ensure they take effect.',
-                variant: 'warning'
-            }));
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Unsaved Settings',
+                    message:
+                        'You have unsaved settings changes. Save your settings before syncing to ensure they take effect.',
+                    variant: 'warning'
+                })
+            );
             return;
         }
         this.isSyncing = true;
         try {
             const failureCount = await triggerSync();
             if (failureCount > 0) {
-                this.dispatchEvent(new ShowToastEvent({
-                    title: 'Sync Warning',
-                    message: LABEL_SYNC_PARTIAL_FAILURE,
-                    variant: 'warning'
-                }));
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Sync Warning',
+                        message: LABEL_SYNC_PARTIAL_FAILURE,
+                        variant: 'warning'
+                    })
+                );
             } else {
                 this.isConnected = true;
                 this.connectionResult = null;
                 this.showSuccess(LABEL_SYNC_TRIGGERED);
             }
-            await Promise.all([this.loadSyncLogs(), this.loadSettings(), this.loadDebugLogs(), this.loadEventLogs()]);
+            await Promise.all([
+                this.loadSyncLogs(),
+                this.loadSettings(),
+                this.loadDebugLogs(),
+                this.loadEventLogs()
+            ]);
         } catch (error) {
             this.isConnected = false;
             this.showError('Sync failed.', error);
@@ -994,7 +1070,9 @@ export default class ExtoleSettings extends LightningElement {
             const raw = await getReportTypes();
             const parsed = JSON.parse(raw);
             // Support array or {data: [...]} wrapper
-            this.rawReportTypes = Array.isArray(parsed) ? parsed : (parsed.data || parsed.report_types || []);
+            this.rawReportTypes = Array.isArray(parsed)
+                ? parsed
+                : parsed.data || parsed.report_types || [];
         } catch (error) {
             this.rawReportTypes = [];
             this.showError('Failed to load report types.', error);
@@ -1015,14 +1093,15 @@ export default class ExtoleSettings extends LightningElement {
         const id = event.currentTarget.dataset.id;
         this.selectedReportTypeId = id;
         this.selectedReportType = this.rawReportTypes.find(
-            rt => (rt.report_runner_id || rt.id) === id
+            (rt) => (rt.report_runner_id || rt.id) === id
         );
     }
 
     async handleModalNext() {
         if (!this.selectedReportTypeId || !this.selectedReportType) return;
         const runner = this.selectedReportType;
-        const runnerName = runner.name || runner.display_name || this.selectedReportTypeId;
+        const runnerName =
+            runner.name || runner.display_name || this.selectedReportTypeId;
         this.editingConfig = {
             ...this.editingConfig,
             Report_Type__c: this.selectedReportTypeId,
@@ -1034,10 +1113,11 @@ export default class ExtoleSettings extends LightningElement {
         this.isLoadingColumns = true;
         this.reportColumns = [];
         try {
-            const cols = await getReportColumns({ runnerId: this.selectedReportTypeId });
+            const cols = await getReportColumns({
+                runnerId: this.selectedReportTypeId
+            });
             this.reportColumns = cols || [];
-        } catch (error) {
-            // Non-fatal — user can still type a value if columns can't be fetched
+        } catch {
             this.reportColumns = [];
         } finally {
             this.isLoadingColumns = false;
@@ -1078,34 +1158,39 @@ export default class ExtoleSettings extends LightningElement {
             await this.loadConfigs();
             // Auto-sync after every save so the tile reflects changes immediately
             if (savedId) {
-                try {
-                    await triggerSingleSync({ configId: savedId });
-                } catch (syncError) {
-                    // Non-fatal — tile will populate on next scheduled sync
-                }
+                await triggerSingleSync({ configId: savedId }).catch(
+                    () => undefined
+                );
             }
             this.showSuccess(LABEL_CONFIG_SAVED);
         } catch (error) {
-            this.configSaveError = (error && error.body && error.body.message) || 'Failed to save configuration.';
+            this.configSaveError =
+                (error && error.body && error.body.message) ||
+                'Failed to save configuration.';
         } finally {
             this.isSavingConfig = false;
         }
     }
 
     showSuccess(message) {
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Success',
-            message,
-            variant: 'success'
-        }));
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Success',
+                message,
+                variant: 'success'
+            })
+        );
     }
 
     showError(message, error) {
-        const detail = error && error.body && error.body.message ? error.body.message : '';
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Error',
-            message: detail || message,
-            variant: 'error'
-        }));
+        const detail =
+            error && error.body && error.body.message ? error.body.message : '';
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Error',
+                message: detail || message,
+                variant: 'error'
+            })
+        );
     }
 }

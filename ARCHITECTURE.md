@@ -16,7 +16,6 @@ LWC (UI)                    Apex (backend)                  External
 ─────────────────────────   ──────────────────────────────  ────────────────────
 extoleSettings          →   ExtoleController                Extole API (my.extole.com)
 extoleKpiDashboard      →   ExtoleController                Salesforce Tooling API
-extoleListView          →   ExtoleController
 extoleEventConfigurator →   ExtoleEventController
                             ExtoleMetadataService       →   Tooling API
                             ExtoleSafetyCheckService    →   Extole API
@@ -187,8 +186,7 @@ sequenceDiagram
 Extole_App_Settings__c (org default singleton)
   ├── sync settings (cadence, history depth, last sync)
   ├── notification settings (email, threshold)
-  ├── debug flag
-  └── list view configuration
+  └── debug flag
 
 Extole_Report_Config__c  (one per KPI tile)
   ├── report type, label, value column, aggregation
@@ -216,15 +214,15 @@ Extole_Debug_Log__c (one per log entry when debug enabled)
 
 ## Apex Classes
 
-| Class | Role |
-|---|---|
-| `ExtoleController` | LWC backend for Settings and Analytics — settings CRUD, sync trigger, report config CRUD, connection test |
-| `ExtoleEventController` | LWC backend for Event Configurator — event config CRUD, deploy, test fire, safety check |
-| `ExtoleMetadataService` | Tooling API integration — builds Flow metadata JSON, deploys/deactivates/deletes Flows |
-| `ExtoleSyncJob` | Schedulable + Queueable sync job — fetches report data from Extole, upserts snapshots, purges logs, sends failure emails |
-| `ExtoleUniversalHandler` | Queueable @InvocableMethod — invoked by generated Flows, sends events to Extole API, updates telemetry |
-| `ExtoleSafetyCheckService` | Checks whether an event name is referenced by an active Extole campaign before allowing deletion |
-| `ExtoleToolingService` | Legacy per-config Apex class generator — **no longer used**; superseded by `ExtoleUniversalHandler`. Do not delete without first confirming no orphaned generated classes remain in the org. |
+| Class                      | Role                                                                                                                                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExtoleController`         | LWC backend for Settings and Analytics — settings CRUD, sync trigger, report config CRUD, connection test                                                                                    |
+| `ExtoleEventController`    | LWC backend for Event Configurator — event config CRUD, deploy, test fire, safety check                                                                                                      |
+| `ExtoleMetadataService`    | Tooling API integration — builds Flow metadata JSON, deploys/deactivates/deletes Flows                                                                                                       |
+| `ExtoleSyncJob`            | Schedulable + Queueable sync job — fetches report data from Extole, upserts snapshots, purges logs, sends failure emails                                                                     |
+| `ExtoleUniversalHandler`   | Queueable @InvocableMethod — invoked by generated Flows, sends events to Extole API, updates telemetry                                                                                       |
+| `ExtoleSafetyCheckService` | Checks whether an event name is referenced by an active Extole campaign before allowing deletion                                                                                             |
+| `ExtoleToolingService`     | Legacy per-config Apex class generator — **no longer used**; superseded by `ExtoleUniversalHandler`. Do not delete without first confirming no orphaned generated classes remain in the org. |
 
 ---
 

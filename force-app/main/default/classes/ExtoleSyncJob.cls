@@ -798,10 +798,6 @@ public class ExtoleSyncJob implements Schedulable {
                     Sync_Cadence__c,
                     Debug_Logging_Enabled__c,
                     History_Depth__c,
-                    Show_List_View__c,
-                    List_View_Field__c,
-                    List_View_Value__c,
-                    List_View_Start_Date__c,
                     Scheduled_Job_Id__c
                 FROM Extole_App_Settings__c
                 WHERE Id = :settingsId
