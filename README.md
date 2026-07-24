@@ -16,8 +16,6 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 
 **Share Link Backfill** — Bulk-enrolls existing Contacts and Leads into Extole and writes their share links back to Salesforce. Audiences can be a Closed/Won opportunity filter, a date range, or a custom Salesforce report.
 
-**List View** — A configurable list of Contacts or Leads filtered by a chosen field/value (e.g. by share-link source) for at-a-glance attribution review.
-
 **Receive Extole Events** — Accepts inbound webhooks from Extole (e.g. reward earned) and writes mapped fields back onto the matching Contact or Lead.
 
 **Person Card** — A Lightning component on the Lead and Contact record pages surfacing that person's Extole share links, referred friends, rewards, and inbound referrer attribution.
@@ -49,10 +47,10 @@ Connects Salesforce to your Extole referral program. Syncs program KPIs into Sal
 | Permission Set      | Assign to                                                                                     |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | `Extole_App_Admin`  | Admins configuring the integration (reports, audiences, events, writeback rules, credentials) |
-| `Extole_App_Viewer` | Users who need read access to Program Analytics, KPI Dashboard, and List View                 |
+| `Extole_App_Viewer` | Users who need read access to Program Analytics and the KPI Dashboard                         |
 | `Extole_API_Access` | System/integration users — grants access to the Extole API credential only                    |
 
-**App and Tabs** — A Lightning app with nine tabs: Program Analytics, KPI Dashboard, List View, Manage Share Links, Send Extole Events, Receive Extole Events, Configure KPIs, Manage Audiences, and Manage List View.
+**App and Tabs** — A Lightning app with seven tabs: Program Analytics, KPI Dashboard, Manage Share Links, Send Extole Events, Receive Extole Events, Configure KPIs, and Manage Audiences.
 
 **Apex Classes** — Backend logic for syncing, event handling, and Tooling/webhook integration.
 
@@ -80,7 +78,6 @@ The app uses two Named Credentials for all external callouts — no tokens are s
 - **Failure notifications** — Configure KPIs → Sync Management. Enable email alerts after N consecutive sync failures.
 - **Debug logging** — Send Extole Events → Debug. Enable for detailed per-sync logs. Disable when not actively troubleshooting to avoid log volume.
 - **Backfilling share links** — Manage Share Links. Pick an audience (Closed/Won opps, date range, or custom report), choose the target field, and run. Progress and results are recorded in the backfill log.
-- **List View setup** — Manage List View. Choose the object, filter field/value, columns, and start date for the List View tab.
 - **Audience sync** — Manage Audiences. Pick a Salesforce report and sync cadence; the sync log on the same tab records each run's outcome.
 - **Receive Extole Events / writeback rules** — Receive Extole Events. Map incoming webhook event fields to Contact or Lead fields; the event log on the same tab records every inbound webhook and its outcome.
 - **Log retention** — Sync logs, event logs, event fire logs, audience sync logs, writeback logs, and debug logs are automatically purged after 30 days by a dedicated nightly job, independent of KPI sync or any other feature being configured.

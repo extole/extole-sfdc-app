@@ -1,5 +1,5 @@
 :host {
-    --extole-green: #1D9E75;
+    --extole-green: #1d9e75;
     display: block;
 }
 
@@ -15,7 +15,7 @@
     background: #ffffff;
     border: 1px solid #dddbda;
     border-radius: 4px;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,.10);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -243,10 +243,26 @@
     font-weight: 600;
     white-space: nowrap;
 }
-.log-badge-success { background: #ecfdf5; color: #027a48; border: 1px solid #a6f4c5; }
-.log-badge-failed  { background: #fde8e8; color: #c23934; border: 1px solid #fca5a5; }
-.log-badge-unknown { background: #fff3e0; color: #b45309; border: 1px solid #f9c23c; }
-.log-badge-skipped { background: #f3f3f3; color: #706e6b; border: 1px solid #dddbda; }
+.log-badge-success {
+    background: #ecfdf5;
+    color: #027a48;
+    border: 1px solid #a6f4c5;
+}
+.log-badge-failed {
+    background: #fde8e8;
+    color: #c23934;
+    border: 1px solid #fca5a5;
+}
+.log-badge-unknown {
+    background: #fff3e0;
+    color: #b45309;
+    border: 1px solid #f9c23c;
+}
+.log-badge-skipped {
+    background: #f3f3f3;
+    color: #706e6b;
+    border: 1px solid #dddbda;
+}
 
 .error-cell {
     max-width: 200px;
@@ -277,13 +293,26 @@
     white-space: nowrap;
 }
 
-.kpi-sortable-th:hover { background: #f3f3f3; }
+.kpi-sortable-th:hover {
+    background: #f3f3f3;
+}
 
-.kpi-col-order   { width: 50px; }
-.kpi-col-agg     { width: 120px; }
-.kpi-col-status  { width: 110px; }
-.kpi-col-date    { width: 165px; }
-.kpi-col-actions { width: 50px; text-align: center; }
+.kpi-col-order {
+    width: 50px;
+}
+.kpi-col-agg {
+    width: 120px;
+}
+.kpi-col-status {
+    width: 110px;
+}
+.kpi-col-date {
+    width: 165px;
+}
+.kpi-col-actions {
+    width: 50px;
+    text-align: center;
+}
 
 .kpi-status-active,
 .kpi-status-inactive {
@@ -294,8 +323,16 @@
     font-weight: 600;
     white-space: nowrap;
 }
-.kpi-status-active   { background: #ecfdf5; color: #027a48; border: 1px solid #a6f4c5; }
-.kpi-status-inactive { background: #f3f3f3; color: #706e6b; border: 1px solid #dddbda; }
+.kpi-status-active {
+    background: #ecfdf5;
+    color: #027a48;
+    border: 1px solid #a6f4c5;
+}
+.kpi-status-inactive {
+    background: #f3f3f3;
+    color: #706e6b;
+    border: 1px solid #dddbda;
+}
 
 /* Debug */
 .debug-actions-desc {
@@ -317,13 +354,6 @@
     padding: 6px 10px;
     border-radius: 4px;
     margin: 0;
-}
-
-.section-description {
-    font-size: 13px;
-    color: #706e6b;
-    margin-bottom: 16px;
-    line-height: 1.5;
 }
 
 /* Empty state */

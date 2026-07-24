@@ -10,27 +10,36 @@
         <!-- Loading state -->
         <template lwc:if={isLoading}>
             <div class="init-loading">
-                <lightning-spinner alternative-text="Loading Extole App..." size="medium"></lightning-spinner>
+                <lightning-spinner
+                    alternative-text="Loading Extole App..."
+                    size="medium"
+                ></lightning-spinner>
             </div>
         </template>
 
         <!-- Onboarding flow -->
         <template lwc:elseif={showOnboarding}>
-            <c-extole-onboarding onboardingcomplete={handleOnboardingComplete}></c-extole-onboarding>
+            <c-extole-onboarding
+                onboardingcomplete={handleOnboardingComplete}
+            ></c-extole-onboarding>
         </template>
 
         <!-- Main app with tabs -->
         <template lwc:else>
             <template for:each={tabsetItems} for:item="tabsetItem">
-                <lightning-tabset key={tabsetItem.key} variant="standard" active-tab-value={activeTab} onactive={handleTabChange}>
+                <lightning-tabset
+                    key={tabsetItem.key}
+                    variant="standard"
+                    active-tab-value={activeTab}
+                    onactive={handleTabChange}
+                >
                     <!-- Analytics tab -->
-                    <lightning-tab lwc:if={showAnalytics} label={labelTabKpiDashboard} value="overview">
+                    <lightning-tab
+                        lwc:if={showAnalytics}
+                        label={labelTabKpiDashboard}
+                        value="overview"
+                    >
                         <c-extole-kpi-dashboard></c-extole-kpi-dashboard>
-                    </lightning-tab>
-
-                    <!-- List View tab -->
-                    <lightning-tab lwc:if={showListView} label={labelTabListView} value="leads">
-                        <c-extole-list-view settings-timestamp={settingsTimestamp}></c-extole-list-view>
                     </lightning-tab>
                 </lightning-tabset>
             </template>

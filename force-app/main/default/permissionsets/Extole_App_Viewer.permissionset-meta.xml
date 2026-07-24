@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <description
-    >Grants access to the Extole App Analytics and List View tabs. Assign to any user who should see Extole program data.</description>
+    >Grants access to the Extole App Analytics tabs. Assign to any user who should see Extole program data.</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Extole App Viewer</label>
     <license>Salesforce</license>
@@ -131,10 +131,6 @@
     </tabSettings>
     <tabSettings>
         <tab>Extole_KPI_Dashboard</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
-    <tabSettings>
-        <tab>Extole_List_View</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <applicationVisibilities>

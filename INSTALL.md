@@ -192,7 +192,7 @@ Assign `Extole_App_Admin` to yourself and any other admins who will configure Pr
 sf org assign permset --name Extole_App_Admin --target-org <alias>
 ```
 
-Assign `Extole_App_Viewer` to any user who needs read access to Program Analytics, the KPI Dashboard, and List View:
+Assign `Extole_App_Viewer` to any user who needs read access to Program Analytics and the KPI Dashboard:
 
 ```bash
 sf org assign permset --name Extole_App_Viewer --target-org <alias>

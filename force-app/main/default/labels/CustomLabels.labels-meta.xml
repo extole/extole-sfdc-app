@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
     <labels>
         <fullName>Extole_ConnectionStatus_Connected</fullName>
@@ -64,13 +64,6 @@
         <value>KPI Dashboard Configuration</value>
     </labels>
     <labels>
-        <fullName>Extole_Settings_ListView_Section</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Lead attribution section header</shortDescription>
-        <value>List View Configuration</value>
-    </labels>
-    <labels>
         <fullName>Extole_Settings_SyncManagement_Section</fullName>
         <language>en_US</language>
         <protected>false</protected>
@@ -96,7 +89,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>API token storage note</shortDescription>
-        <value>API token is stored securely in the Extole API Named Credential</value>
+        <value
+        >API token is stored securely in the Extole API Named Credential</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_GenerateToken</fullName>
@@ -138,21 +132,24 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>No data admin prompt</shortDescription>
-        <value>No reports configured yet. Add a report in Settings to get started.</value>
+        <value
+        >No reports configured yet. Add a report in Settings to get started.</value>
     </labels>
     <labels>
         <fullName>Extole_Overview_NoDataViewer</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>No data viewer message</shortDescription>
-        <value>No program data available yet. Check back after the first sync.</value>
+        <value
+        >No program data available yet. Check back after the first sync.</value>
     </labels>
     <labels>
         <fullName>Extole_Overview_TokenInvalid</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Token invalid error banner</shortDescription>
-        <value>Unable to connect to Extole. Please check your API token in Settings.</value>
+        <value
+        >Unable to connect to Extole. Please check your API token in Settings.</value>
     </labels>
     <labels>
         <fullName>Extole_Tile_ViewInExtole</fullName>
@@ -193,43 +190,9 @@
         <fullName>Extole_Tile_SourceUnavailable</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Tile footer when Extole source runner is not found (404)</shortDescription>
+        <shortDescription
+        >Tile footer when Extole source runner is not found (404)</shortDescription>
         <value>Source Unavailable</value>
-    </labels>
-    <labels>
-        <fullName>Extole_ListView_Title</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Lead attribution page title</shortDescription>
-        <value>List View</value>
-    </labels>
-    <labels>
-        <fullName>Extole_ListView_NoRecords</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>No leads message</shortDescription>
-        <value>No records found for the current filter.</value>
-    </labels>
-    <labels>
-        <fullName>Extole_ListView_TrackingSince</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Showing records from date label</shortDescription>
-        <value>Showing records from</value>
-    </labels>
-    <labels>
-        <fullName>Extole_ListView_NotConfigured</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Lead attribution not configured message</shortDescription>
-        <value>List View is not fully configured. Set the Field, Value, and Start Date in Settings.</value>
-    </labels>
-    <labels>
-        <fullName>Extole_ListView_OpenInSalesforce</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Open in Salesforce button label</shortDescription>
-        <value>Open in Salesforce</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_DisplayLabel</fullName>
@@ -243,28 +206,32 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Aggregation field tooltip</shortDescription>
-        <value>How to extract a single number from your report. Use First Row when your report returns a single summary row. Use Sum when your report returns one row per event or person and you want a total. Use Count when the number of rows is the metric.</value>
+        <value
+        >How to extract a single number from your report. Use First Row when your report returns a single summary row. Use Sum when your report returns one row per event or person and you want a total. Use Count when the number of rows is the metric.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_ChartType</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Chart type field tooltip</shortDescription>
-        <value>The visualization shown beneath the metric value on the dashboard tile.</value>
+        <value
+        >The visualization shown beneath the metric value on the dashboard tile.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_DateRange</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Date range field tooltip</shortDescription>
-        <value>The rolling window or year-to-date period used when fetching this report.</value>
+        <value
+        >The rolling window or year-to-date period used when fetching this report.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_ValueColumn</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Value column field tooltip</shortDescription>
-        <value>The column from the report JSON that contains the primary metric value.</value>
+        <value
+        >The column from the report JSON that contains the primary metric value.</value>
     </labels>
     <labels>
         <fullName>Extole_Modal_Step1_Title</fullName>
@@ -390,7 +357,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync completed with some failures</shortDescription>
-        <value>Sync completed with errors. Check the Sync Log for details.</value>
+        <value
+        >Sync completed with errors. Check the Sync Log for details.</value>
     </labels>
     <labels>
         <fullName>Extole_Success_ConfigSaved</fullName>
@@ -435,13 +403,6 @@
         <value>Settings</value>
     </labels>
     <labels>
-        <fullName>Extole_Tab_ListView</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Lead attribution tab label</shortDescription>
-        <value>List View</value>
-    </labels>
-    <labels>
         <fullName>Extole_Overview_Rolling30</fullName>
         <language>en_US</language>
         <protected>false</protected>
@@ -475,34 +436,6 @@
         <protected>false</protected>
         <shortDescription>Show Analytics tab checkbox label</shortDescription>
         <value>Show Analytics Tab</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Settings_ShowListView</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Show lead attribution checkbox label</shortDescription>
-        <value>Show List View Tab</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Settings_ListView_Field</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Extole attribution field label</shortDescription>
-        <value>Extole Field</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Settings_ListView_Value</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Extole attribution value label</shortDescription>
-        <value>Extole Value</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Settings_ListView_StartDate</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>List View start date label</shortDescription>
-        <value>Show records created after</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_SyncCadence</fullName>
@@ -649,7 +582,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Comparison period field tooltip</shortDescription>
-        <value>Compare the current value to the value from this many days ago. The trend arrow and percentage on the dashboard tile are driven by this setting. If there is not enough history yet, no trend arrow will appear.</value>
+        <value
+        >Compare the current value to the value from this many days ago. The trend arrow and percentage on the dashboard tile are driven by this setting. If there is not enough history yet, no trend arrow will appear.</value>
     </labels>
     <labels>
         <fullName>Extole_Settings_HistoryDepth</fullName>
@@ -663,91 +597,100 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Debug logging enabled field tooltip</shortDescription>
-        <value>Logs detailed HTTP request and response data for each sync. Useful for diagnosing sync failures or unexpected values. Disable in production to avoid accumulating large amounts of log data.</value>
+        <value
+        >Logs detailed HTTP request and response data for each sync. Useful for diagnosing sync failures or unexpected values. Disable in production to avoid accumulating large amounts of log data.</value>
     </labels>
     <labels>
         <fullName>Extole_Debug_ClearActionsDesc</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Description of the clear debug logs action</shortDescription>
-        <value>Clear Debug Logs removes all debug log records from this org.</value>
+        <shortDescription
+        >Description of the clear debug logs action</shortDescription>
+        <value
+        >Clear Debug Logs removes all debug log records from this org.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_SyncCadence</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync cadence field tooltip</shortDescription>
-        <value>How often Extole data is automatically pulled into Salesforce. Hourly keeps tiles fresh throughout the day; Nightly is suitable for most daily-summary reports.</value>
+        <value
+        >How often Extole data is automatically pulled into Salesforce. Hourly keeps tiles fresh throughout the day; Nightly is suitable for most daily-summary reports.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_NotifyOnFailure</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Notify on sync failure field tooltip</shortDescription>
-        <value>When enabled, an email alert is sent if consecutive sync attempts fail. Use this to catch API token expiry or connectivity issues early.</value>
+        <shortDescription
+        >Notify on sync failure field tooltip</shortDescription>
+        <value
+        >When enabled, an email alert is sent if consecutive sync attempts fail. Use this to catch API token expiry or connectivity issues early.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_NotifyAfterN</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Notify after N failures field tooltip</shortDescription>
-        <value>Number of consecutive failures before the alert email is sent. Set to 1 to be notified on the first failure; set higher to tolerate occasional transient errors.</value>
+        <shortDescription
+        >Notify after N failures field tooltip</shortDescription>
+        <value
+        >Number of consecutive failures before the alert email is sent. Set to 1 to be notified on the first failure; set higher to tolerate occasional transient errors.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_FailureEmail</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Failure notification email field tooltip</shortDescription>
-        <value>Email address that receives sync failure alerts. Defaults to the org admin address if left blank.</value>
+        <shortDescription
+        >Failure notification email field tooltip</shortDescription>
+        <value
+        >Email address that receives sync failure alerts. Defaults to the org admin address if left blank.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_Section_Connection</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Connection section tooltip</shortDescription>
-        <value>Connects Salesforce to your Extole account via API. Generate a long-lived token in the Extole Security Center and configure it as a Named Credential.</value>
+        <value
+        >Connects Salesforce to your Extole account via API. Generate a long-lived token in the Extole Security Center and configure it as a Named Credential.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_Section_Debug</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Debug section tooltip</shortDescription>
-        <value>Enable detailed HTTP and value-extraction logging to troubleshoot sync issues. Logs are automatically purged after 30 days.</value>
-    </labels>
-    <labels>
-        <fullName>Extole_Tooltip_Section_ListView</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>List View section tooltip</shortDescription>
-        <value>Identify which Salesforce records are Extole-influenced. The List View tab uses these settings to filter and display the people your program has generated.</value>
+        <value
+        >Enable detailed HTTP and value-extraction logging to troubleshoot sync issues. Logs are automatically purged after 30 days.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_Section_ReportConfig</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Report config section tooltip</shortDescription>
-        <value>Define which Extole reports appear as KPI tiles on the dashboard. Each config maps a report runner to a single metric.</value>
+        <value
+        >Define which Extole reports appear as KPI tiles on the dashboard. Each config maps a report runner to a single metric.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_Section_SyncManagement</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Sync management section tooltip</shortDescription>
-        <value>Control how often Extole data syncs to Salesforce and configure failure alert emails.</value>
+        <value
+        >Control how often Extole data syncs to Salesforce and configure failure alert emails.</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_DisplayOrder</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>KPI display order tooltip</shortDescription>
-        <value>Controls the left-to-right position of this widget on the dashboard. Lower numbers appear first (1 = leftmost).</value>
+        <value
+        >Controls the left-to-right position of this widget on the dashboard. Lower numbers appear first (1 = leftmost).</value>
     </labels>
     <labels>
         <fullName>Extole_Tooltip_Active</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>KPI Active checkbox tooltip</shortDescription>
-        <value>When unchecked, this report will be hidden from the dashboard and skipped during sync.</value>
+        <value
+        >When unchecked, this report will be hidden from the dashboard and skipped during sync.</value>
     </labels>
     <labels>
         <fullName>Extole_Tab_EventConfigurator</fullName>
@@ -788,7 +731,8 @@
         <fullName>Extole_EC_EmptyState_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event configurator empty state title</shortDescription>
+        <shortDescription
+        >Event configurator empty state title</shortDescription>
         <value>No event flows configured yet</value>
     </labels>
     <labels>
@@ -796,13 +740,15 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Event configurator empty state body</shortDescription>
-        <value>Connect a Salesforce trigger to an Extole event in minutes — no Apex, no Zapier, no developer required.</value>
+        <value
+        >Connect a Salesforce trigger to an Extole event in minutes — no Apex, no Zapier, no developer required.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_EmptyState_Action</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event configurator empty state action button</shortDescription>
+        <shortDescription
+        >Event configurator empty state action button</shortDescription>
         <value>Configure Your First Event</value>
     </labels>
     <labels>
@@ -886,28 +832,32 @@
         <fullName>Extole_EC_Modal_Step1_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event configurator modal step 1 title</shortDescription>
+        <shortDescription
+        >Event configurator modal step 1 title</shortDescription>
         <value>Choose Trigger</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Modal_Step2_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event configurator modal step 2 title</shortDescription>
+        <shortDescription
+        >Event configurator modal step 2 title</shortDescription>
         <value>Map Fields</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Modal_Step3_Title</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event configurator modal step 3 title</shortDescription>
+        <shortDescription
+        >Event configurator modal step 3 title</shortDescription>
         <value>Review &amp; Activate</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Modal_EditTitle</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event configurator modal edit title prefix</shortDescription>
+        <shortDescription
+        >Event configurator modal edit title prefix</shortDescription>
         <value>Edit Event Flow</value>
     </labels>
     <labels>
@@ -1040,8 +990,10 @@
         <fullName>Extole_EC_Preset_OpportunityWon_Desc</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Opportunity closed won preset description</shortDescription>
-        <value>Opportunity — StageName equals Closed Won → opportunity_closedwon</value>
+        <shortDescription
+        >Opportunity closed won preset description</shortDescription>
+        <value
+        >Opportunity — StageName equals Closed Won → opportunity_closedwon</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Preset_Custom_Desc</fullName>
@@ -1062,7 +1014,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Extole event name field tooltip</shortDescription>
-        <value>The event_name value sent to Extole. Must match the event name configured in your Extole program (e.g. lead_created, opportunity_closedwon).</value>
+        <value
+        >The event_name value sent to Extole. Must match the event name configured in your Extole program (e.g. lead_created, opportunity_closedwon).</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_RequiredSection</fullName>
@@ -1090,13 +1043,15 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Email parameter tooltip</shortDescription>
-        <value>Required. Maps to the contact email for the Extole event. Save is blocked if unmapped.</value>
+        <value
+        >Required. Maps to the contact email for the Extole event. Save is blocked if unmapped.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_PartnerUserIdLabel</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Partner user ID parameter field label</shortDescription>
+        <shortDescription
+        >Partner user ID parameter field label</shortDescription>
         <value>partner_user_id</value>
     </labels>
     <labels>
@@ -1104,34 +1059,39 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Partner user ID parameter tooltip</shortDescription>
-        <value>Required. A stable unique identifier for the person associated with this event. Defaults to the record Id.</value>
+        <value
+        >Required. A stable unique identifier for the person associated with this event. Defaults to the record Id.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_AppTypeNote</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>app_type auto-injection note</shortDescription>
-        <value>app_type: extole-sfdc-app is automatically injected into every event payload.</value>
+        <value
+        >app_type: extole-sfdc-app is automatically injected into every event payload.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_NullNote</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Null field exclusion note</shortDescription>
-        <value>If a mapped field has no value on a record, that parameter will be excluded from the event payload.</value>
+        <value
+        >If a mapped field has no value on a record, that parameter will be excluded from the event payload.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_ParamNameLabel</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Optional parameter name column label</shortDescription>
+        <shortDescription
+        >Optional parameter name column label</shortDescription>
         <value>Extole Parameter</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_ParamValueLabel</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Optional parameter value column label</shortDescription>
+        <shortDescription
+        >Optional parameter value column label</shortDescription>
         <value>SFDC Field / Static Value</value>
     </labels>
     <labels>
@@ -1166,8 +1126,10 @@
         <fullName>Extole_EC_Fields_NoEmailWarning</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Warning when no email-like field detected</shortDescription>
-        <value>No standard email field detected on this object. Map a related field containing an email address or enter a static value.</value>
+        <shortDescription
+        >Warning when no email-like field detected</shortDescription>
+        <value
+        >No standard email field detected on this object. Map a related field containing an email address or enter a static value.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Fields_FieldPickerLabel</fullName>
@@ -1208,21 +1170,24 @@
         <fullName>Extole_EC_Review_EventNameLabel</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event name row label in review summary</shortDescription>
+        <shortDescription
+        >Event name row label in review summary</shortDescription>
         <value>Extole Event Name</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_MappingsSection</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Field mappings section header in review</shortDescription>
+        <shortDescription
+        >Field mappings section header in review</shortDescription>
         <value>Field Mappings</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_ArtifactsSection</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Generated artifacts section header in review</shortDescription>
+        <shortDescription
+        >Generated artifacts section header in review</shortDescription>
         <value>Generated Artifacts</value>
     </labels>
     <labels>
@@ -1244,13 +1209,15 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Artifacts note in review</shortDescription>
-        <value>These names are shown for reference. The Apex class and Flow are generated and deployed automatically.</value>
+        <value
+        >These names are shown for reference. The Apex class and Flow are generated and deployed automatically.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_TestRecord</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Test with sample record section header</shortDescription>
+        <shortDescription
+        >Test with sample record section header</shortDescription>
         <value>Test with Sample Record</value>
     </labels>
     <labels>
@@ -1258,7 +1225,8 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Test with sample record description</shortDescription>
-        <value>Preview the exact JSON payload that would be sent to Extole for a specific record — without actually sending it.</value>
+        <value
+        >Preview the exact JSON payload that would be sent to Extole for a specific record — without actually sending it.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Review_TestButton</fullName>
@@ -1299,7 +1267,8 @@
         <fullName>Extole_EC_Review_DiffSection</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Payload diff section header (edit mode)</shortDescription>
+        <shortDescription
+        >Payload diff section header (edit mode)</shortDescription>
         <value>Payload Changes</value>
     </labels>
     <labels>
@@ -1334,7 +1303,8 @@
         <fullName>Extole_EC_Review_RecordIdLabel</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Record ID input label in test section</shortDescription>
+        <shortDescription
+        >Record ID input label in test section</shortDescription>
         <value>Record ID</value>
     </labels>
     <labels>
@@ -1348,7 +1318,8 @@
         <fullName>Extole_EC_Review_TriggerChanged</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Trigger condition changed note in diff</shortDescription>
+        <shortDescription
+        >Trigger condition changed note in diff</shortDescription>
         <value>Trigger condition changed</value>
     </labels>
     <labels>
@@ -1362,35 +1333,43 @@
         <fullName>Extole_EC_Delete_Checking</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Checking Extole campaign usage message</shortDescription>
+        <shortDescription
+        >Checking Extole campaign usage message</shortDescription>
         <value>Checking Extole campaign usage…</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Delete_NotFound</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Delete confirmation message when event not in use</shortDescription>
-        <value>This event is not referenced by any active Extole campaigns. Are you sure you want to delete this event flow? This will deactivate the associated Flow and cannot be undone.</value>
+        <shortDescription
+        >Delete confirmation message when event not in use</shortDescription>
+        <value
+        >This event is not referenced by any active Extole campaigns. Are you sure you want to delete this event flow? This will deactivate the associated Flow and cannot be undone.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Delete_Found</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Delete warning message when event is in active use</shortDescription>
-        <value>This event is used by an active Extole campaign. Deleting it may break campaign behavior. Deactivation is recommended.</value>
+        <shortDescription
+        >Delete warning message when event is in active use</shortDescription>
+        <value
+        >This event is used by an active Extole campaign. Deleting it may break campaign behavior. Deactivation is recommended.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Delete_Unknown</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Delete warning message when usage check failed</shortDescription>
-        <value>We couldn&apos;t verify whether this event is in use by Extole campaigns. Deactivation is the safer option.</value>
+        <shortDescription
+        >Delete warning message when usage check failed</shortDescription>
+        <value
+        >We couldn&apos;t verify whether this event is in use by Extole campaigns. Deactivation is the safer option.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Delete_Campaign</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Campaign label in delete found message</shortDescription>
+        <shortDescription
+        >Campaign label in delete found message</shortDescription>
         <value>Campaign</value>
     </labels>
     <labels>
@@ -1404,14 +1383,16 @@
         <fullName>Extole_EC_Delete_DeleteAnyway</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Delete anyway secondary button label</shortDescription>
+        <shortDescription
+        >Delete anyway secondary button label</shortDescription>
         <value>Delete anyway</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Delete_Deactivate</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Deactivate primary button label in delete modal</shortDescription>
+        <shortDescription
+        >Deactivate primary button label in delete modal</shortDescription>
         <value>Deactivate</value>
     </labels>
     <labels>
@@ -1439,7 +1420,8 @@
         <fullName>Extole_EC_EventLog_Cleared</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Event log cleared success toast message</shortDescription>
+        <shortDescription
+        >Event log cleared success toast message</shortDescription>
         <value>Event log cleared.</value>
     </labels>
     <labels>
@@ -1488,29 +1470,35 @@
         <fullName>Extole_EC_Error_SaveRequired</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Validation error for required field unmapped</shortDescription>
-        <value>Both email and partner_user_id must be mapped before saving.</value>
+        <shortDescription
+        >Validation error for required field unmapped</shortDescription>
+        <value
+        >Both email and partner_user_id must be mapped before saving.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Error_EventNameRequired</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Validation error for missing event name</shortDescription>
+        <shortDescription
+        >Validation error for missing event name</shortDescription>
         <value>Extole Event Name is required.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Error_EventNameDuplicate</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Validation error when event name is already in use</shortDescription>
+        <shortDescription
+        >Validation error when event name is already in use</shortDescription>
         <value>This event name is already in use.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Error_EventNameInvalid</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Validation error for invalid event name format</shortDescription>
-        <value>Must be 2–200 characters and contain only letters, numbers, underscores ( _ ), hyphens ( - ), periods ( . ), or spaces.</value>
+        <shortDescription
+        >Validation error for invalid event name format</shortDescription>
+        <value
+        >Must be 2–200 characters and contain only letters, numbers, underscores ( _ ), hyphens ( - ), periods ( . ), or spaces.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Error_ObjectRequired</fullName>
@@ -1531,20 +1519,23 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Tooltip for trigger object picker</shortDescription>
-        <value>The Salesforce object that will trigger the Extole event when records are created or updated.</value>
+        <value
+        >The Salesforce object that will trigger the Extole event when records are created or updated.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Tooltip_TriggerCondition</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Tooltip for trigger condition</shortDescription>
-        <value>The condition that must be true for the event to fire. Field Set To and Field Changes let you target specific field values.</value>
+        <value
+        >The condition that must be true for the event to fire. Field Set To and Field Changes let you target specific field values.</value>
     </labels>
     <labels>
         <fullName>Extole_EC_Tooltip_EventName</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Tooltip for Extole event name</shortDescription>
-        <value>The event_name value sent to Extole. This must match the event name in your Extole program configuration.</value>
+        <value
+        >The event_name value sent to Extole. This must match the event name in your Extole program configuration.</value>
     </labels>
 </CustomLabels>
