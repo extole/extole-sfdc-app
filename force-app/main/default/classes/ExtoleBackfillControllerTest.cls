@@ -315,21 +315,13 @@ private class ExtoleBackfillControllerTest {
         ]
         .Id;
 
-        Integer countBefore = ExtoleBackfillController.previewCount(
-            'Lead',
-            'report',
-            null,
-            reportId
-        );
+        Integer expectedCount = [
+            SELECT COUNT()
+            FROM Lead
+            WHERE Email LIKE '%audiencetest%'
+        ];
 
-        insert new Lead(
-            FirstName = 'Report',
-            LastName = 'CountLead',
-            Email = 'audiencetest_previewcount@extole-test.com',
-            Company = 'Test'
-        );
-
-        Integer countAfter = ExtoleBackfillController.previewCount(
+        Integer count = ExtoleBackfillController.previewCount(
             'Lead',
             'report',
             null,
@@ -337,9 +329,9 @@ private class ExtoleBackfillControllerTest {
         );
 
         System.assertEquals(
-            countBefore + 1,
-            countAfter,
-            'Report-based count should increase by exactly one after inserting a matching Lead'
+            expectedCount,
+            count,
+            'Report-based count should match the number of Leads matching the report\'s email filter'
         );
     }
 
