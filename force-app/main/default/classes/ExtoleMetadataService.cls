@@ -5,7 +5,7 @@
  * Tooling API. All callouts use the Extole_Tooling Named Credential — no
  * session token is required in the calling context.
  *
- * Auth: Named Credential 'Extole_Tooling' (OAuth 2.0, NamedUser principal).
+ * Auth: Named Credential 'Extole_Tooling' (OAuth 2.0, JWT Bearer Flow, NamedUser principal).
  * Run scripts/setup_named_credential.sh once per org to configure it.
  * Required permission: "Customize Application".
  */
@@ -305,8 +305,10 @@ public with sharing class ExtoleMetadataService {
                 + 'Grant it to the authorized user and retry.';
         }
         if (statusCode == 401) {
-            return 'Named Credential authentication failed. Go to Setup → Named Credentials → '
-                + 'Extole Tooling and click Authenticate to re-authorize.';
+            return 'Named Credential authentication failed. Check that the signing certificate on '
+                + 'the Extole Tooling Cred External Credential (Setup → Named Credentials → External '
+                + 'Credentials) has not expired or been deleted, and that its Issuer/Subject/Audience '
+                + 'values still match the Extole Deployer External Client App and this org\'s domain.';
         }
         if (body != null && (body.contains('DUPLICATE_DEVELOPER_NAME') || body.contains('DUPLICATE_VALUE'))) {
             return 'An event config with this name already exists. Delete or deactivate it first.';

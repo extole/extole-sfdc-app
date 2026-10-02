@@ -63,17 +63,17 @@ Used for: deploying, deactivating, and deleting Record-Triggered Flows from the 
 ```mermaid
 flowchart LR
     A[Apex callout\ncallout:Extole_Tooling/...] --> B[Named Credential\nExtole_Tooling\ncreated at install time]
-    B --> C[External Credential\nExtole_Tooling_Cred\nOAuth 2.0 Browser Flow]
-    C --> D[Connected App\nExtole Tooling Auth\nin the target org]
+    B --> C[External Credential\nExtole_Tooling_Cred\nOAuth 2.0 JWT Bearer Flow]
+    C --> D[External Client App\nExtole Deployer\nin the target org]
     D --> E[Salesforce Tooling API\nhttps://orgDomain/services/data/v59.0/tooling]
 
     subgraph Access control
         F[Extole_App_Admin\npermission set] -->|grants Extole_Tooling_Cred-Admin principal| C
-        G[Admin user] -->|one-time OAuth authorization| C
+        G[Signing certificate\nExtole Tooling JWT Cert] -->|signs the JWT; registered on D too| C
     end
 ```
 
-**Setup:** Created by `scripts/setup_named_credential.sh` during install. Requires a Connected App with callback URL `https://login.salesforce.com/services/authcallback/<orgId>/Extole_Tooling_Cred`. After setup, admin clicks **Authorize** next to the principal in Setup → Named Credentials → Extole Tooling → External Credential Principals.
+**Setup:** Created by `scripts/setup_named_credential.sh` during install, plus a few manual Setup UI steps the script pauses for (certificate creation and the External Client App's/External Credential's secret-bearing fields aren't scriptable via Metadata API — see INSTALL.md Step 5). JWT Bearer Flow was chosen over the Authorization Code ("Browser") flow this app originally used, because Salesforce now enforces PKCE on Authorization Code flows for External Client Apps and many orgs can no longer disable it; PKCE doesn't apply to JWT Bearer Flow. As a side benefit, there's no one-time interactive "Authorize" click — the credential is a JWT signed with a certificate whose private key Salesforce holds, so it works as soon as it's deployed.
 
 **Note:** `Extole_Tooling` Named Credential and its External Credential are not in source — they are created at install time and are org-specific (OAuth tokens are per-org).
 
@@ -230,7 +230,7 @@ Extole_Debug_Log__c (one per log entry when debug enabled)
 
 **Bearer token reset on deploy** — Deploying `Extole_API.externalCredential-meta.xml` resets the Authorization header to a placeholder, causing immediate 401 errors. This is a Salesforce platform constraint: secrets are never exported in metadata and any deploy of the file overwrites the live value with whatever is in source (a placeholder). Both `externalCredentials/` and `namedCredentials/` are excluded in `.forceignore` to prevent this from happening during normal code deploys. These files should be treated as install-time-only artifacts — configure once manually, never redeploy. If the credential structure itself genuinely needs to change, update it directly in Setup rather than via a metadata deploy.
 
-**Tooling OAuth session expiry** — If the `Extole_Tooling_Cred-Admin` principal's OAuth token expires or is revoked, all Flow deploys will fail with an auth error. Fix: Setup → Named Credentials → Extole Tooling → External Credential Principals → Authorize.
+**Tooling credential auth failures** — Unlike the old Browser Flow setup, there's no session to expire and no "Authorize" button to click. If Flow deploys fail with an auth error, check instead that the signing certificate (Certificate and Key Management → `Extole Tooling JWT Cert`) hasn't expired or been deleted, and that the Issuer/Subject/Audience values on the `Extole_Tooling_Cred` External Credential still match the `Extole Deployer` External Client App's Consumer Key and the org's domain.
 
 **Sync job re-registration** — Changing the Sync Cadence setting reschedules `ExtoleSyncJob` automatically. If for any reason the job gets stuck or duplicated, abort it in Setup → Apex Jobs → Scheduled Jobs, then re-save any setting in the app to reschedule it.
 

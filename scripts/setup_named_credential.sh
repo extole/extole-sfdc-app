@@ -3,7 +3,14 @@
 # setup_named_credential.sh
 #
 # Sets up the Extole_Tooling Named Credential for Salesforce-to-Salesforce
-# callouts (Tooling API / Metadata API).
+# callouts (Tooling API / Metadata API), using OAuth 2.0 JWT Bearer Flow.
+#
+# JWT Bearer Flow is used instead of the Authorization Code ("Browser") flow
+# because Salesforce now enforces PKCE on Authorization Code flows for
+# External Client Apps, and many orgs can no longer disable it. PKCE only
+# applies to the Authorization Code flow family — JWT Bearer Flow doesn't
+# use an authorization code, so it isn't affected, and it needs no
+# interactive "Authenticate" step either.
 #
 # Run this ONCE after the initial org deploy (Step 5 in INSTALL.md).
 # Requires: sf CLI authenticated to the target org, jq, python3.
@@ -34,12 +41,13 @@ METADATA_DIR="$PROJECT_DIR/force-app/main/default"
 # All metadata writes go to a temp directory — force-app/ is never modified
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "$WORK_DIR"' EXIT
-mkdir -p "$WORK_DIR/authproviders" "$WORK_DIR/namedCredentials" "$WORK_DIR/permissionsets"
+mkdir -p "$WORK_DIR/namedCredentials" "$WORK_DIR/permissionsets"
 
 echo "=== Step 1: Confirm External Client App exists ==="
 echo ""
 echo "Before continuing, confirm you have completed Step 4 in INSTALL.md:"
-echo "the Extole Deployer External Client App must exist in Salesforce Setup."
+echo "the Extole Deployer External Client App must exist in Salesforce Setup,"
+echo "with Enable JWT Bearer Flow checked."
 echo ""
 echo "Press ENTER to continue..."
 read -r
@@ -59,10 +67,39 @@ fi
 echo "Org domain: $ORG_DOMAIN"
 
 echo ""
-echo "=== Step 3: Consumer Key and Secret ==="
+echo "=== Step 3: Create a signing certificate ==="
 echo ""
-echo "Find these values in Salesforce Setup:"
-echo "  External Client App Manager → Extole Deployer → Settings tab → OAuth Settings → Consumer Key and Secret"
+echo "In Salesforce Setup UI:"
+echo ""
+echo "  Setup → Certificate and Key Management → Create Self-Signed Certificate:"
+echo "    Label:       Extole Tooling JWT Cert"
+echo "    Unique Name: Extole_Tooling_JWT_Cert"
+echo "    (leave Key Size and Exportable Private Key at their defaults)"
+echo "  Save, then click Download Certificate and note where the .crt file was saved —"
+echo "  you'll upload it in the next step."
+echo ""
+echo "Press ENTER once you have created and downloaded the certificate..."
+read -r
+
+echo ""
+echo "=== Step 4: Upload the certificate to the External Client App ==="
+echo ""
+echo "In Salesforce Setup UI:"
+echo ""
+echo "  Setup → External Client App Manager → Extole Deployer → row action → Edit Settings"
+echo "  → expand OAuth Settings → Flow Enablement → Certificate Upload →"
+echo "  Upload Files → select the .crt file you downloaded in Step 3 → Save"
+echo ""
+echo "Press ENTER once the certificate is uploaded..."
+read -r
+
+echo ""
+echo "=== Step 5: Find the Consumer Key ==="
+echo ""
+echo "In Salesforce Setup UI:"
+echo "  Setup → External Client App Manager → Extole Deployer → Settings tab →"
+echo "  OAuth Settings → Consumer Key and Secret → copy the Consumer Key"
+echo "  (you don't need the secret for this flow)"
 echo ""
 read -rp "Paste the Consumer Key: " CONSUMER_KEY
 if [[ -z "$CONSUMER_KEY" ]]; then
@@ -70,65 +107,26 @@ if [[ -z "$CONSUMER_KEY" ]]; then
     exit 1
 fi
 echo "Consumer Key: ${CONSUMER_KEY:0:8}... (truncated)"
-read -rsp "Paste the Consumer Secret (input hidden): " CONSUMER_SECRET
-echo ""
-if [[ -z "$CONSUMER_SECRET" ]]; then
-    echo "ERROR: Consumer Secret is required." >&2
-    exit 1
-fi
-echo "Consumer Secret: (captured)"
 
 echo ""
-echo "=== Step 4: Deploying Auth Provider ==="
-
-cat > "$WORK_DIR/authproviders/Extole_Tooling_Auth.authprovider-meta.xml" <<AUTHXML
-<?xml version="1.0" encoding="UTF-8"?>
-<AuthProvider xmlns="http://soap.sforce.com/2006/04/metadata">
-    <friendlyName>Extole Tooling Auth</friendlyName>
-    <providerType>Salesforce</providerType>
-    <consumerKey>${CONSUMER_KEY}</consumerKey>
-    <consumerSecret>${CONSUMER_SECRET}</consumerSecret>
-    <defaultScopes>api refresh_token</defaultScopes>
-    <errorUrl>https://login.salesforce.com</errorUrl>
-</AuthProvider>
-AUTHXML
-
-sf project deploy start \
-    --source-dir "$WORK_DIR/authproviders" \
-    $ORG_FLAG
-
-echo ""
-echo "=== Step 5: Update callback URL in the External Client App ==="
+echo "=== Step 6: Create the External Credential ==="
 echo ""
 echo "In Salesforce Setup UI:"
 echo ""
-echo "  1. Setup → Auth Providers → Extole Tooling Auth"
-echo "     Copy the Callback URL shown on the detail page."
-echo "     It will look like:"
-echo "     ${ORG_DOMAIN}/services/authcallback/Extole_Tooling_Auth"
-echo ""
-echo "  2. Setup → External Client App Manager → Extole Deployer → Settings tab → Edit"
-echo "     Scroll to the OAuth Settings section → replace the Callback URL with the value you just copied → Save"
-echo ""
-echo "Press ENTER once you have updated the Callback URL..."
-read -r
-
-echo ""
-echo "=== Step 6: Create External Credential ==="
-echo ""
-echo "In Salesforce Setup UI:"
-echo ""
-echo "  Setup → Named Credentials → External Credentials tab → New"
-echo ""
-echo "  Fill in:"
+echo "  Setup → Named Credentials → External Credentials tab → New:"
 echo "    Label:                    Extole Tooling Cred"
 echo "    Name:                     Extole_Tooling_Cred"
 echo "    Authentication Protocol:  OAuth 2.0"
-echo "    Authentication Flow Type: Browser Flow"
-echo "                              (this reveals an Identity Provider field)"
-echo "    Identity Provider:        change the dropdown to 'Auth Provider',"
-echo "                              then select 'Extole Tooling Auth'"
-echo "    Scope:                    (leave blank)"
+echo "    Authentication Flow Type: JWT Bearer Flow"
+echo "                              (this reveals Common Claims and JWT Signing fields)"
+echo "    Identity Provider URL:    ${ORG_DOMAIN}/services/oauth2/token"
+echo "    Issuer (iss):             ${CONSUMER_KEY}"
+echo "    Subject (sub):            the admin username who will run the Event"
+echo "                              Configurator (see the Integration User note"
+echo "                              in INSTALL.md Step 7)"
+echo "    Audience (aud):           ${ORG_DOMAIN}"
+echo "    Signing Certificate:      Extole Tooling JWT Cert"
+echo "    Signing Algorithm:        RS256 (default)"
 echo "  Save."
 echo ""
 echo "  Then on the detail page of the Extole Tooling Cred you just created, under Principals → New:"
@@ -199,8 +197,11 @@ echo ""
 echo "================================================================"
 echo "SCRIPT COMPLETE"
 echo ""
+echo "There's no interactive authorization step for JWT Bearer Flow — the"
+echo "credential is ready to use as soon as it's deployed."
+echo ""
 echo "Return to INSTALL.md and continue with:"
-echo "  Step 6 — Authorize the Tooling credential (one-time OAuth)"
+echo "  Step 6 — Verify the Tooling credential"
 echo "  Step 7 — Assign permission sets"
 echo "  Step 8 — Launch and complete onboarding"
 echo "================================================================"

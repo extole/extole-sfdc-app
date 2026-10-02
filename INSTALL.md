@@ -91,6 +91,8 @@ Deploys all Apex classes, LWCs, custom objects, permission sets, and the Extole 
 
 The Extole app lets you configure which Salesforce record changes (e.g. a Lead being created, an Opportunity closing) trigger events sent to Extole. Under the hood, it creates Salesforce Flows to do this — and creating Flows programmatically requires an OAuth app connected to your org.
 
+This app authenticates to the Tooling API using the OAuth 2.0 **JWT Bearer Flow** rather than the interactive Authorization Code ("Browser") flow. Salesforce now requires PKCE on Authorization Code flows for External Client Apps, and in many orgs that requirement can no longer be turned off — but PKCE only applies to the Authorization Code flow family. JWT Bearer Flow doesn't use an authorization code at all, so it isn't subject to that requirement, and as a bonus it doesn't need a one-time interactive "Authenticate" click either.
+
 1. Setup → **External Client App Manager** → click the **New External Client App** button
 2. Under **Basic Information**, fill in:
     - **App Name:** `Extole Deployer`
@@ -100,17 +102,25 @@ The Extole app lets you configure which Salesforce record changes (e.g. a Lead b
     - **Distribution:** Local
 3. Check **Enable OAuth Settings**
 4. Under **OAuth Settings**, configure:
-    - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
-      _(placeholder — you will replace this after the Auth Provider deploys in Step 5)_
-    - **OAuth Scopes** — add both:
-        - **Manage user data via APIs (api)**
-        - **Perform requests at any time (refresh_token, offline_access)**
+   - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
+     _(placeholder — this flow never redirects, but the field is required)_
+   - **OAuth Scopes** — add both:
+     - **Manage user data via APIs (api)**
+     - **Perform requests at any time (refresh_token, offline_access)**
 5. Under **Flow Enablement**, check:
-    - **Enable Authorization Code and Credentials Flow**
-    - Leave **Require user credentials in the POST body for Authorization Code and Credentials Flow** unchecked
-6. Under **Security**, uncheck:
-    - **Require Proof Key for Code Exchange (PKCE) extension for Supported Authorization Flows**
-7. Click **Create** — the app is enabled immediately
+   - **Enable JWT Bearer Flow**
+   - Leave **Enable Authorization Code and Credentials Flow** unchecked — it isn't needed for this credential and is exactly the flow type that triggers the PKCE requirement
+6. Click **Create** — the app is enabled immediately
+7. Open the app's row action → **Edit Policies** → under **OAuth Policies**, set **Permitted Users**
+   to **Admin approved users are pre-authorized**, then under **App Policies** move
+   `Extole App Admin` into **Selected Permission Sets** → Save. JWT Bearer Flow has no interactive
+   consent step, so without this the token exchange fails with
+   `invalid_grant: user hasn't approved this consumer` even though the certificate, External
+   Credential, and Named Credential are all configured correctly — the default **Permitted Users**
+   value ("All users may self-authorize") assumes a user can click through a consent screen, which
+   never happens under this flow.
+
+You'll come back to this app in Step 5 to upload a signing certificate.
 
 ---
 
@@ -122,24 +132,36 @@ The Extole app lets you configure which Salesforce record changes (e.g. a Lead b
 bash scripts/setup_named_credential.sh --target-org <alias>
 ```
 
-The script deploys the Auth Provider and Named Credential, and pauses at points where Salesforce requires manual UI steps. Follow the prompts exactly.
+The script deploys the Named Credential, and pauses at points where Salesforce requires manual UI steps (certificate creation and the External Client App's/External Credential's secret-bearing fields aren't scriptable via Metadata API). Follow the prompts exactly.
 
 **The script will walk you through:**
 
-**a. Find the Consumer Key and Secret**
-
-> In Salesforce Setup UI:
-> Setup → **External Client App Manager** → click **Extole Deployer** → **Settings** tab → **OAuth Settings** → **Consumer Key and Secret**
-
-**b. Update the callback URL** _(after the Auth Provider deploys)_
+**a. Create a signing certificate**
 
 > In Salesforce Setup UI:
 >
-> 1. Setup → **Auth Providers** → **Extole Tooling Auth** → copy the **Callback URL** shown on the detail page
->    _(looks like `https://<your-org>.my.salesforce.com/services/authcallback/Extole_Tooling_Auth`)_
-> 2. Setup → **External Client App Manager** → **Extole Deployer** → **Settings** tab → **Edit** → scroll to the **OAuth Settings** section → replace the Callback URL with the value you just copied → **Save**
+> Setup → **Certificate and Key Management** → **Create Self-Signed Certificate**:
+> - **Label:** `Extole Tooling JWT Cert`
+> - **Unique Name:** `Extole_Tooling_JWT_Cert`
+> - Leave Key Size and Exportable Private Key at their defaults
+>
+> Save, then click **Download Certificate** and note where the `.crt` file was saved — you'll upload it in the next step.
 
-**c. Create the External Credential** _(after updating the callback URL)_
+**b. Enable JWT Bearer Flow on the External Client App**
+
+> In Salesforce Setup UI:
+>
+> Setup → **External Client App Manager** → **Extole Deployer** → row action → **Edit Settings** → expand **OAuth Settings** → scroll to **Flow Enablement** (you already checked **Enable JWT Bearer Flow** in Step 4):
+> - Under **Certificate Upload**, click **Upload Files** and select the `.crt` file you downloaded in step (a)
+>
+> Save.
+
+**c. Find the Consumer Key**
+
+> In Salesforce Setup UI:
+> Setup → **External Client App Manager** → **Extole Deployer** → **Settings** tab → **OAuth Settings** → **Consumer Key and Secret** → copy the **Consumer Key** (you don't need the secret for this flow)
+
+**d. Create the External Credential**
 
 > In Salesforce Setup UI:
 >
@@ -148,9 +170,13 @@ The script deploys the Auth Provider and Named Credential, and pauses at points 
 > - **Label:** `Extole Tooling Cred`
 > - **Name:** `Extole_Tooling_Cred`
 > - **Authentication Protocol:** OAuth 2.0
-> - **Authentication Flow Type:** Browser Flow — _this reveals an Identity Provider field_
-> - **Identity Provider:** change the dropdown to **Auth Provider**, then select `Extole Tooling Auth`
-> - **Scope:** leave blank
+> - **Authentication Flow Type:** JWT Bearer Flow — _this reveals Common Claims and JWT Signing fields_
+> - **Identity Provider URL:** `https://<your-org-domain>/services/oauth2/token`
+> - **Issuer (iss):** the Consumer Key you copied in step (c)
+> - **Subject (sub):** the username of the admin who will run the Event Configurator (e.g. a dedicated Integration User — see the note in Step 7)
+> - **Audience (aud):** `https://<your-org-domain>` (no path)
+> - **Signing Certificate:** `Extole Tooling JWT Cert` (the certificate from step (a))
+> - **Signing Algorithm:** RS256 (default)
 >
 > Save.
 >
@@ -164,21 +190,20 @@ The script deploys the Auth Provider and Named Credential, and pauses at points 
 
 ---
 
-## Step 6 — Authorize the Tooling credential (one-time OAuth)
+## Step 6 — Verify the Tooling credential
+
+Unlike the Authorization Code flow, JWT Bearer Flow needs no interactive consent step — there's no "Authenticate" button to click. The Named Credential is ready to use as soon as it's deployed.
 
 **In Salesforce Setup UI:**
 
-1. Setup → **Named Credentials** → **External Credentials** tab
-2. Click **Extole Tooling Cred**
-3. Under **Principals**, click **Authenticate** next to the Admin principal
-4. Log in with the admin account (must have Author Apex + Customize Application)
-5. Approve the OAuth consent screen
+1. Setup → **Named Credentials** → **Named Credentials** tab → click **Extole Tooling**
+2. Confirm the page shows no errors
 
-> The orange "Security Warning" block on the consent screen is standard Salesforce behavior for all Connected Apps and is not specific to this app.
-
-This is a one-time step. After authorization, the Event Configurator can deploy Flows without requiring a browser session.
+The real test happens in Step 8: opening the app and clicking **Test Connection** / creating an Event Configuration will exercise this credential end-to-end.
 
 > The setup script automatically grants the `Extole_App_Admin` permission set access to the Tooling credential.
+
+> **If a deploy or event fires and fails with an auth error:** unlike Browser Flow, there's no "click Authenticate to re-authorize" fix. Check instead that the certificate in Certificate and Key Management hasn't expired or been deleted, and that the Issuer/Subject/Audience values on the External Credential still match the External Client App's Consumer Key and your org's domain — these are the three fields Salesforce doesn't auto-populate for this flow.
 
 ---
 
@@ -200,7 +225,7 @@ sf org assign permset --name Extole_App_Viewer --target-org <alias>
 
 To assign to another user, add `--on-behalf-of <username>` to either command.
 
-> **Recommended for production orgs:** Create a dedicated Integration User (a non-human Salesforce user with a full license) and assign it `Extole_App_Admin`. Perform the Tooling API OAuth authorization in Step 6 while logged in as that user. This ensures the Event Configurator remains functional even if the original admin's account is deactivated or their session expires.
+> **Recommended for production orgs:** Create a dedicated Integration User (a non-human Salesforce user with a full license), assign it `Extole_App_Admin`, and use its username as the **Subject (sub)** value on the `Extole Tooling Cred` External Credential (Step 5d) instead of a personal admin account. This ensures the Event Configurator remains functional even if the original admin's account is deactivated.
 
 Both permission sets grant visibility into the **Extole** app itself, so assigning either one is sufficient to make it appear in the App Launcher — no separate App Manager step is needed. (See Troubleshooting below if the app still doesn't appear for a user.)
 
@@ -340,7 +365,9 @@ The component exposes a **Disabled** checkbox in the page's properties panel (cl
 | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `InvalidProjectWorkspaceError` on deploy                                                                                                                 | You are not inside the cloned repo directory. Run `cd extole-sfdc-app` first.                                                                                                                                                                                                                                                                                                                    |
 | "Test Connection" fails                                                                                                                                  | Bearer token wrong, missing, or expired. Re-check Step 3.                                                                                                                                                                                                                                                                                                                                        |
-| Event Configurator deploy fails                                                                                                                          | Tooling OAuth not completed. Re-check Step 6.                                                                                                                                                                                                                                                                                                                                                    |
+| Event Configurator deploy fails with "named credential ... might not exist"                                                                              | The Named Credential must be named exactly `Extole_Tooling` (label "Extole Tooling") — re-check Step 5d/the script output.                                                                                                                                                                                                                                                                       |
+| Event Configurator deploy fails with a JWT/token exchange error                                                                                          | Re-check Step 5: the signing certificate hasn't expired or been deleted from Certificate and Key Management, and the External Credential's Issuer/Subject/Audience still match the External Client App's Consumer Key and your org's domain.                                                                                                                                                    |
+| Token exchange fails with `invalid_grant: user hasn't approved this consumer`, even though the certificate/credential/domain all check out                | Re-check Step 4.7: the External Client App's **Permitted Users** OAuth Policy must be **Admin approved users are pre-authorized**, with `Extole App Admin` in Selected Permission Sets. The default **All users may self-authorize** requires an interactive consent click that JWT Bearer Flow never triggers.                                                                                 |
 | Scheduled sync not running                                                                                                                               | Go to **Configure KPIs**, change Sync Cadence and save to re-register the job.                                                                                                                                                                                                                                                                                                                   |
 | Permission errors on objects                                                                                                                             | User missing `Extole_App_Admin` or `Extole_App_Viewer` permission set.                                                                                                                                                                                                                                                                                                                           |
 | Share Link field not visible on Contact/Lead                                                                                                             | Field is deployed but not on the page layout — see Step 9.                                                                                                                                                                                                                                                                                                                                       |
