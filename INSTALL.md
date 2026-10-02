@@ -211,7 +211,7 @@ Both permission sets grant visibility into the **Extole** app itself, so assigni
 1. Open the **Extole** app from the App Launcher (grid icon, top left)
 2. The Getting Started screen will appear on first launch
 3. Open the **Send Extole Events** tab → click **Test Connection** — verify it shows "Connected"
-4. Open the **Configure KPIs** tab → click **Add Report** and configure your first KPI
+4. Open the **Configure KPIs** tab → click **Add KPI** and configure your first KPI
     - Reports must already exist and be scheduled in the Extole platform — if a report hasn't run yet, the sync will return no data
 5. Trigger a manual sync from the Configure KPIs tab — your KPI Dashboard will populate once the first sync completes
 
@@ -252,39 +252,52 @@ The **Manage Share Links** tab generates Extole share links for existing Contact
 
 ## Step 10 — Set up Receive Extole Events (optional)
 
-The **Receive Extole Events** tab lets Extole send events (e.g. a reward being earned) into Salesforce, where they get written to a matching Contact or Lead. This direction is the reverse of everything above — Extole calls into Salesforce, so the auth setup lives on the Salesforce side, in the form of a Connected App, plus a matching credential stored in Extole's own Security Center.
+The **Receive Extole Events** tab lets Extole send events (e.g. a reward being earned) into Salesforce, where they get written to a matching Contact or Lead. This direction is the reverse of everything above — Extole calls into Salesforce, so the auth setup lives on the Salesforce side, in the form of an External Client App using the Client Credentials flow, plus a matching credential stored in Extole's own Security Center.
 
 **In Salesforce Setup UI:**
 
-1. Setup → **App Manager** → **New Connected App**
-2. Enable **OAuth Settings**, then add these two scopes:
+1. Setup → **External Client App Manager** → click the **New External Client App** button
+2. Under **Basic Information**, fill in an **App Name** (e.g. `Extole Receive Events`), matching **API Name**, a **Contact Email**, and set **Distribution** to Local
+3. Check **Enable OAuth Settings**, then under **OAuth Settings** add these two scopes:
     - **Perform requests at any time (refresh_token, offline_access)**
-    - **Access and manage your data (api)**
-3. Under **OAuth Settings**, check **Enable Client Credentials Flow**
-4. Save, then open the app's detail page to find the **Consumer Key** and **Consumer Secret**
+    - **Manage user data via APIs (api)**
+4. Under **Flow Enablement**, check **Enable Client Credentials Flow**
+5. Click **Create**
+6. Open the app's row action → **Edit Policies** → under **OAuth Policies**:
+    - Set **Permitted Users** to **Admin approved users are pre-authorized** — Client Credentials Flow has no interactive consent step, so without this the token exchange fails with `invalid_grant: user hasn't approved this consumer` even though every other setting is correct
+    - Under **Client Credentials Flow**, set the **Run As** user to a dedicated integration user (or an admin) — this is the Salesforce identity every inbound Extole event will execute as
+    - Save
+7. Back on the app's **Settings** tab, under **OAuth Settings**, find the **Consumer Key** and **Consumer Secret**
 
 **In the Receive Extole Events tab:**
 
-5. Copy the **Webhook Endpoint** URL shown at the top of the tab (`.../services/apexrest/extole/events`) — this is generated dynamically from your org's own domain (`ExtoleWritebackController.getEndpointUrl()`), so it's always correct for whichever org you view it in
+8. Copy the **Webhook Endpoint** URL shown at the top of the tab (`.../services/apexrest/extole/events`) — this is generated dynamically from your org's own domain (`ExtoleWritebackController.getEndpointUrl()`), so it's always correct for whichever org you view it in
 
 **In Extole (my.extole.com → Security Center):**
 
-6. Create a new key with:
+9. Create a new key with:
     - **Key Name** — something identifiable, e.g. "Salesforce Client Credentials"
+    - **Key Type** — **Webhook**
     - **Algorithm** — **`OAUTH_SFDC`** (not `OAUTH_SALESFORCE` or `OAUTH_SFDC_PASSWORD` — those are for different auth patterns; `OAUTH_SFDC` is specifically built for Salesforce's Client Credentials flow, since Salesforce's token response omits `expires_in`, which the generic `OAUTH` algorithm requires)
-    - **Key** — the Connected App's **Consumer Secret**
+    - **Key** — the External Client App's **Consumer Secret**
     - **Authorization URL** — `https://<your-org-domain>.my.salesforce.com/services/oauth2/token`
-    - **OAuth Client ID** — the Connected App's **Consumer Key**
+    - **OAuth Client ID** — the External Client App's **Consumer Key**
 
 **Back in the Extole component's configuration:**
 
-7. Set the Security Center key from step 6 as the `CLIENT_KEY` setting, and the endpoint URL from step 5 as the webhook target setting
-8. Check the **Enable Salesforce Writeback** setting to turn on the outbound webhooks. This is **off by default** — if your account doesn't want any data written back to Salesforce, simply leave it unchecked. No request is ever built or sent while off (checked at the very start of the webhook's own script, before any reward/event data is touched), so nothing leaves the Extole platform and nothing is logged on either side — this is different from just arriving and being silently skipped.
+> Steps 10-11 assume the Extole-side "Salesforce" integration component already exists for your
+> account. If it doesn't yet, it isn't something this app deploys — it lives in
+> [extole-sfdc-component](https://github.com/extole/extole-sfdc-component), which has its own
+> README covering what it is and how to install it (there's no deploy script yet, so it's a manual
+> Management API build).
+
+10. Set the Security Center key from step 9 as the `CLIENT_KEY` setting, and the endpoint URL from step 8 as the webhook target setting
+11. Check the **Enable Salesforce Writeback** setting to turn on the outbound webhooks. This is **off by default** — if your account doesn't want any data written back to Salesforce, simply leave it unchecked. No request is ever built or sent while off (checked at the very start of the webhook's own script, before any reward/event data is touched), so nothing leaves the Extole platform and nothing is logged on either side — this is different from just arriving and being silently skipped.
 
 > Keep the endpoint URL and client key filled in even during testing or if you want to pause writeback for a while — use the **Enable Salesforce Writeback** toggle for that instead. Extole treats these two fields as required once the integration is active, so clearing them blocks saving further changes until they're restored.
 
-9. Click **Add Rule** under **Rules** to map incoming event fields to Contact or Lead fields — target fields must be **Text** type; `ExtoleWebhookController.applyMappings()` always writes values as strings, so a Number/Date field will silently fail to populate
-10. Trigger a test event from Extole and confirm it appears in the **Event Log** on the same tab
+12. Click **Add Rule** under **Rules** to map incoming event fields to Contact or Lead fields — target fields must be **Text** type; `ExtoleWebhookController.applyMappings()` always writes values as strings, so a Number/Date field will silently fail to populate
+13. Trigger a test event from Extole and confirm it appears in the **Event Log** on the same tab
 
 > Requires `Extole_App_Admin` — the underlying `ExtoleWebhookController`/`ExtoleWritebackController` classes and the `Extole_Writeback_Cfg__c`/`Extole_Writeback_Log__c` objects are only accessible to that permission set.
 
