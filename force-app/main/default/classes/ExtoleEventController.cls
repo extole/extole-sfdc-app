@@ -403,21 +403,70 @@ public with sharing class ExtoleEventController {
                 .replaceAll('[^a-zA-Z0-9_]', '_');
         }
 
+        String eventName = (String) configMap.get('eventName');
+        String triggerObject = (String) configMap.get('triggerObject');
+        String triggerType = (String) configMap.get('triggerType');
+        String triggerField = (String) configMap.get('triggerField');
+        String triggerValue = (String) configMap.get('triggerValue');
+        String triggerFromValue = (String) configMap.get('triggerFromValue');
+        String triggerToValue = (String) configMap.get('triggerToValue');
+        String fieldMappingsJson = (String) configMap.get('fieldMappingsJson');
+
         Extole_Event_Cfg__c rec = new Extole_Event_Cfg__c(
             Config_Key__c = configKey,
-            Event_Name__c = (String) configMap.get('eventName'),
-            Trigger_Object__c = (String) configMap.get('triggerObject'),
-            Trigger_Type__c = (String) configMap.get('triggerType'),
-            Trigger_Field__c = (String) configMap.get('triggerField'),
-            Trigger_Value__c = (String) configMap.get('triggerValue'),
-            Trigger_From_Value__c = (String) configMap.get('triggerFromValue'),
-            Trigger_To_Value__c = (String) configMap.get('triggerToValue'),
-            Field_Mappings_JSON__c = (String) configMap.get(
-                'fieldMappingsJson'
-            ),
+            Event_Name__c = eventName,
+            Trigger_Object__c = triggerObject,
+            Trigger_Type__c = triggerType,
+            Trigger_Field__c = triggerField,
+            Trigger_Value__c = triggerValue,
+            Trigger_From_Value__c = triggerFromValue,
+            Trigger_To_Value__c = triggerToValue,
+            Field_Mappings_JSON__c = fieldMappingsJson,
             Status__c = 'DRAFT',
             Active__c = false
         );
+
+        // Editing an already-deployed, active config unconditionally knocked
+        // it back to DRAFT/inactive on every save, even when nothing about
+        // its trigger/mapping definition actually changed (e.g. just
+        // clicking through the edit wizard). The deployed Flow only goes
+        // out of sync with the config when the config's own content
+        // changes, so preserve the live status when it doesn't.
+        List<Extole_Event_Cfg__c> existingList = [
+            SELECT Status__c, Active__c, Event_Name__c, Trigger_Object__c,
+                Trigger_Type__c, Trigger_Field__c, Trigger_Value__c,
+                Trigger_From_Value__c, Trigger_To_Value__c,
+                Field_Mappings_JSON__c
+            FROM Extole_Event_Cfg__c
+            WHERE Config_Key__c = :configKey
+            LIMIT 1
+        ];
+        if (!existingList.isEmpty()) {
+            Extole_Event_Cfg__c existing = existingList[0];
+            Boolean wasActive =
+                existing.Status__c == 'ACTIVE' && existing.Active__c == true;
+            Boolean unchanged =
+                normalize(existing.Event_Name__c) == normalize(eventName) &&
+                normalize(existing.Trigger_Object__c) ==
+                    normalize(triggerObject) &&
+                normalize(existing.Trigger_Type__c) ==
+                    normalize(triggerType) &&
+                normalize(existing.Trigger_Field__c) ==
+                    normalize(triggerField) &&
+                normalize(existing.Trigger_Value__c) ==
+                    normalize(triggerValue) &&
+                normalize(existing.Trigger_From_Value__c) ==
+                    normalize(triggerFromValue) &&
+                normalize(existing.Trigger_To_Value__c) ==
+                    normalize(triggerToValue) &&
+                normalize(existing.Field_Mappings_JSON__c) ==
+                    normalize(fieldMappingsJson);
+            if (wasActive && unchanged) {
+                rec.Status__c = existing.Status__c;
+                rec.Active__c = existing.Active__c;
+            }
+        }
+
         try {
             upsert rec Extole_Event_Cfg__c.Config_Key__c;
         } catch (DmlException e) {
@@ -895,6 +944,12 @@ public with sharing class ExtoleEventController {
         if (s == null)
             return '';
         return s.length() > maxLen ? s.substring(0, maxLen) : s;
+    }
+
+    // Treats null and blank identically so a field that round-trips through
+    // JSON as '' instead of null doesn't register as a change.
+    private static String normalize(String s) {
+        return String.isBlank(s) ? null : s;
     }
 
     private static Boolean isValidApiName(String name) {

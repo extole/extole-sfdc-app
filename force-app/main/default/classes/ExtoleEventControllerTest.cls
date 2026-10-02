@@ -516,4 +516,92 @@ private class ExtoleEventControllerTest {
         ];
         System.assertEquals('INACTIVE', updated.Status__c);
     }
+
+    @IsTest
+    static void testSaveEventConfig_noopSavePreservesActiveStatus() {
+        Extole_Event_Cfg__c config = makeConfig(
+            'noop_save_test',
+            'ACTIVE',
+            'Extole_Flow_noop_save_test'
+        );
+        config.Active__c = true;
+        config.Trigger_Field__c = 'StageName';
+        config.Trigger_Value__c = 'Closed Won';
+        config.Field_Mappings_JSON__c = '[]';
+        update config;
+
+        Map<String, Object> sameConfig = new Map<String, Object>{
+            'configKey' => config.Config_Key__c,
+            'eventName' => config.Event_Name__c,
+            'triggerObject' => config.Trigger_Object__c,
+            'triggerType' => config.Trigger_Type__c,
+            'triggerField' => config.Trigger_Field__c,
+            'triggerValue' => config.Trigger_Value__c,
+            'fieldMappingsJson' => config.Field_Mappings_JSON__c
+        };
+
+        Test.startTest();
+        ExtoleEventController.saveEventConfig(JSON.serialize(sameConfig));
+        Test.stopTest();
+
+        Extole_Event_Cfg__c updated = [
+            SELECT Status__c, Active__c
+            FROM Extole_Event_Cfg__c
+            WHERE Id = :config.Id
+        ];
+        System.assertEquals(
+            'ACTIVE',
+            updated.Status__c,
+            'Saving unchanged values should not knock an active config back to draft'
+        );
+        System.assertEquals(
+            true,
+            updated.Active__c,
+            'Saving unchanged values should leave Active__c untouched'
+        );
+    }
+
+    @IsTest
+    static void testSaveEventConfig_realChangeRevertsToDraft() {
+        Extole_Event_Cfg__c config = makeConfig(
+            'real_change_test',
+            'ACTIVE',
+            'Extole_Flow_real_change_test'
+        );
+        config.Active__c = true;
+        config.Trigger_Field__c = 'StageName';
+        config.Trigger_Value__c = 'Closed Won';
+        config.Field_Mappings_JSON__c = '[]';
+        update config;
+
+        Map<String, Object> changedConfig = new Map<String, Object>{
+            'configKey' => config.Config_Key__c,
+            'eventName' => config.Event_Name__c,
+            'triggerObject' => config.Trigger_Object__c,
+            'triggerType' => config.Trigger_Type__c,
+            'triggerField' => config.Trigger_Field__c,
+            'triggerValue' => 'Closed Lost',
+            'fieldMappingsJson' => config.Field_Mappings_JSON__c
+        };
+
+        Test.startTest();
+        ExtoleEventController.saveEventConfig(JSON.serialize(changedConfig));
+        Test.stopTest();
+
+        Extole_Event_Cfg__c updated = [
+            SELECT Status__c, Active__c
+            FROM Extole_Event_Cfg__c
+            WHERE Id = :config.Id
+        ];
+        System.assertEquals(
+            'DRAFT',
+            updated.Status__c,
+            'Saving a real change to an active config should still require redeploy'
+        );
+        System.assertEquals(
+            false,
+            updated.Active__c,
+            'Saving a real change to an active config should still deactivate it'
+        );
+    }
 }
