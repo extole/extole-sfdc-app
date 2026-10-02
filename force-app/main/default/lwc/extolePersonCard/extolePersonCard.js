@@ -281,9 +281,33 @@ export default class ExtolePersonCard extends LightningElement {
         event.stopPropagation();
         const link = event.currentTarget.dataset.link;
         if (!link) return;
-        if (navigator && navigator.clipboard) {
-            navigator.clipboard.writeText(link);
+        // navigator.clipboard.writeText commonly rejects inside Salesforce
+        // Lightning's sandboxed iframe -- fall back to a hidden-textarea +
+        // execCommand('copy') when the Clipboard API is unavailable or rejects.
+        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+                .writeText(link)
+                .catch(() => this.copyLinkFallback(link));
+        } else {
+            this.copyLinkFallback(link);
         }
+    }
+
+    copyLinkFallback(link) {
+        const textarea = document.createElement('textarea');
+        textarea.value = link;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+            document.execCommand('copy');
+        } catch (e) {
+            // Nothing further to fall back to -- consistent with this
+            // handler's existing no-feedback behavior on failure.
+        }
+        document.body.removeChild(textarea);
     }
 
     toggleSection(event) {

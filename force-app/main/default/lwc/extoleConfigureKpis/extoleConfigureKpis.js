@@ -580,10 +580,46 @@ export default class ExtoleConfigureKpis extends LightningElement {
 
     async copyToClipboard(text, successMessage) {
         try {
-            await navigator.clipboard.writeText(text);
+            await this.copyText(text);
             this.showSuccess(successMessage);
         } catch (e) {
             this.showError('Could not copy to clipboard.', e);
+        }
+    }
+
+    // navigator.clipboard.writeText commonly rejects inside Salesforce
+    // Lightning's sandboxed iframe (clipboard-write isn't delegated by the
+    // platform's Permissions Policy), so fall back to a hidden-textarea +
+    // execCommand('copy') when the Clipboard API is unavailable or rejects.
+    async copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch (e) {
+                // Fall through to the execCommand fallback below.
+            }
+        }
+        this.copyTextFallback(text);
+    }
+
+    copyTextFallback(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        let successful = false;
+        try {
+            successful = document.execCommand('copy');
+        } catch (e) {
+            successful = false;
+        }
+        document.body.removeChild(textarea);
+        if (!successful) {
+            throw new Error('Copy command failed');
         }
     }
 
