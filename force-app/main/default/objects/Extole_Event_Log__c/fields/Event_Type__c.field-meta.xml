@@ -19,9 +19,19 @@
                 <label>CONFIG_EDITED</label>
             </value>
             <value>
+                <fullName>CONFIG_SAVED</fullName>
+                <default>false</default>
+                <label>CONFIG_SAVED</label>
+            </value>
+            <value>
                 <fullName>CONFIG_DELETED</fullName>
                 <default>false</default>
                 <label>CONFIG_DELETED</label>
+            </value>
+            <value>
+                <fullName>CONFIG_DEACTIVATED</fullName>
+                <default>false</default>
+                <label>CONFIG_DEACTIVATED</label>
             </value>
             <value>
                 <fullName>DEPLOY_INITIATED</fullName>

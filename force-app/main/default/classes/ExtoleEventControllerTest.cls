@@ -203,6 +203,54 @@ private class ExtoleEventControllerTest {
     }
 
     @IsTest
+    static void testSaveEventConfig_writesConfigSavedLog() {
+        Map<String, Object> newConfig = new Map<String, Object>{
+            'eventName' => 'save_log_test',
+            'triggerObject' => 'Lead',
+            'triggerType' => 'CREATED'
+        };
+
+        Test.startTest();
+        ExtoleEventController.saveEventConfig(JSON.serialize(newConfig));
+        Test.stopTest();
+
+        List<Extole_Event_Log__c> logs = [
+            SELECT Event_Type__c, Result__c
+            FROM Extole_Event_Log__c
+            WHERE Config_Key__c = 'Lead_save_log_test'
+        ];
+        System.assertEquals(
+            1,
+            logs.size(),
+            'saveEventConfig should write exactly one audit log entry'
+        );
+        System.assertEquals('CONFIG_SAVED', logs[0].Event_Type__c);
+        System.assertEquals('SUCCESS', logs[0].Result__c);
+    }
+
+    @IsTest
+    static void testDeactivateEventConfig_writesConfigDeactivatedLog() {
+        makeConfig('deactivate_log_test', 'ACTIVE', null);
+
+        Test.startTest();
+        ExtoleEventController.deactivateEventConfig('deactivate_log_test');
+        Test.stopTest();
+
+        List<Extole_Event_Log__c> logs = [
+            SELECT Event_Type__c, Result__c
+            FROM Extole_Event_Log__c
+            WHERE Config_Key__c = 'deactivate_log_test'
+        ];
+        System.assertEquals(
+            1,
+            logs.size(),
+            'deactivateEventConfig should write exactly one audit log entry'
+        );
+        System.assertEquals('CONFIG_DEACTIVATED', logs[0].Event_Type__c);
+        System.assertEquals('SUCCESS', logs[0].Result__c);
+    }
+
+    @IsTest
     static void testDeactivateEventConfig_notFoundThrows() {
         Boolean threw = false;
         try {
