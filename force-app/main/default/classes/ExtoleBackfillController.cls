@@ -235,7 +235,7 @@ public with sharing class ExtoleBackfillController {
                 return [
                     SELECT COUNT() FROM Contact
                     WHERE Email != null
-                    AND Id IN (SELECT ContactId FROM Opportunity WHERE StageName = 'Closed Won' AND ContactId != null)
+                    AND AccountId IN (SELECT AccountId FROM Opportunity WHERE StageName = 'Closed Won' AND AccountId != null)
                 ];
             } else {
                 return [SELECT COUNT() FROM Lead WHERE Email != null AND IsConverted = false];
@@ -274,7 +274,7 @@ public with sharing class ExtoleBackfillController {
 
     private static String defaultFilterDescription(String objectType) {
         return objectType == 'Contact'
-            ? 'Contacts with email on Closed Won opportunities'
+            ? 'Contacts on accounts with a Closed Won opportunity'
             : 'Unconverted leads with email';
     }
 

@@ -338,7 +338,7 @@ public class ExtoleBackfillQueueable implements Queueable, Database.AllowsCallou
             List<String> filters = new List<String>{ 'Email != null' };
             if (objectType == 'Contact') {
                 filters.add(
-                    'Id IN (SELECT ContactId FROM Opportunity WHERE StageName = \'Closed Won\' AND ContactId != null)'
+                    'AccountId IN (SELECT AccountId FROM Opportunity WHERE StageName = \'Closed Won\' AND AccountId != null)'
                 );
             } else {
                 filters.add('IsConverted = false');

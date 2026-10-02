@@ -56,7 +56,7 @@ export default class ExtoleBackfill extends LightningElement {
 
     get defaultFilterDescription() {
         return this.selectedObject === 'Contact'
-            ? 'Contacts with an email address on any Closed Won opportunity'
+            ? 'Contacts with an email address on accounts with any Closed Won opportunity'
             : 'Unconverted leads with an email address';
     }
 

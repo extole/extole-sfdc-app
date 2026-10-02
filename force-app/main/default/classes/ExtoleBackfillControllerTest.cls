@@ -285,6 +285,39 @@ private class ExtoleBackfillControllerTest {
     }
 
     @IsTest
+    static void testPreviewCountDefaultContactOnAccountWithClosedWonOppCounts() {
+        Account acct = new Account(Name = 'Closed Won Test Account');
+        insert acct;
+        insert new Contact(
+            FirstName = 'Has',
+            LastName = 'AccountOpp',
+            Email = 'hasaccountopp@extole-test.com',
+            AccountId = acct.Id
+        );
+        // Deliberately leave Opportunity.ContactId unset -- the default
+        // filter matches via the Account relationship, not the legacy
+        // single-Contact field on Opportunity, so most B2B orgs relying on
+        // OpportunityContactRole instead of that field still match.
+        insert new Opportunity(
+            Name = 'Closed Won Test Opp',
+            AccountId = acct.Id,
+            StageName = 'Closed Won',
+            CloseDate = Date.today()
+        );
+
+        Integer count = ExtoleBackfillController.previewCount(
+            'Contact',
+            'default',
+            null,
+            null
+        );
+        System.assert(
+            count >= 1,
+            'Contact on an account with a Closed Won opportunity should count, even without Opportunity.ContactId set'
+        );
+    }
+
+    @IsTest
     static void testPreviewCountDateFilterLead() {
         insert new Lead(
             FirstName = 'Count',
