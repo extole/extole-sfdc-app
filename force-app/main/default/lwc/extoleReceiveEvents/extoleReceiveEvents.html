@@ -330,7 +330,7 @@
                             label="Create the record if it is not found"
                             checked={editingConfig.Create_If_Not_Found__c}
                             data-field="Create_If_Not_Found__c"
-                            field-level-help="When no existing record has the event's email, create a new one with the email and name (if sent). Turn this on for sign-up rules. Leave it off for rules like reward_earned, where the record should already exist."
+                            field-level-help="On: Creates a record if none exists for the event's email. For Leads, it also checks program and campaign, so the same person can get one Lead per program and campaign. It won't create a Lead if a Contact or Person Account already has the email. New Leads get Lead Source Extole. Off: Only updates records that already exist."
                             onchange={handleCheckboxChange}
                         ></lightning-input>
                     </template>
@@ -341,7 +341,7 @@
                             label="Create a Lead even if the person is already a Contact or Person Account"
                             checked={editingConfig.Create_Lead_If_Contact_Exists__c}
                             data-field="Create_Lead_If_Contact_Exists__c"
-                            field-level-help="Off: no Lead is created when a Contact or Person Account already has the email. On: a Lead is still created for a new program or campaign. A repeat of the same program and campaign never creates a second Lead. Applies to events that include a program or campaign."
+                            field-level-help="Off: no Lead is created if a Contact or Person Account already has the email. On: a Lead is still created for a new program or campaign. A repeat of the same program and campaign never creates a second Lead."
                             onchange={handleCheckboxChange}
                         ></lightning-input>
                     </template>
