@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Lead</object>
+                <object>Contact</object>
+                <object>Account</object>
+            </objects>
+            <property
+                name="disabled"
+                type="Boolean"
+                default="false"
+                label="Disabled"
+                description="Check to turn off the Extole Offers Card on this page without removing it."
+            />
+        </targetConfig>
+    </targetConfigs>
+    <masterLabel>Extole Offers Card</masterLabel>
+    <description
+    >Surfaces the Extole offers a Lead, Contact, or Person Account is in that are not referrals, grouped by program, with their steps and reward.</description>
+</LightningComponentBundle>

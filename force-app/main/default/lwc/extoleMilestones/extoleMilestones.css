@@ -1,0 +1,64 @@
+:host {
+    --extole-green: #1d9e75;
+    --text-primary: #181818;
+    --text-secondary: #6b7280;
+    display: block;
+}
+
+.milestone-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 4px 2px 4px;
+}
+
+.milestone-row {
+    display: grid;
+    grid-template-columns: 16px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.milestone-bullet {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    justify-self: center;
+}
+
+.milestone-row-completed .milestone-bullet {
+    background: var(--extole-green);
+}
+
+.milestone-row-completed .milestone-label {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.milestone-row-failed .milestone-bullet {
+    background: #c23934;
+}
+
+.milestone-row-failed .milestone-label {
+    color: #c23934;
+    font-weight: 600;
+}
+
+.milestone-row-pending .milestone-bullet {
+    background: transparent;
+    border: 1.5px solid #cbcfd4;
+    box-sizing: border-box;
+}
+
+.milestone-row-pending .milestone-label {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.milestone-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}

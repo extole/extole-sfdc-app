@@ -1,0 +1,69 @@
+<template>
+    <lightning-modal-header label="Referred by"></lightning-modal-header>
+    <lightning-modal-body>
+        <div class="search-wrap">
+            <input
+                type="text"
+                class="search-input"
+                placeholder="Search by name or email"
+                aria-label="Search referrers by name or email"
+                oninput={handleSearch}
+            />
+        </div>
+        <template lwc:if={hasResults}>
+            <template for:each={visibleGroups} for:item="group">
+                <div key={group.key} class="program-group">
+                    <template lwc:if={group.program}>
+                        <span class="program-pill" style={group.programStyle}
+                            >{group.program}</span
+                        >
+                    </template>
+                    <template for:each={group.cards} for:item="card">
+                        <div key={card.key} class="referral-card">
+                            <div class="referrer-row">
+                                <span class="referrer-by">
+                                    <span class="referrer-in"
+                                        >referral from</span
+                                    >
+                                    <template lwc:if={card.line.isLinked}>
+                                        <a
+                                            href={card.line.sfdcUrl}
+                                            class="record-link referrer-name"
+                                            title={card.line.title}
+                                            >{card.line.displayName}</a
+                                        >
+                                    </template>
+                                    <template lwc:else>
+                                        <span
+                                            class="plain-name referrer-name"
+                                            title={card.line.title}
+                                            >{card.line.displayName}</span
+                                        >
+                                    </template>
+                                </span>
+                                <template lwc:if={card.line.reward}>
+                                    <span class={card.line.reward.cls}
+                                        >{card.line.reward.text}<template
+                                            lwc:if={card.line.reward.dateText}
+                                            ><span class="pill-date"
+                                                >{card.line.reward.dateText}</span
+                                            ></template
+                                        ></span
+                                    >
+                                </template>
+                            </div>
+                            <template lwc:if={card.hasMilestones}>
+                                <c-extole-milestones
+                                    milestones={card.milestones}
+                                ></c-extole-milestones>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+        <template lwc:else>
+            <p class="empty">No referrers match your search.</p>
+        </template>
+    </lightning-modal-body>
+</template>

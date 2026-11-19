@@ -1,0 +1,55 @@
+<template>
+    <div class="engagement-card">
+        <div class="engagement-header">
+            <div class={friend.avatarClass}>
+                <template lwc:if={friend.avatarIsEarned}>
+                    <lightning-icon
+                        icon-name="utility:check"
+                        size="x-small"
+                        variant="inverse"
+                    ></lightning-icon>
+                </template>
+                <template lwc:elseif={friend.avatarIsDeclined}>
+                    <lightning-icon
+                        icon-name="utility:close"
+                        size="x-small"
+                        variant="inverse"
+                    ></lightning-icon>
+                </template>
+                <template lwc:else>
+                    <span class="avatar-initials">{friend.avatarInitials}</span>
+                </template>
+            </div>
+            <div class="engagement-identity">
+                <template lwc:if={friend.isLinked}>
+                    <a href={friend.sfdcUrl} class="engagement-name record-link"
+                        >{friend.displayName}</a
+                    >
+                </template>
+                <template lwc:else>
+                    <span class="engagement-name">{friend.displayName}</span>
+                </template>
+                <template lwc:if={friend.email}>
+                    <div class="engagement-email">{friend.email}</div>
+                </template>
+            </div>
+            <div class="engagement-reward">
+                <template lwc:if={friend.rewardStateText}>
+                    <span class={friend.rewardStateClass}
+                        >{friend.rewardStateText}<template
+                            lwc:if={friend.rewardDateText}
+                            ><span class="pill-date"
+                                >{friend.rewardDateText}</span
+                            ></template
+                        ></span
+                    >
+                </template>
+            </div>
+        </div>
+        <template lwc:if={friend.hasMilestones}>
+            <c-extole-milestones
+                milestones={friend.milestones}
+            ></c-extole-milestones>
+        </template>
+    </div>
+</template>

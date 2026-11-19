@@ -1,0 +1,160 @@
+:host {
+    --extole-green: #1d9e75;
+    --extole-green-faint: rgba(29, 158, 117, 0.12);
+    --text-primary: #181818;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --surface-muted: #f7f7f7;
+    display: block;
+}
+
+.engagement-card {
+    background: var(--surface-muted);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.engagement-header {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    user-select: none;
+}
+
+.avatar-neutral {
+    width: 36px;
+    height: 36px;
+    font-size: 11px;
+    background: #ececec;
+    color: #4a4a4a;
+}
+
+.avatar-success {
+    width: 36px;
+    height: 36px;
+    background: var(--extole-green);
+    color: #ffffff;
+}
+
+.avatar-declined {
+    width: 36px;
+    height: 36px;
+    background: #c23934;
+    color: #ffffff;
+}
+
+.avatar-success lightning-icon,
+.avatar-declined lightning-icon {
+    --sds-c-icon-color-foreground-default: #ffffff;
+}
+
+.avatar-initials {
+    line-height: 1;
+}
+
+.engagement-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.engagement-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.engagement-name {
+    color: var(--extole-green);
+    text-decoration: none;
+}
+
+a.engagement-name:hover {
+    text-decoration: underline;
+}
+
+.engagement-email {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.engagement-reward {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 2px 8px;
+    text-align: right;
+}
+
+.reward-date {
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.record-link {
+    color: var(--extole-green);
+    text-decoration: none;
+}
+
+.record-link:hover {
+    text-decoration: underline;
+}
+
+.reward-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.reward-pill-pending {
+    background: #fdf3df;
+    color: #8a5a00;
+}
+
+.reward-pill-earned {
+    background: rgba(29, 158, 117, 0.12);
+    color: #12775a;
+}
+
+.reward-pill-declined {
+    background: #fdecea;
+    color: #c23934;
+}
+
+.pill-date {
+    margin-left: 6px;
+    font-weight: 400;
+    opacity: 0.8;
+}

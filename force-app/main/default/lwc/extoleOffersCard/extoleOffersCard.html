@@ -1,0 +1,89 @@
+<template>
+    <template lwc:if={disabled}></template>
+    <template lwc:elseif={isLoading}>
+        <div class="loading-row">
+            <lightning-spinner
+                size="small"
+                alternative-text="Loading"
+            ></lightning-spinner>
+        </div>
+    </template>
+    <template lwc:elseif={loadError}>
+        <div class="error-banner">{loadError}</div>
+    </template>
+    <template lwc:elseif={showCard}>
+        <div class="offers-card">
+            <div class="card-header">
+                <c-extole-logo-mark></c-extole-logo-mark>
+                <div class="header-title">Extole Offers</div>
+                <div class="header-aside">
+                    <template lwc:if={profileUrl}>
+                        <a
+                            class="header-link"
+                            href={profileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={viewLinkTitle}
+                        >
+                            <span class="header-link-text"
+                                >View profile in Extole</span
+                            >
+                            <lightning-icon
+                                icon-name="utility:new_window"
+                                size="xx-small"
+                                alternative-text="Opens in a new tab"
+                                class="header-link-icon"
+                            ></lightning-icon>
+                        </a>
+                    </template>
+                </div>
+            </div>
+            <template for:each={offers} for:item="offer">
+                <div key={offer.key} class="section">
+                    <div
+                        class="section-header"
+                        data-key={offer.key}
+                        onclick={toggleOffer}
+                    >
+                        <template lwc:if={offer.canToggle}>
+                            <lightning-icon
+                                icon-name={offer.chevron}
+                                size="xx-small"
+                                class="section-chevron"
+                            ></lightning-icon>
+                        </template>
+                        <template lwc:if={offer.program}>
+                            <span
+                                class="program-pill"
+                                style={offer.programStyle}
+                                >{offer.program}</span
+                            >
+                        </template>
+                        <lightning-helptext
+                            content={helpText}
+                            class="section-help"
+                            onclick={stopClick}
+                        ></lightning-helptext>
+                        <template lwc:if={offer.reward}>
+                            <span class={offer.reward.cls}
+                                >{offer.reward.text}<template
+                                    lwc:if={offer.reward.dateText}
+                                    ><span class="pill-date"
+                                        >{offer.reward.dateText}</span
+                                    ></template
+                                ></span
+                            >
+                        </template>
+                    </div>
+                    <template lwc:if={offer.showMilestones}>
+                        <div class="section-body">
+                            <c-extole-milestones
+                                milestones={offer.milestones}
+                            ></c-extole-milestones>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+</template>

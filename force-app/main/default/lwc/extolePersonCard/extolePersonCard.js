@@ -1,52 +1,28 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import getCardData from '@salesforce/apex/ExtolePersonCardController.getCardData';
+import getFriendDetails from '@salesforce/apex/ExtolePersonCardController.getFriendDetails';
 import getShareLinkFieldSetting from '@salesforce/apex/ExtoleBackfillController.getShareLinkFieldSetting';
+import ExtolePersonCardModal from 'c/extolePersonCardModal';
+import ExtoleReferrersModal from 'c/extoleReferrersModal';
+import {
+    programColors,
+    decorateFriend,
+    decorateMilestones,
+    describeReward,
+    programPillStyle,
+    groupByProgram,
+    FRIENDS_HELP_TEXT,
+    REFERRED_BY_HELP_TEXT,
+    formatShortDate
+} from 'c/extolePersonCardUtils';
 
 import LEAD_EMAIL from '@salesforce/schema/Lead.Email';
 import LEAD_NAME from '@salesforce/schema/Lead.Name';
 import CONTACT_EMAIL from '@salesforce/schema/Contact.Email';
 import CONTACT_NAME from '@salesforce/schema/Contact.Name';
 
-const PALETTE = [
-    { primary: '#1D9E75', fill: 'rgba(29, 158, 117, 0.12)' },
-    { primary: '#2563EB', fill: 'rgba(37, 99, 235, 0.10)' },
-    { primary: '#8B5CF6', fill: 'rgba(139, 92, 246, 0.10)' },
-    { primary: '#F97316', fill: 'rgba(249, 115, 22, 0.12)' },
-    { primary: '#E94560', fill: 'rgba(233, 69, 96, 0.10)' }
-];
-
-function hashProgram(name) {
-    if (!name) return 0;
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
-    return Math.abs(h) % PALETTE.length;
-}
-
-function programColors(name) {
-    return PALETTE[hashProgram(name)];
-}
-
-function computeInitials(name) {
-    if (!name) return '?';
-    const trimmed = String(name).trim();
-    if (!trimmed) return '?';
-    const parts = trimmed.split(/\s+/);
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return trimmed.substring(0, 2).toUpperCase();
-}
-
-function formatShortDate(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const yy = String(d.getFullYear()).slice(-2);
-    return `${mm}/${dd}/${yy}`;
-}
+const FRIEND_BATCH = 5;
 
 export default class ExtolePersonCard extends LightningElement {
     @api recordId;
@@ -54,14 +30,20 @@ export default class ExtolePersonCard extends LightningElement {
     @api disabled = false;
 
     @track card = null;
+    @track friendsLoaded = [];
+    @track isLoadingMore = false;
+    @track loadMoreError = null;
     @track isLoading = false;
     @track loadError = null;
+    // How many referrers show before Show more.
+    referrerLimit = FRIEND_BATCH;
     @track sectionCollapsed = {
-        shareLinks: false,
-        friends: true,
+        shareLinks: true,
+        friends: false,
         referredBy: false
     };
 
+    helpText = FRIENDS_HELP_TEXT;
     email = null;
     sfdcName = null;
     sfdcShareLink = null;
@@ -105,9 +87,7 @@ export default class ExtolePersonCard extends LightningElement {
         if (data) {
             const shareFieldName = this.configuredShareLinkField;
             this.sfdcShareLink =
-                shareFieldName &&
-                data.fields &&
-                data.fields[shareFieldName]
+                shareFieldName && data.fields && data.fields[shareFieldName]
                     ? data.fields[shareFieldName].value
                     : null;
             if (this.isAccount) {
@@ -157,6 +137,8 @@ export default class ExtolePersonCard extends LightningElement {
         this.loadError = null;
         try {
             this.card = await getCardData({ email: this.email });
+            this.friendsLoaded = this.card.friends || [];
+            this.loadMoreError = null;
         } catch (e) {
             this.loadError =
                 (e && e.body && e.body.message) ||
@@ -170,22 +152,237 @@ export default class ExtolePersonCard extends LightningElement {
         return this.card && this.card.hasAnyData;
     }
 
-    get shouldShowEmpty() {
-        return this.card !== null && !this.card.hasAnyData && !this.loadError;
-    }
-
     get hasShareLinks() {
         return (
             this.card && this.card.shareLinks && this.card.shareLinks.length > 0
         );
     }
 
-    get hasFriends() {
-        return this.card && this.card.friends && this.card.friends.length > 0;
+    // Everything this person is in themselves, one block per program. A
+    // program that referred them is shown under Referred by, with who referred
+    // them; any other is an offer they're in, shown under Rewards.
+    get ownBlocks() {
+        if (!this.card) return [];
+        const referrers = this.card.referrers || [];
+        const referrersByProgram = new Map();
+        for (const r of referrers) {
+            const key = r.program || '';
+            if (!referrersByProgram.has(key)) referrersByProgram.set(key, []);
+            referrersByProgram.get(key).push(r);
+        }
+        const blocks = (this.card.ownPrograms || []).map((op, i) => {
+            const key = op.program || '';
+            const milestones = decorateMilestones(op.steps);
+            return {
+                key: `${key || 'none'}-${i}`,
+                program: op.program,
+                programStyle: op.program ? programPillStyle(op.program) : '',
+                referrers: this.decorateReferrers(referrersByProgram.get(key)),
+                milestones,
+                hasMilestones: milestones.length > 0,
+                reward: this.rewardFor(op, this.card.ownAmounts),
+                rewardReferrerId: op.rewardReferrerId
+            };
+        });
+        for (const b of blocks) b.lines = this.referrerLines(b);
+        // A referral with no program entry still gets its row.
+        const shown = new Set(blocks.map((b) => b.program || ''));
+        for (const [key, rs] of referrersByProgram) {
+            if (shown.has(key)) continue;
+            blocks.push({
+                key: `${key || 'none'}-referral`,
+                program: key || null,
+                programStyle: key ? programPillStyle(key) : '',
+                referrers: this.decorateReferrers(rs),
+                milestones: [],
+                hasMilestones: false,
+                reward: null
+            });
+            blocks[blocks.length - 1].lines = this.referrerLines(
+                blocks[blocks.length - 1]
+            );
+        }
+        return blocks;
     }
 
-    get hasReferredBy() {
-        return this.card && this.card.referredBy != null;
+    // The reward pill, or nothing when there is no amount, reward or decline.
+    rewardFor(op, amounts) {
+        const r = describeReward(
+            { reward: op.reward, status: op.status },
+            amounts && amounts[op.program]
+        );
+        return r.text ? r : null;
+    }
+
+    // One sentence per referrer: "Quality Test in [program]". The first line
+    // carries this person's own reward on the right, above their steps, like a
+    // friend's row under an advocate.
+    referrerLines(block) {
+        // The reward goes on the referrer Extole says it came from, else the
+        // first one.
+        const owner = block.referrers.findIndex(
+            (r) =>
+                block.rewardReferrerId && r.personId === block.rewardReferrerId
+        );
+        const rewardIndex = owner < 0 ? 0 : owner;
+        return block.referrers.map((r, i) => ({
+            key: r.key,
+            displayName: r.displayName,
+            title: r.email || r.identityValue || r.displayName,
+            isLinked: r.isLinked,
+            sfdcUrl: r.sfdcUrl,
+            dateText: block.referrers.length > 1 ? r.dateText : '',
+            program: block.program,
+            programStyle: block.programStyle,
+            reward: i === rewardIndex ? block.reward : null,
+            isOwner: i === rewardIndex
+        }));
+    }
+
+    // Newest referral first, so the current referrer reads first.
+    decorateReferrers(list) {
+        return (list || [])
+            .slice()
+            .sort((a, b) =>
+                String(b.referredDate || '').localeCompare(
+                    String(a.referredDate || '')
+                )
+            )
+            .map((r, i) => ({
+                ...r,
+                key: `${r.personId}-${i}`,
+                displayName: r.displayName || r.email || 'Anonymous',
+                dateText: formatShortDate(r.referredDate),
+                sfdcUrl: r.sfdcRecordId
+                    ? `/lightning/r/${r.sfdcObjectType}/${r.sfdcRecordId}/view`
+                    : null,
+                isLinked: !!r.sfdcRecordId
+            }));
+    }
+
+    get referralBlocks() {
+        return this.ownBlocks.filter((b) => b.referrers.length > 0);
+    }
+
+    get totalReferrers() {
+        return this.referralBlocks.reduce((n, b) => n + b.lines.length, 0);
+    }
+
+    // The first referrerLimit referrers across all programs.
+    get visibleReferralBlocks() {
+        let left = this.referrerLimit;
+        return this.referralBlocks
+            .map((b) => {
+                const take = Math.max(0, Math.min(left, b.lines.length));
+                left -= take;
+                return {
+                    ...b,
+                    multi: b.lines.length > 1,
+                    lines: b.lines.slice(0, take)
+                };
+            })
+            .filter((b) => b.lines.length > 0);
+    }
+
+    // Referrers grouped under their program, one card each. The program's
+    // steps sit on the card of the referrer the reward came from, since Extole
+    // doesn't split them further.
+    get visibleReferralGroups() {
+        return this.toReferralGroups(this.visibleReferralBlocks);
+    }
+
+    toReferralGroups(blocks) {
+        return blocks.map((block) => ({
+            key: block.key,
+            program: block.program,
+            programStyle: block.programStyle,
+            cards: block.lines.map((line) => ({
+                key: `${block.key}-${line.key}`,
+                line,
+                search: `${line.displayName} ${line.title || ''}`.toLowerCase(),
+                milestones: line.isOwner ? block.milestones : [],
+                hasMilestones: line.isOwner && block.hasMilestones
+            }))
+        }));
+    }
+
+    // What a declined friend's reward was: the advocate's own amount, else the
+    // program's one reward.
+    get declinedAmounts() {
+        return {
+            ...(this.card.onlyAmounts || {}),
+            ...(this.card.advocateAmounts || {})
+        };
+    }
+
+    get referrersExpandable() {
+        return this.totalReferrers > FRIEND_BATCH;
+    }
+
+    get referrersShowMoreVisible() {
+        return this.totalReferrers > this.referrerLimit;
+    }
+
+    get referrersCountText() {
+        return `Showing ${Math.min(this.referrerLimit, this.totalReferrers)} of ${this.totalReferrers}`;
+    }
+
+    handleShowMoreReferrers() {
+        this.referrerLimit += FRIEND_BATCH;
+    }
+
+    async handleExpandReferrers(event) {
+        event.stopPropagation();
+        await ExtoleReferrersModal.open({
+            size: 'large',
+            groups: this.toReferralGroups(this.referralBlocks)
+        });
+    }
+
+    get hasReferralBlocks() {
+        return this.referralBlocks.length > 0;
+    }
+
+    get referredByHelpText() {
+        return REFERRED_BY_HELP_TEXT;
+    }
+
+    get profileUrl() {
+        return this.card && this.card.profileUrl ? this.card.profileUrl : null;
+    }
+
+    get hasFriends() {
+        return this.totalFriends > 0;
+    }
+
+    get totalFriends() {
+        return this.card ? this.card.totalFriends || 0 : 0;
+    }
+
+    get remainingFriends() {
+        return Math.max(0, this.totalFriends - this.friendsLoaded.length);
+    }
+
+    get showMoreVisible() {
+        return this.remainingFriends > 0;
+    }
+
+    get showCountRow() {
+        return this.totalFriends > FRIEND_BATCH;
+    }
+
+    get friendsCountText() {
+        return this.showMoreVisible
+            ? `Showing ${this.friendsLoaded.length} of ${this.totalFriends}`
+            : `Showing all ${this.totalFriends}`;
+    }
+
+    stopClick(event) {
+        event.stopPropagation();
+    }
+
+    get showMoreLabel() {
+        return this.isLoadingMore ? 'Loading…' : 'Show more';
     }
 
     get displayName() {
@@ -196,17 +393,11 @@ export default class ExtolePersonCard extends LightningElement {
         return (first + ' ' + last).trim() || this.card.email || '';
     }
 
-    get initials() {
-        return computeInitials(this.displayName);
-    }
-
-    get roleLabel() {
-        const advocate = this.hasFriends;
-        const friend = this.hasReferredBy;
-        if (advocate && friend) return 'Advocate · Referred friend';
-        if (advocate) return 'Advocate';
-        if (friend) return 'Referred friend';
-        return '';
+    // The hover text names whose profile the link opens.
+    get viewLinkTitle() {
+        return this.displayName
+            ? `Open ${this.displayName} in My Extole`
+            : 'Open this person in My Extole';
     }
 
     get decoratedShareLinks() {
@@ -228,86 +419,15 @@ export default class ExtolePersonCard extends LightningElement {
     }
 
     get programGroups() {
-        if (!this.hasFriends) return [];
-        const byProgram = new Map();
-        for (const f of this.card.friends) {
-            const program = f.program || 'unknown';
-            if (!byProgram.has(program)) byProgram.set(program, []);
-            const earned =
-                f.reward &&
-                (f.reward.state === 'PAID' ||
-                    f.reward.state === 'EARNED' ||
-                    f.reward.state === 'SENT');
-            const rewardDateStr = earned
-                ? formatShortDate(f.reward.dateEarned)
-                : null;
-            const statusText = earned
-                ? rewardDateStr
-                    ? `Reward earned ${rewardDateStr}`
-                    : 'Reward earned'
-                : '';
-            const rewardStateText = earned
-                ? f.reward.amountLabel
-                : 'no reward yet';
-            const rewardStateClass = earned
-                ? 'reward-amount-earned'
-                : 'reward-pending';
-            const sfdcUrl = f.sfdcRecordId
-                ? `/lightning/r/${f.sfdcObjectType}/${f.sfdcRecordId}/view`
-                : null;
-            const displayName = f.displayName || f.email || 'Anonymous';
-            const milestones = (f.steps || []).map((s) => ({
-                key: s.name,
-                label: s.label,
-                date: s.dateCompleted ? formatShortDate(s.dateCompleted) : null,
-                rowClass: s.dateCompleted
-                    ? 'milestone-row milestone-row-completed'
-                    : 'milestone-row milestone-row-pending'
-            }));
-            byProgram.get(program).push({
-                key: f.personId,
-                displayName,
-                sfdcUrl,
-                isLinked: !!f.sfdcRecordId,
-                avatarInitials: computeInitials(displayName),
-                avatarClass: earned
-                    ? 'avatar avatar-success'
-                    : 'avatar avatar-neutral',
-                avatarIsEarned: earned,
-                statusText,
-                rewardStateText,
-                rewardStateClass,
-                milestones,
-                hasMilestones: milestones.length > 0
-            });
-        }
-        const groups = [];
-        for (const [program, friends] of byProgram.entries()) {
-            const c = programColors(program);
-            groups.push({
-                program,
-                programStyle: `background:${c.fill};color:${c.primary};`,
-                friends
-            });
-        }
-        return groups;
-    }
-
-    get referredByDecorated() {
-        if (!this.hasReferredBy) return null;
-        const r = this.card.referredBy;
-        const c = programColors(r.program);
-        const displayName = r.displayName || r.email || 'Anonymous';
-        return {
-            ...r,
-            displayName,
-            sfdcUrl: r.sfdcRecordId
-                ? `/lightning/r/${r.sfdcObjectType}/${r.sfdcRecordId}/view`
-                : null,
-            isLinked: !!r.sfdcRecordId,
-            programStyle: `background:${c.fill};color:${c.primary};`,
-            avatarInitials: computeInitials(displayName)
-        };
+        return groupByProgram(
+            this.friendsLoaded.map((f) =>
+                decorateFriend(
+                    f,
+                    this.card.advocateAmounts,
+                    this.declinedAmounts
+                )
+            )
+        );
     }
 
     handleCopyLink(event) {
@@ -336,7 +456,7 @@ export default class ExtolePersonCard extends LightningElement {
         textarea.select();
         try {
             document.execCommand('copy');
-        } catch (e) {
+        } catch {
             // Nothing further to fall back to -- consistent with this
             // handler's existing no-feedback behavior on failure.
         }
@@ -362,6 +482,12 @@ export default class ExtolePersonCard extends LightningElement {
         return !this.sectionCollapsed.referredBy;
     }
 
+    get referredByChevron() {
+        return this.referredByExpanded
+            ? 'utility:chevrondown'
+            : 'utility:chevronright';
+    }
+
     get shareLinksChevron() {
         return this.shareLinksExpanded
             ? 'utility:chevrondown'
@@ -372,20 +498,95 @@ export default class ExtolePersonCard extends LightningElement {
             ? 'utility:chevrondown'
             : 'utility:chevronright';
     }
-    get referredByChevron() {
-        return this.referredByExpanded
-            ? 'utility:chevrondown'
-            : 'utility:chevronright';
-    }
-
     get shareLinksLabel() {
         const n =
             this.card && this.card.shareLinks ? this.card.shareLinks.length : 0;
         return this.shareLinksExpanded ? 'Share Links' : `Share Links (${n})`;
     }
 
+    get referredByLabel() {
+        return this.referredByExpanded
+            ? 'Referred by'
+            : `Referred by (${this.totalReferrers})`;
+    }
+
     get friendsLabel() {
-        const n = this.card && this.card.friends ? this.card.friends.length : 0;
-        return this.friendsExpanded ? 'Friends' : `Friends (${n})`;
+        return this.friendsExpanded
+            ? 'Friends'
+            : `Friends (${this.totalFriends})`;
+    }
+
+    // An advocate reads: share links, friends, referred by. Anyone else reads:
+    // referred by, share links.
+    get sectionOrder() {
+        return this.hasFriends
+            ? { shareLinks: 1, friends: 2, referredBy: 3 }
+            : { referredBy: 1, shareLinks: 2, friends: 3 };
+    }
+
+    get referredByOrder() {
+        return `order:${this.sectionOrder.referredBy}`;
+    }
+
+    get shareLinksOrder() {
+        return `order:${this.sectionOrder.shareLinks}`;
+    }
+
+    get friendsOrder() {
+        return `order:${this.sectionOrder.friends}`;
+    }
+
+    async handleShowMore() {
+        if (this.isLoadingMore || !this.showMoreVisible) return;
+        this.isLoadingMore = true;
+        this.loadMoreError = null;
+        try {
+            const loadedIds = new Set(
+                this.friendsLoaded.map((f) => f.personId)
+            );
+            const batch = (this.card.friendRefs || [])
+                .filter((r) => !loadedIds.has(r.personId))
+                .slice(0, FRIEND_BATCH);
+            const refById = new Map(
+                (this.card.friendRefs || []).map((r) => [r.personId, r])
+            );
+            const result = await getFriendDetails({
+                personIds: batch.map((r) => r.personId),
+                programs: batch.map((r) => r.program),
+                identityKeys: batch.map((r) => r.identityKey),
+                identityValues: batch.map((r) => r.identityValue)
+            });
+            const added = (result || []).map((f) => {
+                const ref = refById.get(f.personId) || {};
+                return {
+                    ...f,
+                    reward: ref.reward || null,
+                    status: ref.status || null
+                };
+            });
+            this.friendsLoaded = [...this.friendsLoaded, ...added];
+        } catch (e) {
+            this.loadMoreError =
+                (e && e.body && e.body.message) ||
+                'Could not load more friends.';
+        } finally {
+            this.isLoadingMore = false;
+        }
+    }
+
+    async handleExpand(event) {
+        event.stopPropagation();
+        await ExtolePersonCardModal.open({
+            size: 'large',
+            label: this.displayName,
+            description: `Friends referred by ${this.displayName}`,
+            advocateName: this.displayName,
+            totalFriends: this.totalFriends,
+            friends: this.friendsLoaded,
+            friendRefs: this.card.friendRefs || [],
+            advocateAmounts: this.card.advocateAmounts,
+            declinedAmounts: this.declinedAmounts,
+            profileUrl: this.profileUrl
+        });
     }
 }

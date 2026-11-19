@@ -10,37 +10,36 @@
             </div>
         </template>
 
-        <template lwc:elseif={shouldShowEmpty}>
-            <div class="person-card empty-card">
-                <div class="empty-state">
-                    <lightning-icon
-                        icon-name="utility:user"
-                        size="small"
-                        class="empty-icon"
-                    ></lightning-icon>
-                    <div class="empty-text">
-                        No Extole activity for this person yet.
-                    </div>
-                </div>
-            </div>
-        </template>
-
         <template lwc:elseif={shouldRender}>
             <div class="person-card">
                 <div class="card-header">
-                    <div class="avatar avatar-lg">
-                        <span class="avatar-initials">{initials}</span>
-                    </div>
-                    <div class="header-text">
-                        <div class="header-name">{displayName}</div>
-                        <template lwc:if={roleLabel}>
-                            <div class="header-role">{roleLabel}</div>
+                    <c-extole-logo-mark></c-extole-logo-mark>
+                    <div class="header-title">Extole Referrals</div>
+                    <div class="header-aside">
+                        <template lwc:if={profileUrl}>
+                            <a
+                                class="header-link"
+                                href={profileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={viewLinkTitle}
+                            >
+                                <span class="header-link-text"
+                                    >View profile in Extole</span
+                                >
+                                <lightning-icon
+                                    icon-name="utility:new_window"
+                                    size="xx-small"
+                                    alternative-text="Opens in a new tab"
+                                    class="header-link-icon"
+                                ></lightning-icon>
+                            </a>
                         </template>
                     </div>
                 </div>
 
-                <template lwc:if={hasReferredBy}>
-                    <div class="section">
+                <template lwc:if={hasReferralBlocks}>
+                    <div class="section" style={referredByOrder}>
                         <div
                             class="section-header"
                             data-section="referredBy"
@@ -51,38 +50,125 @@
                                 size="xx-small"
                                 class="section-chevron"
                             ></lightning-icon>
-                            <span class="section-label">Referred by</span>
+                            <span class="section-label">{referredByLabel}</span>
+                            <lightning-helptext
+                                content={referredByHelpText}
+                                class="section-help"
+                                onclick={stopClick}
+                            ></lightning-helptext>
+                            <template lwc:if={hasReferralBlocks}>
+                                <button
+                                    type="button"
+                                    class="expand-btn"
+                                    onclick={handleExpandReferrers}
+                                    title="Expand referrers"
+                                    aria-label="Expand referrers"
+                                >
+                                    <lightning-icon
+                                        icon-name="utility:expand_alt"
+                                        size="xx-small"
+                                        class="expand-icon"
+                                    ></lightning-icon>
+                                </button>
+                            </template>
                         </div>
                         <template lwc:if={referredByExpanded}>
-                            <div class="section-body">
-                                <div class="referred-by-row">
-                                    <span
-                                        class="program-pill"
-                                        style={referredByDecorated.programStyle}
-                                        >{referredByDecorated.program}</span
-                                    >
-                                    <template
-                                        lwc:if={referredByDecorated.isLinked}
-                                    >
-                                        <a
-                                            href={referredByDecorated.sfdcUrl}
-                                            class="record-link"
-                                            >{referredByDecorated.displayName}</a
+                            <div class="section-body offers-body">
+                                <template
+                                    for:each={visibleReferralGroups}
+                                    for:item="group"
+                                >
+                                    <div key={group.key} class="program-group">
+                                        <template lwc:if={group.program}>
+                                            <span
+                                                class="program-pill"
+                                                style={group.programStyle}
+                                                >{group.program}</span
+                                            >
+                                        </template>
+                                        <template
+                                            for:each={group.cards}
+                                            for:item="card"
                                         >
-                                    </template>
-                                    <template lwc:else>
-                                        <span class="plain-email"
-                                            >{referredByDecorated.displayName}</span
+                                            <div
+                                                key={card.key}
+                                                class="referral-card"
+                                            >
+                                                <div class="referrer-row">
+                                                    <span class="referrer-by">
+                                                        <span
+                                                            class="referrer-in"
+                                                            >referral from</span
+                                                        >
+                                                        <template
+                                                            lwc:if={card.line.isLinked}
+                                                        >
+                                                            <a
+                                                                href={card.line.sfdcUrl}
+                                                                class="record-link referrer-name"
+                                                                title={card.line.title}
+                                                                >{card.line.displayName}</a
+                                                            >
+                                                        </template>
+                                                        <template lwc:else>
+                                                            <span
+                                                                class="plain-email referrer-name"
+                                                                title={card.line.title}
+                                                                >{card.line.displayName}</span
+                                                            >
+                                                        </template>
+                                                    </span>
+                                                    <template
+                                                        lwc:if={card.line.reward}
+                                                    >
+                                                        <span
+                                                            class={card.line.reward.cls}
+                                                            >{card.line.reward.text}<template
+                                                                lwc:if={card.line.reward.dateText}
+                                                                ><span
+                                                                    class="pill-date"
+                                                                    >{card.line.reward.dateText}</span
+                                                                ></template
+                                                            ></span
+                                                        >
+                                                    </template>
+                                                </div>
+                                                <template
+                                                    lwc:if={card.hasMilestones}
+                                                >
+                                                    <c-extole-milestones
+                                                        milestones={card.milestones}
+                                                    ></c-extole-milestones>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template lwc:if={referrersExpandable}>
+                                    <div class="show-more-row">
+                                        <span class="show-more-count"
+                                            >{referrersCountText}</span
                                         >
-                                    </template>
-                                </div>
+                                        <template
+                                            lwc:if={referrersShowMoreVisible}
+                                        >
+                                            <button
+                                                type="button"
+                                                class="show-more-btn"
+                                                onclick={handleShowMoreReferrers}
+                                            >
+                                                Show more
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>
                 </template>
 
                 <template lwc:if={hasShareLinks}>
-                    <div class="section">
+                    <div class="section" style={shareLinksOrder}>
                         <div
                             class="section-header"
                             data-section="shareLinks"
@@ -143,7 +229,7 @@
                 </template>
 
                 <template lwc:if={hasFriends}>
-                    <div class="section">
+                    <div class="section" style={friendsOrder}>
                         <div
                             class="section-header"
                             data-section="friends"
@@ -155,6 +241,24 @@
                                 class="section-chevron"
                             ></lightning-icon>
                             <span class="section-label">{friendsLabel}</span>
+                            <lightning-helptext
+                                content={helpText}
+                                class="section-help"
+                                onclick={stopClick}
+                            ></lightning-helptext>
+                            <button
+                                type="button"
+                                class="expand-btn"
+                                onclick={handleExpand}
+                                title="Expand friends"
+                                aria-label="Expand friends"
+                            >
+                                <lightning-icon
+                                    icon-name="utility:expand_alt"
+                                    size="xx-small"
+                                    class="expand-icon"
+                                ></lightning-icon>
+                            </button>
                         </div>
                         <template lwc:if={friendsExpanded}>
                             <div class="section-body friends-body">
@@ -169,93 +273,31 @@
                                             for:each={g.friends}
                                             for:item="f"
                                         >
-                                            <div
+                                            <c-extole-friend-card
                                                 key={f.key}
-                                                class="engagement-card"
+                                                friend={f}
+                                            ></c-extole-friend-card>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template lwc:if={showCountRow}>
+                                    <div class="show-more-row">
+                                        <span class="show-more-count"
+                                            >{friendsCountText}</span
+                                        >
+                                        <template lwc:if={showMoreVisible}>
+                                            <button
+                                                type="button"
+                                                class="show-more-btn"
+                                                onclick={handleShowMore}
+                                                disabled={isLoadingMore}
                                             >
-                                                <div class="engagement-header">
-                                                    <div class={f.avatarClass}>
-                                                        <template
-                                                            lwc:if={f.avatarIsEarned}
-                                                        >
-                                                            <lightning-icon
-                                                                icon-name="utility:check"
-                                                                size="x-small"
-                                                                variant="inverse"
-                                                            ></lightning-icon>
-                                                        </template>
-                                                        <template lwc:else>
-                                                            <span
-                                                                class="avatar-initials"
-                                                                >{f.avatarInitials}</span
-                                                            >
-                                                        </template>
-                                                    </div>
-                                                    <div
-                                                        class="engagement-identity"
-                                                    >
-                                                        <template
-                                                            lwc:if={f.isLinked}
-                                                        >
-                                                            <a
-                                                                href={f.sfdcUrl}
-                                                                class="engagement-name record-link"
-                                                                >{f.displayName}</a
-                                                            >
-                                                        </template>
-                                                        <template lwc:else>
-                                                            <span
-                                                                class="engagement-name"
-                                                                >{f.displayName}</span
-                                                            >
-                                                        </template>
-                                                        <div
-                                                            class="engagement-status"
-                                                        >
-                                                            {f.statusText}
-                                                        </div>
-                                                    </div>
-                                                    <span
-                                                        class={f.rewardStateClass}
-                                                        >{f.rewardStateText}</span
-                                                    >
-                                                </div>
-                                                <template
-                                                    lwc:if={f.hasMilestones}
-                                                >
-                                                    <div class="milestone-list">
-                                                        <template
-                                                            for:each={f.milestones}
-                                                            for:item="m"
-                                                        >
-                                                            <div
-                                                                key={m.key}
-                                                                class={m.rowClass}
-                                                            >
-                                                                <div
-                                                                    class="milestone-bullet"
-                                                                ></div>
-                                                                <span
-                                                                    class="milestone-label"
-                                                                    >{m.label}</span
-                                                                >
-                                                                <template
-                                                                    lwc:if={m.date}
-                                                                >
-                                                                    <span
-                                                                        class="milestone-date"
-                                                                        >{m.date}</span
-                                                                    >
-                                                                </template>
-                                                                <template
-                                                                    lwc:else
-                                                                >
-                                                                    <span></span>
-                                                                </template>
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                </template>
+                                                {showMoreLabel}
+                                            </button>
+                                        </template>
+                                        <template lwc:if={loadMoreError}>
+                                            <div class="error-banner">
+                                                {loadMoreError}
                                             </div>
                                         </template>
                                     </div>

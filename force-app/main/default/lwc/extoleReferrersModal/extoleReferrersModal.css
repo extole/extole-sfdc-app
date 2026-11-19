@@ -1,0 +1,126 @@
+.search-wrap {
+    padding-bottom: 12px;
+}
+
+.search-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #c9c7c5;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.record-link {
+    color: #1d9e75;
+    text-decoration: none;
+}
+
+.record-link:hover {
+    text-decoration: underline;
+}
+
+.plain-name {
+    color: #181818;
+}
+
+.muted {
+    color: #6b7280;
+}
+
+.program-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.empty {
+    font-size: 13px;
+    color: #4a4a4a;
+}
+
+.reward-pill {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.reward-pill-pending {
+    background: #fdf3df;
+    color: #8a5a00;
+}
+
+.reward-pill-earned {
+    background: rgba(29, 158, 117, 0.12);
+    color: #12775a;
+}
+
+.reward-pill-declined {
+    background: #fdecea;
+    color: #c23934;
+}
+
+.pill-date {
+    margin-left: 6px;
+    font-weight: 400;
+    opacity: 0.8;
+}
+
+.program-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.program-group + .program-group {
+    margin-top: 16px;
+}
+
+.referral-card {
+    background: #f7f7f7;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.referrer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.referrer-by {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+}
+
+.referrer-in {
+    color: #6b7280;
+}
+
+.referrer-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.program-group > .program-pill {
+    align-self: flex-start;
+}

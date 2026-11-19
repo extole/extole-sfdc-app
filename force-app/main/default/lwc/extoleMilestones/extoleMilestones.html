@@ -1,0 +1,16 @@
+<template>
+    <div class="milestone-list">
+        <template for:each={milestones} for:item="m">
+            <div key={m.key} class={m.rowClass}>
+                <div class="milestone-bullet"></div>
+                <span class="milestone-label">{m.label}</span>
+                <template lwc:if={m.date}>
+                    <span class="milestone-date">{m.date}</span>
+                </template>
+                <template lwc:else>
+                    <span></span>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

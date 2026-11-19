@@ -1,0 +1,149 @@
+<template>
+    <lightning-modal-header label={advocateName}></lightning-modal-header>
+
+    <lightning-modal-body>
+        <div class="modal-sub">
+            <span class="header-count">{friendCountLabel}</span>
+            <lightning-helptext
+                content={helpText}
+                class="sub-help"
+            ></lightning-helptext>
+            <template lwc:if={profileUrl}>
+                <a
+                    class="header-link"
+                    href={profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open this person in My Extole"
+                >
+                    <span>View in Extole</span>
+                    <lightning-icon
+                        icon-name="utility:new_window"
+                        size="xx-small"
+                        alternative-text="Opens in a new tab"
+                        class="header-link-icon"
+                    ></lightning-icon>
+                </a>
+            </template>
+        </div>
+        <div class="toolbar">
+            <div class="search-wrap">
+                <lightning-icon
+                    icon-name="utility:search"
+                    size="x-small"
+                    class="search-icon"
+                ></lightning-icon>
+                <input
+                    type="text"
+                    class="search-input"
+                    placeholder="Search by name or email"
+                    aria-label="Search friends by name or email"
+                    oninput={handleSearch}
+                />
+            </div>
+
+            <template lwc:if={showLoading}>
+                <div class="loading-row">
+                    <span class="loading-text">{loadingText}</span>
+                    <div class="loading-bar">
+                        <div
+                            class="loading-bar-fill"
+                            style={loadingBarStyle}
+                        ></div>
+                    </div>
+                </div>
+            </template>
+
+            <div class="filter-row">
+                <span class="filter-label">Show:</span>
+                <template for:each={filterButtons} for:item="b">
+                    <button
+                        key={b.key}
+                        type="button"
+                        class={b.cls}
+                        aria-pressed={b.pressed}
+                        data-filter={b.key}
+                        onclick={handleFilter}
+                    >
+                        {b.label}
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <div class="list">
+            <template lwc:if={hasResults}>
+                <template for:each={groups} for:item="g">
+                    <div key={g.program} class="program-group">
+                        <span class="program-pill" style={g.programStyle}
+                            >{g.program}</span
+                        >
+                        <template for:each={g.friends} for:item="f">
+                            <c-extole-friend-card
+                                key={f.key}
+                                friend={f}
+                            ></c-extole-friend-card>
+                        </template>
+                    </div>
+                </template>
+            </template>
+            <template lwc:else>
+                <div class="empty">{emptyText}</div>
+            </template>
+            <template lwc:if={loadError}>
+                <div class="error-banner">{loadError}</div>
+            </template>
+        </div>
+    </lightning-modal-body>
+
+    <lightning-modal-footer>
+        <div class="footer-row">
+            <span class="range-text">{rangeText}</span>
+            <template lwc:if={showPager}>
+                <div class="pager">
+                    <button
+                        type="button"
+                        class="page-btn"
+                        onclick={handlePrev}
+                        disabled={prevDisabled}
+                        aria-label="Previous page"
+                    >
+                        <lightning-icon
+                            icon-name="utility:chevronleft"
+                            size="xx-small"
+                        ></lightning-icon>
+                    </button>
+                    <template for:each={pageItems} for:item="p">
+                        <template lwc:if={p.isGap}>
+                            <span key={p.key} class="page-gap">…</span>
+                        </template>
+                        <template lwc:else>
+                            <button
+                                key={p.key}
+                                type="button"
+                                class={p.cls}
+                                data-page={p.number}
+                                aria-current={p.current}
+                                onclick={handlePage}
+                            >
+                                {p.number}
+                            </button>
+                        </template>
+                    </template>
+                    <button
+                        type="button"
+                        class="page-btn"
+                        onclick={handleNext}
+                        disabled={nextDisabled}
+                        aria-label="Next page"
+                    >
+                        <lightning-icon
+                            icon-name="utility:chevronright"
+                            size="xx-small"
+                        ></lightning-icon>
+                    </button>
+                </div>
+            </template>
+        </div>
+    </lightning-modal-footer>
+</template>
