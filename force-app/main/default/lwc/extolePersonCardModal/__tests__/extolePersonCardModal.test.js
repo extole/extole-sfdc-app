@@ -18,7 +18,19 @@ jest.mock(
     { virtual: true }
 );
 
-const ref = (i) => ({ personId: `p${i}`, program: 'refer-a-friend' });
+function statusOf(i) {
+    if (i % 7 === 0) return 'rewarded';
+    return i % 11 === 0 ? 'declined' : 'pending';
+}
+const ref = (i) => ({
+    personId: `p${i}`,
+    program: 'refer-a-friend',
+    status: statusOf(i),
+    reward:
+        statusOf(i) === 'rewarded'
+            ? { state: 'EARNED', amountLabel: '$5' }
+            : null
+});
 const friend = (i) => ({
     personId: `p${i}`,
     program: 'refer-a-friend',
@@ -142,5 +154,77 @@ describe('extolePersonCardModal', () => {
 
         expect(getFriendDetails).toHaveBeenCalledTimes(1);
         expect(el.shadowRoot.querySelector('.error-banner')).not.toBeNull();
+    });
+
+    it('filters by reward status and pages within the filtered friends', async () => {
+        const el = mount(refs(100));
+        await settle();
+        const chips = () => [...el.shadowRoot.querySelectorAll('.chip')];
+        const click = async (label) => {
+            chips()
+                .find((c) => c.textContent.trim() === label)
+                .click();
+            await settle();
+        };
+
+        await click('Rewarded');
+        expect(el.shadowRoot.querySelector('.pager-range').textContent).toBe(
+            '1–10 of 15'
+        );
+        expect(names(el)[0]).toBe('Friend 0');
+        expect(names(el)[1]).toBe('Friend 7');
+
+        await click('Declined');
+        expect(el.shadowRoot.querySelector('.pager-range').textContent).toBe(
+            '1–8 of 8'
+        );
+        expect(names(el)).toHaveLength(8);
+
+        await click('Not rewarded yet');
+        expect(el.shadowRoot.querySelector('.pager-range').textContent).toBe(
+            '1–10 of 77'
+        );
+
+        await click('All');
+        expect(el.shadowRoot.querySelector('.pager-range').textContent).toBe(
+            '1–10 of 100'
+        );
+    });
+
+    it('lists a friend with an unknown status under All, not under Not rewarded yet', async () => {
+        const unknown = refs(3).map((r) => ({ ...r, status: null }));
+        const el = mount(unknown);
+        await settle();
+        expect(names(el)).toHaveLength(3);
+
+        [...el.shadowRoot.querySelectorAll('.chip')]
+            .find((c) => c.textContent.trim() === 'Not rewarded yet')
+            .click();
+        await settle();
+
+        expect(names(el)).toHaveLength(0);
+    });
+
+    it('says so when no friend matches the filter', async () => {
+        const el = mount(refs(5).filter((r) => r.status !== 'declined'));
+        await settle();
+        [...el.shadowRoot.querySelectorAll('.chip')]
+            .find((c) => c.textContent.trim() === 'Declined')
+            .click();
+        await settle();
+
+        expect(el.shadowRoot.querySelector('.empty')).not.toBeNull();
+        expect(names(el)).toHaveLength(0);
+    });
+
+    it('keeps the status and reward the card already knew', async () => {
+        const el = mount(refs(10));
+        await settle();
+
+        const first = el.shadowRoot.querySelector(
+            'c-extole-friend-card'
+        ).friend;
+        expect(first.status).toBe('rewarded');
+        expect(first.rewardStateText).toBe('$5 earned');
     });
 });

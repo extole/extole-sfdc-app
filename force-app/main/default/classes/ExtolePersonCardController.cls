@@ -5,6 +5,12 @@ public with sharing class ExtolePersonCardController {
     private static final Integer CALLOUTS_PER_FRIEND = 3;
     private static final Integer PAGE_SIZE = 100;
     private static final Integer MAX_PAGES = 10;
+    private static final Set<String> DECLINED_STATES = new Set<String>{
+        'FAILED',
+        'CANCELED',
+        'REVOKED'
+    };
+    private static final Integer MAX_DECISION_PAGES = 3;
     // Reward states for a reward that was given. EXPIRED can only follow
     // EARNED, FULFILLED or SENT, so the person did get one.
     private static final Set<String> REWARDED_STATES = new Set<String>{
@@ -32,18 +38,38 @@ public with sharing class ExtolePersonCardController {
 
             result.shareLinks = fetchShareLinks(config, client, personId);
 
+            String personPath = ExtoleConstants.PEOPLE_PATH + '/' + personId;
             Pages relPages = fetchPages(
                 config,
                 client,
-                personId,
-                'relationships'
+                personPath + '/relationships',
+                '',
+                MAX_PAGES
             );
-            Pages rewardPages = fetchPages(config, client, personId, 'rewards');
+            Pages rewardPages = fetchPages(
+                config,
+                client,
+                personPath + '/rewards',
+                '',
+                MAX_PAGES
+            );
+            Pages decisionPages = fetchPages(
+                config,
+                client,
+                personPath + '/steps',
+                'journey_names=reward',
+                MAX_DECISION_PAGES
+            );
             result.friendsTruncated = relPages.truncated;
             result.rewardsTruncated = rewardPages.truncated;
+            Boolean statusKnown =
+                !rewardPages.truncated && !decisionPages.truncated;
+            Set<String> declinedFriendIds = new Set<String>();
             Map<String, ExtolePersonCard.Reward> rewardsByFriendId = rewardsByFriend(
-                rewardPages.rows
+                rewardPages.rows,
+                declinedFriendIds
             );
+            addDeclinedEvaluations(decisionPages.rows, declinedFriendIds);
 
             Set<String> seenFriendIds = new Set<String>();
             List<String> personIdsToFetch = new List<String>();
@@ -63,12 +89,18 @@ public with sharing class ExtolePersonCardController {
                     ref.personId = otherId;
                     ref.program = getString(rel, 'program');
                     ref.reward = rewardsByFriendId.get(otherId);
+                    ref.status = rewardStatus(
+                        ref.reward,
+                        declinedFriendIds.contains(otherId),
+                        statusKnown
+                    );
                     result.friendRefs.add(ref);
                     if (result.friends.size() < FRIEND_BATCH) {
                         ExtolePersonCard.Friend f = new ExtolePersonCard.Friend();
                         f.personId = otherId;
                         f.program = ref.program;
                         f.reward = ref.reward;
+                        f.status = ref.status;
                         result.friends.add(f);
                         personIdsToFetch.add(otherId);
                         personIdToProgram.put(otherId, f.program);
@@ -87,10 +119,26 @@ public with sharing class ExtolePersonCardController {
 
             result.totalFriends = result.friendRefs.size();
 
+            Set<String> allPrograms = new Set<String>();
+            for (ExtolePersonCard.FriendRef ref : result.friendRefs) {
+                if (String.isNotBlank(ref.program))
+                    allPrograms.add(ref.program);
+            }
+            Map<String, String> campaignByProgram = fetchProgramCampaigns(
+                config,
+                client,
+                allPrograms
+            );
+            result.advocateAmounts = fetchAdvocateAmounts(
+                config,
+                client,
+                campaignByProgram
+            );
             Map<String, List<ExtolePersonCard.JourneyStep>> templateByProgram = fetchProgramTemplates(
                 config,
                 client,
-                friendPrograms
+                friendPrograms,
+                campaignByProgram
             );
             Map<String, PersonProfile> profileById = fetchPersonProfiles(
                 config,
@@ -247,7 +295,8 @@ public with sharing class ExtolePersonCardController {
             Map<String, List<ExtolePersonCard.JourneyStep>> templateByProgram = fetchProgramTemplates(
                 config,
                 client,
-                friendPrograms
+                friendPrograms,
+                fetchProgramCampaigns(config, client, friendPrograms)
             );
             Map<String, PersonProfile> profileById = fetchPersonProfiles(
                 config,
@@ -305,18 +354,13 @@ public with sharing class ExtolePersonCardController {
         ExtoleClient client,
         String email
     ) {
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(
-            config.getEndpoint() +
-                ExtoleConstants.PEOPLE_PATH +
+        HttpRequest req = getRequest(
+            config,
+            ExtoleConstants.PEOPLE_PATH +
                 '?identity_key_value=' +
                 EncodingUtil.urlEncode(email, 'UTF-8') +
                 '&limit=1'
         );
-        req.setMethod('GET');
-        if (!config.isNamedCredentialMode())
-            req.setHeader('Authorization', config.getAuthHeader());
-        req.setTimeout(config.timeoutMs);
 
         HttpResponse res = client.send(config, req);
         if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
@@ -337,18 +381,10 @@ public with sharing class ExtolePersonCardController {
         String personId
     ) {
         List<ExtolePersonCard.ShareLink> out = new List<ExtolePersonCard.ShareLink>();
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(
-            config.getEndpoint() +
-                ExtoleConstants.PEOPLE_PATH +
-                '/' +
-                personId +
-                '/shareables'
+        HttpRequest req = getRequest(
+            config,
+            ExtoleConstants.PEOPLE_PATH + '/' + personId + '/shareables'
         );
-        req.setMethod('GET');
-        if (!config.isNamedCredentialMode())
-            req.setHeader('Authorization', config.getAuthHeader());
-        req.setTimeout(config.timeoutMs);
 
         HttpResponse res = client.send(config, req);
         if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
@@ -377,35 +413,30 @@ public with sharing class ExtolePersonCardController {
         Boolean truncated = false;
     }
 
-    // Reads a person's relationships or rewards. An empty page ends it: the
-    // API drops deleted persons after paging, so a short page can have more.
+    // Reads a list a hundred at a time. An empty page ends it: the API drops
+    // deleted persons after paging, so a short page can still have more.
     private static Pages fetchPages(
         ExtoleConfig config,
         ExtoleClient client,
-        String personId,
-        String resource
+        String path,
+        String query,
+        Integer maxPages
     ) {
         Pages out = new Pages();
-        for (Integer page = 0; page < MAX_PAGES; page++) {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(
-                config.getEndpoint() +
-                    ExtoleConstants.PEOPLE_PATH +
-                    '/' +
-                    personId +
-                    '/' +
-                    resource +
-                    '?limit=' +
-                    PAGE_SIZE +
-                    '&offset=' +
-                    (page * PAGE_SIZE)
+        for (Integer page = 0; page < maxPages; page++) {
+            HttpResponse res = client.send(
+                config,
+                getRequest(
+                    config,
+                    path +
+                        '?' +
+                        (String.isBlank(query) ? '' : query + '&') +
+                        'limit=' +
+                        PAGE_SIZE +
+                        '&offset=' +
+                        (page * PAGE_SIZE)
+                )
             );
-            req.setMethod('GET');
-            if (!config.isNamedCredentialMode())
-                req.setHeader('Authorization', config.getAuthHeader());
-            req.setTimeout(config.timeoutMs);
-
-            HttpResponse res = client.send(config, req);
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
                 out.truncated = true;
                 return out;
@@ -422,13 +453,15 @@ public with sharing class ExtolePersonCardController {
     }
 
     private static Map<String, ExtolePersonCard.Reward> rewardsByFriend(
-        List<Object> raw
+        List<Object> raw,
+        Set<String> declinedFriendIds
     ) {
         Map<String, ExtolePersonCard.Reward> out = new Map<String, ExtolePersonCard.Reward>();
         for (Object o : raw) {
             Map<String, Object> m = (Map<String, Object>) o;
             String state = getString(m, 'state');
-            if (!REWARDED_STATES.contains(state))
+            Boolean rewarded = REWARDED_STATES.contains(state);
+            if (!rewarded && !DECLINED_STATES.contains(state))
                 continue;
 
             Object dataRaw = m.get('data');
@@ -436,10 +469,14 @@ public with sharing class ExtolePersonCardController {
                 continue;
             Map<String, Object> data = (Map<String, Object>) dataRaw;
             String friendId = dataString(data, 'other_person_id');
-            if (friendId == null || out.containsKey(friendId))
+            if (friendId == null)
                 continue;
-
-            out.put(friendId, buildReward(m, state));
+            if (!rewarded) {
+                declinedFriendIds.add(friendId);
+                continue;
+            }
+            if (!out.containsKey(friendId))
+                out.put(friendId, buildReward(m, state));
         }
         return out;
     }
@@ -500,18 +537,10 @@ public with sharing class ExtolePersonCardController {
                     (Map<String, Object>) JSON.deserializeUntyped(res.getBody())
                 );
 
-                HttpRequest dataReq = new HttpRequest();
-                dataReq.setEndpoint(
-                    config.getEndpoint() +
-                        ExtoleConstants.PEOPLE_PATH +
-                        '/' +
-                        pid +
-                        '/data'
+                HttpRequest dataReq = getRequest(
+                    config,
+                    ExtoleConstants.PEOPLE_PATH + '/' + pid + '/data'
                 );
-                dataReq.setMethod('GET');
-                if (!config.isNamedCredentialMode())
-                    dataReq.setHeader('Authorization', config.getAuthHeader());
-                dataReq.setTimeout(config.timeoutMs);
                 HttpResponse dataRes = client.send(config, dataReq);
                 if (
                     dataRes.getStatusCode() >= 200 &&
@@ -558,50 +587,48 @@ public with sharing class ExtolePersonCardController {
         return out;
     }
 
-    private static Map<String, List<ExtolePersonCard.JourneyStep>> fetchProgramTemplates(
+    private static Map<String, String> fetchProgramCampaigns(
         ExtoleConfig config,
         ExtoleClient client,
         Set<String> programs
     ) {
-        Map<String, List<ExtolePersonCard.JourneyStep>> out = new Map<String, List<ExtolePersonCard.JourneyStep>>();
+        Map<String, String> out = new Map<String, String>();
         if (programs.isEmpty())
             return out;
-
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(
-            config.getEndpoint() + ExtoleConstants.CAMPAIGNS_SUMMARY_PATH
+        HttpResponse res = client.send(
+            config,
+            getRequest(config, ExtoleConstants.CAMPAIGNS_SUMMARY_PATH)
         );
-        req.setMethod('GET');
-        if (!config.isNamedCredentialMode())
-            req.setHeader('Authorization', config.getAuthHeader());
-        req.setTimeout(config.timeoutMs);
-
-        HttpResponse res = client.send(config, req);
         if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
             return out;
-
         List<Object> raw = (List<Object>) JSON.deserializeUntyped(
             res.getBody()
         );
         if (raw == null)
             return out;
-
-        // Build program → campaignId, preferring LIVE state
-        Map<String, String> programToCampaignId = new Map<String, String>();
         for (Object o : raw) {
             Map<String, Object> c = (Map<String, Object>) o;
             String prog = getString(c, 'program_label');
-            if (!programs.contains(prog))
-                continue;
             String cid = getString(c, 'campaign_id');
-            if (cid == null)
+            if (!programs.contains(prog) || cid == null)
                 continue;
-            if (
-                !programToCampaignId.containsKey(prog) ||
-                'LIVE'.equals(getString(c, 'state'))
-            ) {
-                programToCampaignId.put(prog, cid);
-            }
+            if (!out.containsKey(prog) || 'LIVE'.equals(getString(c, 'state')))
+                out.put(prog, cid);
+        }
+        return out;
+    }
+
+    private static Map<String, List<ExtolePersonCard.JourneyStep>> fetchProgramTemplates(
+        ExtoleConfig config,
+        ExtoleClient client,
+        Set<String> programs,
+        Map<String, String> campaignByProgram
+    ) {
+        Map<String, List<ExtolePersonCard.JourneyStep>> out = new Map<String, List<ExtolePersonCard.JourneyStep>>();
+        Map<String, String> programToCampaignId = new Map<String, String>();
+        for (String prog : programs) {
+            if (campaignByProgram.containsKey(prog))
+                programToCampaignId.put(prog, campaignByProgram.get(prog));
         }
 
         for (String prog : programToCampaignId.keySet()) {
@@ -640,18 +667,13 @@ public with sharing class ExtolePersonCardController {
         String pid
     ) {
         List<ExtolePersonCard.JourneyStep> out = new List<ExtolePersonCard.JourneyStep>();
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(
-            config.getEndpoint() +
-                ExtoleConstants.PEOPLE_PATH +
+        HttpRequest req = getRequest(
+            config,
+            ExtoleConstants.PEOPLE_PATH +
                 '/' +
                 pid +
                 '/steps?limit=25&journey_names=FRIEND&is_primary=true'
         );
-        req.setMethod('GET');
-        if (!config.isNamedCredentialMode())
-            req.setHeader('Authorization', config.getAuthHeader());
-        req.setTimeout(config.timeoutMs);
         try {
             HttpResponse res = client.send(config, req);
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
@@ -689,18 +711,13 @@ public with sharing class ExtolePersonCardController {
         String campaignId
     ) {
         Set<String> names = new Set<String>();
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(
-            config.getEndpoint() +
-                ExtoleConstants.CAMPAIGNS_PATH +
+        HttpRequest req = getRequest(
+            config,
+            ExtoleConstants.CAMPAIGNS_PATH +
                 '/' +
                 campaignId +
                 '/controllers/built'
         );
-        req.setMethod('GET');
-        if (!config.isNamedCredentialMode())
-            req.setHeader('Authorization', config.getAuthHeader());
-        req.setTimeout(config.timeoutMs);
         try {
             HttpResponse res = client.send(config, req);
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
@@ -744,18 +761,13 @@ public with sharing class ExtolePersonCardController {
         List<ExtolePersonCard.JourneyStep> out = new List<ExtolePersonCard.JourneyStep>();
         if (friendStepNames.isEmpty())
             return out;
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(
-            config.getEndpoint() +
-                ExtoleConstants.CAMPAIGNS_PATH +
+        HttpRequest req = getRequest(
+            config,
+            ExtoleConstants.CAMPAIGNS_PATH +
                 '/' +
                 campaignId +
                 '/flow-steps/built'
         );
-        req.setMethod('GET');
-        if (!config.isNamedCredentialMode())
-            req.setHeader('Authorization', config.getAuthHeader());
-        req.setTimeout(config.timeoutMs);
         try {
             HttpResponse res = client.send(config, req);
             if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
@@ -913,6 +925,226 @@ public with sharing class ExtolePersonCardController {
                 data.referredBy.sfdcRecordId = l.recordId;
                 data.referredBy.sfdcObjectType = l.objectType;
             }
+        }
+    }
+
+    private static Map<String, String> fetchAdvocateAmounts(
+        ExtoleConfig config,
+        ExtoleClient client,
+        Map<String, String> campaignByProgram
+    ) {
+        Map<String, String> out = new Map<String, String>();
+        if (
+            campaignByProgram.isEmpty() ||
+            Limits.getCallouts() + 2 > Limits.getLimitCallouts()
+        )
+            return out;
+        Map<String, String> supplierAmounts = fetchSupplierAmounts(
+            config,
+            client
+        );
+        if (supplierAmounts.isEmpty())
+            return out;
+        for (String program : campaignByProgram.keySet()) {
+            if (Limits.getCallouts() >= Limits.getLimitCallouts())
+                break;
+            String amount = fetchAdvocateAmount(
+                config,
+                client,
+                campaignByProgram.get(program),
+                supplierAmounts
+            );
+            if (amount != null)
+                out.put(program, amount);
+        }
+        return out;
+    }
+
+    private static HttpRequest getRequest(ExtoleConfig config, String path) {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(config.getEndpoint() + path);
+        req.setMethod('GET');
+        if (!config.isNamedCredentialMode())
+            req.setHeader('Authorization', config.getAuthHeader());
+        req.setTimeout(config.timeoutMs);
+        return req;
+    }
+
+    private static Map<String, String> fetchSupplierAmounts(
+        ExtoleConfig config,
+        ExtoleClient client
+    ) {
+        Map<String, String> out = new Map<String, String>();
+        HttpResponse res = client.send(
+            config,
+            getRequest(config, '/v6/reward-suppliers')
+        );
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
+            return out;
+        Object parsed = JSON.deserializeUntyped(res.getBody());
+        if (!(parsed instanceof List<Object>))
+            return out;
+        for (Object o : (List<Object>) parsed) {
+            if (!(o instanceof Map<String, Object>))
+                continue;
+            Map<String, Object> m = (Map<String, Object>) o;
+            Object fv = m.get('face_value');
+            String id = getString(m, 'id');
+            if (id == null || fv == null)
+                continue;
+            try {
+                out.put(
+                    id,
+                    formatAmount(
+                        Decimal.valueOf(String.valueOf(fv)),
+                        getString(m, 'face_value_type')
+                    )
+                );
+            } catch (Exception ignored) {
+            }
+        }
+        return out;
+    }
+
+    // The advocate's reward is the reward component installed under the
+    // campaign's advocate role.
+    private static String fetchAdvocateAmount(
+        ExtoleConfig config,
+        ExtoleClient client,
+        String campaignId,
+        Map<String, String> supplierAmounts
+    ) {
+        HttpResponse res = client.send(
+            config,
+            getRequest(
+                config,
+                ExtoleConstants.CAMPAIGNS_PATH +
+                    '/' +
+                    campaignId +
+                    '/components'
+            )
+        );
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300)
+            return null;
+        Object parsed = JSON.deserializeUntyped(res.getBody());
+        if (!(parsed instanceof List<Object>))
+            return null;
+        List<Object> components = (List<Object>) parsed;
+        Set<String> advocateRoleIds = new Set<String>();
+        for (Object o : components) {
+            Map<String, Object> comp = (Map<String, Object>) o;
+            if (
+                hasType(comp, 'role-v10.0') &&
+                'advocate'.equals(getString(comp, 'name'))
+            )
+                advocateRoleIds.add(getString(comp, 'id'));
+        }
+        for (Object o : components) {
+            Map<String, Object> comp = (Map<String, Object>) o;
+            if (!hasType(comp, 'reward-v10.0'))
+                continue;
+            Object parents = comp.get('component_ids');
+            if (!(parents instanceof List<Object>))
+                continue;
+            for (Object parent : (List<Object>) parents) {
+                if (advocateRoleIds.contains((String) parent))
+                    return supplierAmounts.get(rewardSupplierId(comp));
+            }
+        }
+        return null;
+    }
+
+    private static Boolean hasType(Map<String, Object> comp, String type) {
+        Object types = comp.get('types');
+        return types instanceof List<Object> &&
+            ((List<Object>) types).contains(type);
+    }
+
+    private static String rewardSupplierId(Map<String, Object> comp) {
+        Object varsRaw = comp.get('variables');
+        if (!(varsRaw instanceof List<Object>))
+            return null;
+        for (Object v : (List<Object>) varsRaw) {
+            if (!(v instanceof Map<String, Object>))
+                continue;
+            Map<String, Object> variable = (Map<String, Object>) v;
+            if (!'rewardSupplierId'.equals(getString(variable, 'name')))
+                continue;
+            Object values = variable.get('values');
+            if (values instanceof Map<String, Object>) {
+                Object d = ((Map<String, Object>) values).get('default');
+                return d instanceof String ? (String) d : null;
+            }
+        }
+        return null;
+    }
+
+    // 'pending' only when every read that could show a reward or a decline
+    // finished; otherwise the status is unknown and the card shows none.
+    private static String rewardStatus(
+        ExtolePersonCard.Reward reward,
+        Boolean declined,
+        Boolean known
+    ) {
+        if (reward != null)
+            return 'rewarded';
+        if (declined)
+            return 'declined';
+        return known ? 'pending' : null;
+    }
+
+    // Step data values arrive as {scope, value}.
+    private static String decisionState(Object dataRaw) {
+        if (!(dataRaw instanceof Map<String, Object>))
+            return null;
+        Object stateRaw = ((Map<String, Object>) dataRaw).get('state');
+        if (stateRaw instanceof Map<String, Object>)
+            stateRaw = ((Map<String, Object>) stateRaw).get('value');
+        return stateRaw instanceof String
+            ? ((String) stateRaw).toLowerCase()
+            : null;
+    }
+
+    // Adds the friends whose latest reward decision is a decline. A decision
+    // is a reward_evaluated step (state "declined") or a manual decline or
+    // approval; the newest one for a friend wins.
+    private static void addDeclinedEvaluations(
+        List<Object> steps,
+        Set<String> declinedFriendIds
+    ) {
+        Map<String, String> latestDate = new Map<String, String>();
+        Map<String, Boolean> latestDeclined = new Map<String, Boolean>();
+        for (Object o : steps) {
+            Map<String, Object> step = (Map<String, Object>) o;
+            String name = getString(step, 'name');
+            Boolean declined;
+            if (name == 'reward_manually_declined')
+                declined = true;
+            else if (name == 'reward_manually_approved')
+                declined = false;
+            else if (name == 'reward_evaluated')
+                declined = 'declined'.equals(decisionState(step.get('data')));
+            else
+                continue;
+
+            Object key = step.get('journey_key');
+            if (!(key instanceof Map<String, Object>))
+                continue;
+            String friendId = getString((Map<String, Object>) key, 'value');
+            String stepDate = getString(step, 'event_date');
+            if (friendId == null || stepDate == null)
+                continue;
+            if (
+                !latestDate.containsKey(friendId) ||
+                stepDate > latestDate.get(friendId)
+            ) {
+                latestDate.put(friendId, stepDate);
+                latestDeclined.put(friendId, declined);
+            }
+        }
+        for (String friendId : latestDeclined.keySet()) {
+            if (latestDeclined.get(friendId))
+                declinedFriendIds.add(friendId);
         }
     }
 

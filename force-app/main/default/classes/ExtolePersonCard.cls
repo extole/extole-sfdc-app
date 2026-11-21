@@ -38,6 +38,8 @@ public with sharing class ExtolePersonCard {
         @AuraEnabled
         public Reward reward;
         @AuraEnabled
+        public String status;
+        @AuraEnabled
         public String sfdcRecordId;
         @AuraEnabled
         public String sfdcObjectType;
@@ -52,6 +54,9 @@ public with sharing class ExtolePersonCard {
         public String program;
         @AuraEnabled
         public Reward reward;
+        // 'rewarded', 'declined' or 'pending'; null when it can't be known
+        @AuraEnabled
+        public String status;
     }
 
     public class ReferredBy {
@@ -88,6 +93,8 @@ public with sharing class ExtolePersonCard {
         public Boolean friendsTruncated = false;
         @AuraEnabled
         public Boolean rewardsTruncated = false;
+        @AuraEnabled
+        public Map<String, String> advocateAmounts = new Map<String, String>();
         @AuraEnabled
         public ReferredBy referredBy;
         @AuraEnabled

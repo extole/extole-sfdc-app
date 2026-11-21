@@ -46,3 +46,32 @@
     font-size: 13px;
     color: #6b7280;
 }
+
+.filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.filters-label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.chip {
+    background: #ffffff;
+    border: 1px solid #c9c7c5;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #181818;
+}
+
+.chip-active {
+    background: #1d9e75;
+    border-color: #1d9e75;
+    color: #ffffff;
+}

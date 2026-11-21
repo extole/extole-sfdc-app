@@ -166,10 +166,6 @@ export default class ExtolePersonCard extends LightningElement {
         return !!(this.card && this.card.friendsTruncated);
     }
 
-    get rewardsTruncated() {
-        return !!(this.card && this.card.rewardsTruncated);
-    }
-
     get totalFriendsText() {
         return this.friendsTruncated
             ? `${this.totalFriends}+`
@@ -232,7 +228,7 @@ export default class ExtolePersonCard extends LightningElement {
     }
 
     get programGroups() {
-        return groupByProgram(this.friendsLoaded, this.rewardsTruncated);
+        return groupByProgram(this.friendsLoaded, this.card.advocateAmounts);
     }
 
     async handleShowMore() {
@@ -270,7 +266,7 @@ export default class ExtolePersonCard extends LightningElement {
             friendRefs: this.card.friendRefs || [],
             loaded: this.friendsLoaded,
             friendsTruncated: this.friendsTruncated,
-            rewardsTruncated: this.rewardsTruncated
+            advocateAmounts: this.card.advocateAmounts
         });
     }
 

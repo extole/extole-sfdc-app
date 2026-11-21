@@ -1,11 +1,28 @@
 <template>
     <lightning-modal-header label={headerLabel}></lightning-modal-header>
     <lightning-modal-body>
+        <div class="filters">
+            <span class="filters-label">Show:</span>
+            <template for:each={filters} for:item="f">
+                <button
+                    key={f.key}
+                    type="button"
+                    class={f.cls}
+                    data-filter={f.key}
+                    onclick={handleFilter}
+                >
+                    {f.label}
+                </button>
+            </template>
+        </div>
         <template lwc:if={isLoading}>
             <div class="loading-row">Loading friends…</div>
         </template>
         <template lwc:if={error}>
             <div class="error-banner">{error}</div>
+        </template>
+        <template lwc:if={showEmpty}>
+            <p class="empty">No friends match.</p>
         </template>
         <template for:each={groups} for:item="g">
             <div key={g.program} class="program-group">

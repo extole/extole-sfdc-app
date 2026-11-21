@@ -9,6 +9,13 @@
                         variant="inverse"
                     ></lightning-icon>
                 </template>
+                <template lwc:elseif={friend.avatarIsDeclined}>
+                    <lightning-icon
+                        icon-name="utility:close"
+                        size="x-small"
+                        variant="inverse"
+                    ></lightning-icon>
+                </template>
                 <template lwc:else>
                     <span class="avatar-initials">{friend.avatarInitials}</span>
                 </template>
@@ -22,11 +29,19 @@
                 <template lwc:else>
                     <span class="engagement-name">{friend.displayName}</span>
                 </template>
-                <div class="engagement-status">{friend.statusText}</div>
             </div>
-            <span class={friend.rewardStateClass}
-                >{friend.rewardStateText}</span
-            >
+            <div class="engagement-reward">
+                <template lwc:if={friend.rewardStateText}>
+                    <span class={friend.rewardStateClass}
+                        >{friend.rewardStateText}<template
+                            lwc:if={friend.rewardDateText}
+                            ><span class="pill-date"
+                                >{friend.rewardDateText}</span
+                            ></template
+                        ></span
+                    >
+                </template>
+            </div>
         </div>
         <template lwc:if={friend.hasMilestones}>
             <div class="milestone-list">

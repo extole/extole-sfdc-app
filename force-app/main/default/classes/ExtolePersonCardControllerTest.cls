@@ -596,4 +596,363 @@ private class ExtolePersonCardControllerTest {
             )
             .reward.amountLabel;
     }
+
+    private static ExtolePersonCard.FriendRef refFor(
+        ExtoleConfigurableMock mock
+    ) {
+        Test.setMock(HttpCalloutMock.class, mock);
+        return ExtolePersonCardController.getCardData('advocate@example.com')
+            .friendRefs[0];
+    }
+
+    @IsTest
+    static void testAFriendWithNoDecisionIsNotRewardedYet() {
+        Test.startTest();
+        ExtolePersonCard.FriendRef ref = refFor(manyFriendsMock(1));
+        Test.stopTest();
+
+        System.assertEquals('pending', ref.status);
+    }
+
+    @IsTest
+    static void testARewardThatWentOutMakesTheFriendRewarded() {
+        Test.startTest();
+        ExtolePersonCard.FriendRef ref = refFor(
+            manyFriendsMock(1)
+                .addPattern(
+                    pageUrl('rewards', 0),
+                    200,
+                    '[{"id":"r1","state":"FULFILLED","face_value":5,"face_value_type":"USD",' +
+                    '"data":{"other_person_id":{"value":"p_f0"}}}]'
+                )
+        );
+        Test.stopTest();
+
+        System.assertEquals('rewarded', ref.status);
+    }
+
+    @IsTest
+    static void testAFailedOrCanceledRewardMakesTheFriendDeclined() {
+        Test.startTest();
+        for (
+            String state : new List<String>{ 'FAILED', 'CANCELED', 'REVOKED' }
+        ) {
+            ExtolePersonCard.FriendRef ref = refFor(
+                manyFriendsMock(1)
+                    .addPattern(
+                        pageUrl('rewards', 0),
+                        200,
+                        '[{"id":"r1","state":"' +
+                            state +
+                            '","face_value":5,"face_value_type":"USD",' +
+                            '"data":{"other_person_id":{"value":"p_f0"}}}]'
+                    )
+            );
+            System.assertEquals('declined', ref.status, state);
+        }
+        Test.stopTest();
+    }
+
+    private static String decision(String name, String stamp, String state) {
+        return '{"name":"' +
+            name +
+            '","event_date":"' +
+            stamp +
+            '",' +
+            '"journey_key":{"name":"identity_person_id","value":"p_f0"},' +
+            '"data":{"state":{"scope":"PRIVATE","value":"' +
+            state +
+            '"}}}';
+    }
+
+    // One friend, with the reward decisions answered first because the
+    // generic /steps pattern in manyFriendsMock would otherwise match them.
+    private static ExtoleConfigurableMock decisionsMock(
+        Integer status,
+        String decisions
+    ) {
+        return new ExtoleConfigurableMock()
+            .addPattern(
+                '/steps?journey_names=reward&limit=100&offset=0',
+                status,
+                decisions
+            )
+            .addPattern(
+                '/data',
+                200,
+                '{"email":{"name":"email","value":"friend@example.com","scope":"PUBLIC"}}'
+            )
+            .addPattern('/steps', 200, '[]')
+            .addPattern(pageUrl('relationships', 0), 200, advocateRels(0, 1))
+            .addPattern(
+                '/v5/persons?identity_key_value=',
+                200,
+                '[{"id":"p_advocate"}]'
+            )
+            .addPattern(
+                '/v5/persons/p_f',
+                200,
+                '{"id":"p_f","identity_key":"email","identity_key_value":"friend@example.com"}'
+            )
+            .withDefault(200, '[]');
+    }
+
+    @IsTest
+    static void testADeclinedRewardDecisionMakesTheFriendDeclined() {
+        Test.startTest();
+        ExtolePersonCard.FriendRef ref = refFor(
+            decisionsMock(
+                200,
+                '[' +
+                    decision(
+                        'reward_evaluated',
+                        '2026-11-18T12:37:23.569-08:00',
+                        'declined'
+                    ) +
+                    ']'
+            )
+        );
+        Test.stopTest();
+
+        System.assertEquals('declined', ref.status);
+    }
+
+    @IsTest
+    static void testTheNewestDecisionWins() {
+        Test.startTest();
+        ExtolePersonCard.FriendRef approved = refFor(
+            decisionsMock(
+                200,
+                '[' +
+                    decision(
+                        'reward_manually_approved',
+                        '2026-11-19T09:00:00.000-08:00',
+                        ''
+                    ) +
+                    ',' +
+                    decision(
+                        'reward_evaluated',
+                        '2026-11-18T12:00:00.000-08:00',
+                        'declined'
+                    ) +
+                    ']'
+            )
+        );
+        System.assertEquals('pending', approved.status);
+
+        ExtolePersonCard.FriendRef declined = refFor(
+            decisionsMock(
+                200,
+                '[' +
+                    decision(
+                        'reward_manually_declined',
+                        '2026-11-19T09:00:00.000-08:00',
+                        ''
+                    ) +
+                    ',' +
+                    decision(
+                        'reward_evaluated',
+                        '2026-11-18T12:00:00.000-08:00',
+                        'approved'
+                    ) +
+                    ']'
+            )
+        );
+        Test.stopTest();
+
+        System.assertEquals('declined', declined.status);
+    }
+
+    @IsTest
+    static void testARewardBeatsADeclineForTheSameFriend() {
+        Test.startTest();
+        ExtolePersonCard.FriendRef ref = refFor(
+            manyFriendsMock(1)
+                .addPattern(
+                    pageUrl('rewards', 0),
+                    200,
+                    '[{"id":"r1","state":"EARNED","face_value":5,"face_value_type":"USD",' +
+                        '"data":{"other_person_id":{"value":"p_f0"}}},' +
+                        '{"id":"r2","state":"FAILED","face_value":5,"face_value_type":"USD",' +
+                        '"data":{"other_person_id":{"value":"p_f0"}}}]'
+                )
+        );
+        Test.stopTest();
+
+        System.assertEquals('rewarded', ref.status);
+    }
+
+    @IsTest
+    static void testAFailedDecisionReadLeavesTheStatusUnknown() {
+        Test.startTest();
+        ExtolePersonCard.FriendRef ref = refFor(decisionsMock(500, '{}'));
+        Test.stopTest();
+
+        System.assertEquals(null, ref.status);
+    }
+
+    @IsTest
+    static void testDecisionsAtThePageLimitLeaveTheStatusUnknown() {
+        // Three full pages of decisions for other friends: a decline for
+        // this one could be on a page that was never read.
+        String filler = '[';
+        for (Integer i = 0; i < 100; i++) {
+            filler +=
+                (i > 0 ? ',' : '') +
+                '{"name":"reward_evaluated","event_date":"2026-11-18T00:00:00.000-08:00"}';
+        }
+        filler += ']';
+        ExtoleConfigurableMock capped = new ExtoleConfigurableMock();
+        for (Integer page = 0; page < 3; page++) {
+            capped.addPattern(
+                '/steps?journey_names=reward&limit=100&offset=' + (page * 100),
+                200,
+                filler
+            );
+        }
+        Test.startTest();
+        ExtolePersonCard.FriendRef ref = refFor(
+            withPersonLookups(
+                capped.addPattern(
+                    pageUrl('relationships', 0),
+                    200,
+                    advocateRels(0, 1)
+                )
+            )
+        );
+        Test.stopTest();
+
+        System.assertEquals(null, ref.status);
+    }
+
+    @IsTest
+    static void testRewardsAtThePageLimitLeaveOnlyTheStatusUnknown() {
+        ExtoleConfigurableMock mock = new ExtoleConfigurableMock();
+        String firstPage =
+            '[{"id":"r1","state":"EARNED","face_value":5,"face_value_type":"USD",' +
+            '"data":{"other_person_id":{"name":"other_person_id","value":"p_f0"}}},' +
+            filler(99).substring(1);
+        mock.addPattern(pageUrl('rewards', 0), 200, firstPage);
+        for (Integer page = 1; page < 10; page++) {
+            mock.addPattern(pageUrl('rewards', page), 200, filler(100));
+        }
+        mock.addPattern(pageUrl('relationships', 0), 200, advocateRels(0, 2));
+        Test.setMock(HttpCalloutMock.class, withPersonLookups(mock));
+
+        Test.startTest();
+        ExtolePersonCard.CardData result = ExtolePersonCardController.getCardData(
+            'advocate@example.com'
+        );
+        Test.stopTest();
+
+        System.assertEquals('rewarded', result.friendRefs[0].status);
+        System.assertEquals(null, result.friendRefs[1].status);
+    }
+
+    private static ExtoleConfigurableMock amountsMock(String components) {
+        return manyFriendsMock(1)
+            .addPattern(
+                '/v6/reward-suppliers',
+                200,
+                '[{"id":"s1","face_value":5,"face_value_type":"USD"},' +
+                '{"id":"s2","face_value":10,"face_value_type":"USD"}]'
+            )
+            .addPattern(
+                '/v2/campaign-summaries',
+                200,
+                '[{"campaign_id":"c1","program_label":"referral-program","state":"LIVE"}]'
+            )
+            .addPattern('/v2/campaigns/c1/components', 200, components);
+    }
+
+    private static String role(String id, String name) {
+        return '{"id":"' +
+            id +
+            '","name":"' +
+            name +
+            '","types":["role-v10.0"],"component_ids":[]}';
+    }
+
+    private static String reward(String name, String roleId, String supplier) {
+        return '{"id":"' +
+            name +
+            '","name":"' +
+            name +
+            '","types":["reward-v10.0"],"component_ids":["' +
+            roleId +
+            '"],' +
+            '"variables":[{"name":"rewardSupplierId","values":{"default":"' +
+            supplier +
+            '"}}]}';
+    }
+
+    private static String advocateAmount(String components) {
+        Test.setMock(HttpCalloutMock.class, amountsMock(components));
+        return ExtolePersonCardController.getCardData('advocate@example.com')
+            .advocateAmounts.get('referral-program');
+    }
+
+    @IsTest
+    static void testTheAdvocatesAmountIsTheRewardUnderTheAdvocateRole() {
+        Test.startTest();
+        String amount = advocateAmount(
+            '[' +
+                role('ra', 'advocate') +
+                ',' +
+                role('rf', 'friend') +
+                ',' +
+                reward('first', 'rf', 's1') +
+                ',' +
+                reward('second', 'ra', 's2') +
+                ']'
+        );
+        Test.stopTest();
+
+        System.assertEquals('$10', amount);
+    }
+
+    @IsTest
+    static void testARewardIsNotTheAdvocatesJustBecauseOfItsName() {
+        Test.startTest();
+        String amount = advocateAmount(
+            '[' +
+                role('ra', 'advocate') +
+                ',' +
+                role('rf', 'friend') +
+                ',' +
+                reward('advocate_reward', 'rf', 's1') +
+                ']'
+        );
+        Test.stopTest();
+
+        System.assertEquals(null, amount);
+    }
+
+    @IsTest
+    static void testNoAdvocateAmountWhenTheCampaignHasNoAdvocateReward() {
+        Test.startTest();
+        String amount = advocateAmount(
+            '[' + role('rf', 'friend') + ',' + reward('r', 'rf', 's1') + ']'
+        );
+        Test.stopTest();
+
+        System.assertEquals(null, amount);
+    }
+
+    @IsTest
+    static void testNoAmountWhenTheRewardSetupCannotBeRead() {
+        Test.setMock(
+            HttpCalloutMock.class,
+            manyFriendsMock(1).addPattern('/v6/reward-suppliers', 500, '{}')
+        );
+
+        Test.startTest();
+        ExtolePersonCard.CardData result = ExtolePersonCardController.getCardData(
+            'advocate@example.com'
+        );
+        Test.stopTest();
+
+        System.assertEquals(0, result.advocateAmounts.size());
+        System.assertEquals(1, result.friendRefs.size());
+    }
 }
