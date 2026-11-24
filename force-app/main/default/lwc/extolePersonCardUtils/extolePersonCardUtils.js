@@ -146,3 +146,37 @@ export function groupByProgram(friends, amounts) {
         friends: list
     }));
 }
+
+export function referrerKey(r) {
+    return `${r.personId}|${r.program || ''}`;
+}
+
+export function mergeReferrers(details, refs) {
+    const detailById = new Map((details || []).map((d) => [d.personId, d]));
+    return (refs || []).map((ref) => ({
+        ...detailById.get(ref.personId),
+        personId: ref.personId,
+        program: ref.program
+    }));
+}
+
+export function groupReferrers(referrers) {
+    const byProgram = new Map();
+    for (const r of referrers || []) {
+        const program = r.program || 'unknown';
+        if (!byProgram.has(program)) byProgram.set(program, []);
+        byProgram.get(program).push({
+            key: referrerKey(r),
+            displayName: r.displayName || r.email || 'Anonymous',
+            sfdcUrl: r.sfdcRecordId
+                ? `/lightning/r/${r.sfdcObjectType}/${r.sfdcRecordId}/view`
+                : null,
+            isLinked: !!r.sfdcRecordId
+        });
+    }
+    return [...byProgram.entries()].map(([program, list]) => ({
+        program,
+        programStyle: programPillStyle(program),
+        referrers: list
+    }));
+}

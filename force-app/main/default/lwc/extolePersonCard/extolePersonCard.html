@@ -51,31 +51,61 @@
                                 size="xx-small"
                                 class="section-chevron"
                             ></lightning-icon>
-                            <span class="section-label">Referred by</span>
+                            <span class="section-label">{referredByLabel}</span>
                         </div>
                         <template lwc:if={referredByExpanded}>
-                            <div class="section-body">
-                                <div class="referred-by-row">
-                                    <span
-                                        class="program-pill"
-                                        style={referredByDecorated.programStyle}
-                                        >{referredByDecorated.program}</span
-                                    >
-                                    <template
-                                        lwc:if={referredByDecorated.isLinked}
-                                    >
-                                        <a
-                                            href={referredByDecorated.sfdcUrl}
-                                            class="record-link"
-                                            >{referredByDecorated.displayName}</a
+                            <div class="section-body friends-body">
+                                <template
+                                    for:each={referrerGroups}
+                                    for:item="g"
+                                >
+                                    <div key={g.program} class="program-group">
+                                        <span
+                                            class="program-pill"
+                                            style={g.programStyle}
+                                            >{g.program}</span
                                         >
-                                    </template>
-                                    <template lwc:else>
-                                        <span class="plain-email"
-                                            >{referredByDecorated.displayName}</span
+                                        <template
+                                            for:each={g.referrers}
+                                            for:item="r"
                                         >
-                                    </template>
-                                </div>
+                                            <div
+                                                key={r.key}
+                                                class="referred-by-row"
+                                            >
+                                                <template lwc:if={r.isLinked}>
+                                                    <a
+                                                        href={r.sfdcUrl}
+                                                        class="record-link"
+                                                        >{r.displayName}</a
+                                                    >
+                                                </template>
+                                                <template lwc:else>
+                                                    <span class="plain-email"
+                                                        >{r.displayName}</span
+                                                    >
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template lwc:if={referrersExpandable}>
+                                    <div class="show-more-row">
+                                        <span class="show-more-count"
+                                            >{referrersCountText}</span
+                                        >
+                                        <template
+                                            lwc:if={referrersShowMoreVisible}
+                                        >
+                                            <lightning-button
+                                                variant="neutral"
+                                                label="Show more"
+                                                onclick={handleShowMoreReferrers}
+                                                disabled={isLoadingMoreReferrers}
+                                            ></lightning-button>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>

@@ -5,6 +5,8 @@ import {
     describeReward,
     decorateFriend,
     groupByProgram,
+    groupReferrers,
+    mergeReferrers,
     detailsArgs,
     attachRewards
 } from 'c/extolePersonCardUtils';
@@ -223,5 +225,67 @@ describe('attachRewards', () => {
         expect(out[1].status).toBe('declined');
         expect(out[2].reward).toBeNull();
         expect(out[2].status).toBeNull();
+    });
+});
+
+describe('groupReferrers', () => {
+    it('groups referrers under their program', () => {
+        const groups = groupReferrers([
+            { personId: 'p1', program: 'a', displayName: 'Ann' },
+            { personId: 'p2', program: 'b', email: 'bo@example.com' },
+            {
+                personId: 'p3',
+                program: 'a',
+                displayName: 'Cy',
+                sfdcRecordId: '003x',
+                sfdcObjectType: 'Contact'
+            }
+        ]);
+        expect(groups.map((g) => g.program)).toEqual(['a', 'b']);
+        expect(groups[0].referrers.map((r) => r.displayName)).toEqual([
+            'Ann',
+            'Cy'
+        ]);
+        expect(groups[0].referrers[1].sfdcUrl).toBe(
+            '/lightning/r/Contact/003x/view'
+        );
+        expect(groups[0].referrers[1].isLinked).toBe(true);
+        expect(groups[1].referrers[0].displayName).toBe('bo@example.com');
+        expect(groups[1].referrers[0].isLinked).toBe(false);
+    });
+
+    it('lists one person once per program', () => {
+        const groups = groupReferrers([
+            { personId: 'p1', program: 'a', displayName: 'Ann' },
+            { personId: 'p1', program: 'b', displayName: 'Ann' }
+        ]);
+        expect(groups.map((g) => g.referrers[0].key)).toEqual(['p1|a', 'p1|b']);
+    });
+
+    it('names a referrer with no name or email Anonymous and a blank program unknown', () => {
+        const groups = groupReferrers([{ personId: 'p1' }]);
+        expect(groups[0].program).toBe('unknown');
+        expect(groups[0].referrers[0].displayName).toBe('Anonymous');
+        expect(groupReferrers(undefined)).toEqual([]);
+    });
+});
+
+describe('mergeReferrers', () => {
+    it('puts each loaded name on its reference, and a person in two programs on both', () => {
+        const out = mergeReferrers(
+            [{ personId: 'p1', displayName: 'Ann', sfdcRecordId: '003x' }],
+            [
+                { personId: 'p1', program: 'a' },
+                { personId: 'p1', program: 'b' },
+                { personId: 'p2', program: 'a' }
+            ]
+        );
+        expect(out.map((r) => r.displayName)).toEqual([
+            'Ann',
+            'Ann',
+            undefined
+        ]);
+        expect(out.map((r) => r.program)).toEqual(['a', 'b', 'a']);
+        expect(out[0].sfdcRecordId).toBe('003x');
     });
 });

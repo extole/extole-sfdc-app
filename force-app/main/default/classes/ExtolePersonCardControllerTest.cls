@@ -1,5 +1,7 @@
 @IsTest
 private class ExtolePersonCardControllerTest {
+    private static final String REFERRERS_URL = '/relationships?my_roles=FRIEND&include_duplicate_identities=true&limit=100&offset=0';
+
     @IsTest
     static void testBlankEmailReturnsEmptyCard() {
         Test.startTest();
@@ -12,7 +14,7 @@ private class ExtolePersonCardControllerTest {
         System.assertEquals(false, result.hasAnyData);
         System.assertEquals(0, result.shareLinks.size());
         System.assertEquals(0, result.friends.size());
-        System.assertEquals(null, result.referredBy);
+        System.assertEquals(0, result.referrers.size());
     }
 
     @IsTest
@@ -95,8 +97,12 @@ private class ExtolePersonCardControllerTest {
             .addPattern(
                 '/v5/persons/p_advocate/relationships?limit=100&offset=0',
                 200,
-                '[{"my_role":"ADVOCATE","other_person_id":"p_friend","program":"referral-program"},' +
-                '{"my_role":"FRIEND","other_person_id":"p_referrer","program":"referral-program"}]'
+                '[{"my_role":"ADVOCATE","other_person_id":"p_friend","program":"referral-program"}]'
+            )
+            .addPattern(
+                REFERRERS_URL,
+                200,
+                '[{"my_role":"FRIEND","other_person_id":"p_referrer","program":"referral-program"}]'
             )
             .addPattern(
                 '/v5/persons/p_advocate/rewards?limit=100&offset=0',
@@ -153,9 +159,9 @@ private class ExtolePersonCardControllerTest {
         System.assertEquals('friend_signup', friend.steps[0].name);
         System.assertEquals('2026-01-02', friend.steps[0].dateCompleted);
 
-        System.assertNotEquals(null, result.referredBy);
-        System.assertEquals('p_referrer', result.referredBy.personId);
-        System.assertEquals('referrer@example.com', result.referredBy.email);
+        System.assertEquals(1, result.totalReferrers);
+        System.assertEquals('p_referrer', result.referrers[0].personId);
+        System.assertEquals('referrer@example.com', result.referrers[0].email);
     }
 
     @IsTest
@@ -305,6 +311,245 @@ private class ExtolePersonCardControllerTest {
                 '","state":"CANCELED"}';
         }
         return body + ']';
+    }
+
+    private static String referrerRel(
+        String otherId,
+        String program,
+        String identity
+    ) {
+        return '{"my_role":"FRIEND","other_person_id":"' +
+            otherId +
+            '","program":"' +
+            program +
+            '","other_person":{"id":"' +
+            otherId +
+            '","identity_key":{"name":"email"}' +
+            (identity == null
+                ? ''
+                : ',"identity_key_value":"' + identity + '"') +
+            '}}';
+    }
+
+    private static String referrerRels(Integer count, String program) {
+        String body = '[';
+        for (Integer i = 0; i < count; i++) {
+            body +=
+                (i > 0 ? ',' : '') +
+                referrerRel('p_r' + i, program, 'r' + i + '@example.com');
+        }
+        return body + ']';
+    }
+
+    private static ExtoleConfigurableMock referrersMock(
+        String friendRelationships,
+        String referrerRelationships
+    ) {
+        return new ExtoleConfigurableMock()
+            .addPattern(
+                '/v5/persons/p_advocate/relationships?limit=100&offset=0',
+                200,
+                friendRelationships
+            )
+            .addPattern(REFERRERS_URL, 200, referrerRelationships)
+            .addPattern(
+                '/data',
+                200,
+                '{"email":{"name":"email","value":"looked@example.com","scope":"PUBLIC"},' +
+                    '"first_name":{"name":"first_name","value":"Looked","scope":"PUBLIC"},' +
+                    '"last_name":{"name":"last_name","value":"Up","scope":"PUBLIC"}}'
+            )
+            .addPattern('/steps', 200, '[]')
+            .addPattern(
+                '/v5/persons?identity_key_value=',
+                200,
+                '[{"id":"p_advocate"}]'
+            )
+            .addPattern('/v5/persons/p_r', 200, '{"id":"p_r"}')
+            .withDefault(200, '[]');
+    }
+
+    private class RecordingMock implements HttpCalloutMock {
+        ExtoleConfigurableMock answers;
+        List<String> endpoints = new List<String>();
+        RecordingMock(ExtoleConfigurableMock mock) {
+            answers = mock;
+        }
+        public HttpResponse respond(HttpRequest req) {
+            endpoints.add(req.getEndpoint());
+            return answers.respond(req);
+        }
+    }
+
+    @IsTest
+    static void testReferrersAreReadWithDuplicateIdentitiesAndKeyedOnIdentity() {
+        // p_r0 referred this person in two programs. p_r0b is a duplicate
+        // person with p_r0's identity, in the first program. The two people
+        // with no identity are two referrers.
+        Test.setMock(
+            HttpCalloutMock.class,
+            referrersMock(
+                '[]',
+                '[' +
+                    referrerRel('p_r0', 'prog-a', 'r0@example.com') +
+                    ',' +
+                    referrerRel('p_r1', 'prog-b', 'r1@example.com') +
+                    ',' +
+                    referrerRel('p_r0', 'prog-b', 'r0@example.com') +
+                    ',' +
+                    referrerRel('p_r0b', 'prog-a', 'r0@example.com') +
+                    ',' +
+                    referrerRel('p_n1', 'prog-a', null) +
+                    ',' +
+                    referrerRel('p_n2', 'prog-a', null) +
+                    ']'
+            )
+        );
+
+        Test.startTest();
+        ExtolePersonCard.CardData result = ExtolePersonCardController.getCardData(
+            'advocate@example.com'
+        );
+        Test.stopTest();
+
+        System.assertEquals(true, result.hasAnyData);
+        System.assertEquals(5, result.totalReferrers);
+        List<String> seen = new List<String>();
+        for (ExtolePersonCard.ReferredBy ref : result.referrerRefs) {
+            seen.add(ref.personId + '|' + ref.program);
+        }
+        System.assertEquals(
+            new List<String>{
+                'p_r0|prog-a',
+                'p_r1|prog-b',
+                'p_r0|prog-b',
+                'p_n1|prog-a',
+                'p_n2|prog-a'
+            },
+            seen
+        );
+    }
+
+    @IsTest
+    static void testOnlyTheFirstReferrersAreLookedUpAndWithoutSteps() {
+        RecordingMock mock = new RecordingMock(
+            referrersMock('[]', referrerRels(7, 'prog-a'))
+        );
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        ExtolePersonCard.CardData result = ExtolePersonCardController.getCardData(
+            'advocate@example.com'
+        );
+        Test.stopTest();
+
+        System.assertEquals(7, result.totalReferrers);
+        System.assertEquals(7, result.referrerRefs.size());
+        System.assertEquals(5, result.referrers.size());
+        System.assertEquals('Looked Up', result.referrers[4].displayName);
+        System.assertEquals('p_r4', result.referrers[4].personId);
+        for (String endpoint : mock.endpoints) {
+            System.assert(
+                !endpoint.contains('/p_r5') && !endpoint.contains('/p_r6'),
+                'looked up a referrer past the first five: ' + endpoint
+            );
+            System.assert(
+                !(endpoint.contains('/p_r') && endpoint.contains('/steps')),
+                'read a referrer\'s steps: ' + endpoint
+            );
+        }
+    }
+
+    @IsTest
+    static void testReferrersPastTheFirstPageAreCounted() {
+        ExtoleConfigurableMock mock = referrersMock(
+            '[]',
+            referrerRels(100, 'prog-a')
+        );
+        mock.addPattern(
+            '&limit=100&offset=100',
+            200,
+            '[' + referrerRel('p_r100', 'prog-a', 'r100@example.com') + ']'
+        );
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        ExtolePersonCard.CardData result = ExtolePersonCardController.getCardData(
+            'advocate@example.com'
+        );
+        Test.stopTest();
+
+        System.assertEquals(101, result.totalReferrers);
+    }
+
+    @IsTest
+    static void testAFriendWhoIsAlsoAReferrerShowsInBoth() {
+        // p_r0 is this person's friend in one program and referrer in another.
+        Test.setMock(
+            HttpCalloutMock.class,
+            referrersMock(
+                '[{"my_role":"ADVOCATE","other_person_id":"p_r0","program":"prog-a"}]',
+                '[' + referrerRel('p_r0', 'prog-b', 'r0@example.com') + ']'
+            )
+        );
+
+        Test.startTest();
+        ExtolePersonCard.CardData result = ExtolePersonCardController.getCardData(
+            'advocate@example.com'
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, result.friends.size());
+        System.assertEquals(1, result.referrers.size());
+        System.assertEquals('Looked Up', result.referrers[0].displayName);
+        System.assertEquals('Looked Up', result.friends[0].displayName);
+    }
+
+    @IsTest
+    static void testReferrerDetailsNameLinkAndSkipSteps() {
+        Contact linked = new Contact(
+            LastName = 'Linked',
+            Email = 'looked@example.com'
+        );
+        insert linked;
+        RecordingMock mock = new RecordingMock(referrersMock('[]', '[]'));
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        List<ExtolePersonCard.ReferredBy> out = ExtolePersonCardController.getReferrerDetails(
+            new List<String>{ 'p_r5', 'p_r6', 'p_r5' }
+        );
+        Test.stopTest();
+
+        System.assertEquals(2, out.size());
+        System.assertEquals('p_r5', out[0].personId);
+        System.assertEquals('Looked Up', out[0].displayName);
+        System.assertEquals(linked.Id, out[0].sfdcRecordId);
+        System.assertEquals('Contact', out[0].sfdcObjectType);
+        for (String endpoint : mock.endpoints) {
+            System.assert(
+                !endpoint.contains('/steps'),
+                'read steps: ' + endpoint
+            );
+        }
+    }
+
+    @IsTest
+    static void testReferrerDetailsKeepsAReferrerWhoseLookupFails() {
+        Test.setMock(
+            HttpCalloutMock.class,
+            new ExtoleConfigurableMock().withDefault(500, '{}')
+        );
+
+        Test.startTest();
+        List<ExtolePersonCard.ReferredBy> out = ExtolePersonCardController.getReferrerDetails(
+            new List<String>{ 'p_r5' }
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, out.size());
+        System.assertEquals('p_r5', out[0].personId);
+        System.assertEquals(null, out[0].displayName);
     }
 
     @IsTest

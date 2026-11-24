@@ -46,6 +46,13 @@ public with sharing class ExtolePersonCardController {
                 '',
                 MAX_PAGES
             );
+            Pages referrerPages = fetchPages(
+                config,
+                client,
+                personPath + '/relationships',
+                'my_roles=FRIEND&include_duplicate_identities=true',
+                MAX_PAGES
+            );
             Pages rewardPages = fetchPages(
                 config,
                 client,
@@ -111,17 +118,26 @@ public with sharing class ExtolePersonCardController {
                         if (String.isNotBlank(f.program))
                             friendPrograms.add(f.program);
                     }
-                } else if (role == 'FRIEND' && result.referredBy == null) {
-                    ExtolePersonCard.ReferredBy rb = new ExtolePersonCard.ReferredBy();
-                    rb.personId = otherId;
-                    rb.program = getString(rel, 'program');
-                    result.referredBy = rb;
-                    personIdsToFetch.add(otherId);
-                    personIdToProgram.put(otherId, rb.program);
                 }
             }
 
             result.totalFriends = result.friendRefs.size();
+            result.referrerRefs = referrersFrom(referrerPages.rows);
+            result.totalReferrers = result.referrerRefs.size();
+            List<String> referrerIdsToFetch = new List<String>();
+            for (
+                Integer i = 0;
+                i < Math.min(FRIEND_BATCH, result.referrerRefs.size());
+                i++
+            ) {
+                ExtolePersonCard.ReferredBy ref = result.referrerRefs[i];
+                ExtolePersonCard.ReferredBy rb = new ExtolePersonCard.ReferredBy();
+                rb.personId = ref.personId;
+                rb.program = ref.program;
+                result.referrers.add(rb);
+                if (!referrerIdsToFetch.contains(ref.personId))
+                    referrerIdsToFetch.add(ref.personId);
+            }
 
             Set<String> allPrograms = new Set<String>();
             for (ExtolePersonCard.FriendRef ref : result.friendRefs) {
@@ -149,7 +165,16 @@ public with sharing class ExtolePersonCardController {
                 client,
                 personIdsToFetch,
                 personIdToProgram,
-                templateByProgram
+                templateByProgram,
+                true
+            );
+            Map<String, PersonProfile> referrerProfileById = fetchPersonProfiles(
+                config,
+                client,
+                referrerIdsToFetch,
+                new Map<String, String>(),
+                new Map<String, List<ExtolePersonCard.JourneyStep>>(),
+                false
             );
 
             for (ExtolePersonCard.Friend f : result.friends) {
@@ -162,24 +187,14 @@ public with sharing class ExtolePersonCardController {
                     f.steps = profile.steps;
                 }
             }
-            if (result.referredBy != null) {
-                PersonProfile profile = profileById.get(
-                    result.referredBy.personId
-                );
-                if (profile != null) {
-                    result.referredBy.email = profile.email;
-                    result.referredBy.displayName = String.isNotBlank(
-                            profile.displayName
-                        )
-                        ? profile.displayName
-                        : profile.email;
-                }
+            for (ExtolePersonCard.ReferredBy rb : result.referrers) {
+                applyReferrerProfile(rb, referrerProfileById.get(rb.personId));
             }
 
             result.hasAnyData =
                 !result.shareLinks.isEmpty() ||
                 !result.friends.isEmpty() ||
-                result.referredBy != null;
+                !result.referrerRefs.isEmpty();
 
             List<String> emails = collectEmails(result);
             if (!emails.isEmpty()) {
@@ -307,7 +322,8 @@ public with sharing class ExtolePersonCardController {
                 client,
                 toFetch,
                 personIdToProgram,
-                templateByProgram
+                templateByProgram,
+                true
             );
 
             List<String> emails = new List<String>();
@@ -345,6 +361,50 @@ public with sharing class ExtolePersonCardController {
         } catch (Exception e) {
             System.debug(
                 'ExtolePersonCardController.getFriendDetails ERROR: ' +
+                e.getMessage()
+            );
+        }
+        return out;
+    }
+
+    @AuraEnabled
+    public static List<ExtolePersonCard.ReferredBy> getReferrerDetails(
+        List<String> personIds
+    ) {
+        List<ExtolePersonCard.ReferredBy> out = new List<ExtolePersonCard.ReferredBy>();
+        if (personIds == null || personIds.isEmpty())
+            return out;
+
+        try {
+            ExtoleConfig config = new ExtoleConfig('Extole_API');
+            ExtoleClient client = new ExtoleClient();
+
+            List<String> toFetch = new List<String>();
+            for (String pid : personIds) {
+                if (String.isNotBlank(pid) && !toFetch.contains(pid))
+                    toFetch.add(pid);
+            }
+            Map<String, PersonProfile> profileById = fetchPersonProfiles(
+                config,
+                client,
+                toFetch,
+                new Map<String, String>(),
+                new Map<String, List<ExtolePersonCard.JourneyStep>>(),
+                false
+            );
+            for (String pid : toFetch) {
+                ExtolePersonCard.ReferredBy rb = new ExtolePersonCard.ReferredBy();
+                rb.personId = pid;
+                applyReferrerProfile(rb, profileById.get(pid));
+                out.add(rb);
+            }
+
+            ExtolePersonCard.CardData data = new ExtolePersonCard.CardData();
+            data.referrers = out;
+            applySfdcLinks(data, attachSfdcLinks(collectEmails(data)));
+        } catch (Exception e) {
+            System.debug(
+                'ExtolePersonCardController.getReferrerDetails ERROR: ' +
                 e.getMessage()
             );
         }
@@ -513,7 +573,8 @@ public with sharing class ExtolePersonCardController {
         ExtoleClient client,
         List<String> personIds,
         Map<String, String> personIdToProgram,
-        Map<String, List<ExtolePersonCard.JourneyStep>> templateByProgram
+        Map<String, List<ExtolePersonCard.JourneyStep>> templateByProgram,
+        Boolean withSteps
     ) {
         Map<String, PersonProfile> out = new Map<String, PersonProfile>();
         for (String pid : personIds) {
@@ -557,11 +618,9 @@ public with sharing class ExtolePersonCardController {
                     );
                 }
 
-                List<ExtolePersonCard.JourneyStep> completedSteps = fetchFriendStepsData(
-                    config,
-                    client,
-                    pid
-                );
+                List<ExtolePersonCard.JourneyStep> completedSteps = withSteps
+                    ? fetchFriendStepsData(config, client, pid)
+                    : new List<ExtolePersonCard.JourneyStep>();
                 List<ExtolePersonCard.JourneyStep> steps = completedSteps;
                 String prog = personIdToProgram.get(pid);
                 if (
@@ -881,6 +940,51 @@ public with sharing class ExtolePersonCardController {
 
     // ── Shared helpers ────────────────────────────────────────────────────────
 
+    // One entry per referrer and program. Duplicate persons with the same
+    // identity are one referrer, so key on the identity, not the person id.
+    private static List<ExtolePersonCard.ReferredBy> referrersFrom(
+        List<Object> rows
+    ) {
+        List<ExtolePersonCard.ReferredBy> out = new List<ExtolePersonCard.ReferredBy>();
+        Set<String> seen = new Set<String>();
+        for (Object raw : rows) {
+            Map<String, Object> rel = (Map<String, Object>) raw;
+            String otherId = getString(rel, 'other_person_id');
+            if (otherId == null)
+                continue;
+            String program = getString(rel, 'program');
+            Object other = rel.get('other_person');
+            String identity = other instanceof Map<String, Object>
+                ? getString((Map<String, Object>) other, 'identity_key_value')
+                : null;
+            if (
+                !seen.add(
+                    (String.isBlank(identity) ? otherId : identity) +
+                        '|' +
+                        program
+                )
+            )
+                continue;
+            ExtolePersonCard.ReferredBy ref = new ExtolePersonCard.ReferredBy();
+            ref.personId = otherId;
+            ref.program = program;
+            out.add(ref);
+        }
+        return out;
+    }
+
+    private static void applyReferrerProfile(
+        ExtolePersonCard.ReferredBy rb,
+        PersonProfile profile
+    ) {
+        if (profile == null)
+            return;
+        rb.email = profile.email;
+        rb.displayName = String.isNotBlank(profile.displayName)
+            ? profile.displayName
+            : profile.email;
+    }
+
     private static List<String> collectEmails(ExtolePersonCard.CardData data) {
         List<String> emails = new List<String>();
         if (data.friends != null) {
@@ -889,10 +993,11 @@ public with sharing class ExtolePersonCardController {
                     emails.add(f.email);
             }
         }
-        if (
-            data.referredBy != null && String.isNotBlank(data.referredBy.email)
-        ) {
-            emails.add(data.referredBy.email);
+        if (data.referrers != null) {
+            for (ExtolePersonCard.ReferredBy rb : data.referrers) {
+                if (String.isNotBlank(rb.email))
+                    emails.add(rb.email);
+            }
         }
         return emails;
     }
@@ -921,13 +1026,17 @@ public with sharing class ExtolePersonCardController {
                 }
             }
         }
-        if (data.referredBy != null && data.referredBy.email != null) {
-            ExtolePersonCard.SfdcLink l = byEmail.get(
-                data.referredBy.email.toLowerCase()
-            );
-            if (l != null) {
-                data.referredBy.sfdcRecordId = l.recordId;
-                data.referredBy.sfdcObjectType = l.objectType;
+        if (data.referrers != null) {
+            for (ExtolePersonCard.ReferredBy rb : data.referrers) {
+                if (rb.email == null)
+                    continue;
+                ExtolePersonCard.SfdcLink l = byEmail.get(
+                    rb.email.toLowerCase()
+                );
+                if (l != null) {
+                    rb.sfdcRecordId = l.recordId;
+                    rb.sfdcObjectType = l.objectType;
+                }
             }
         }
     }
